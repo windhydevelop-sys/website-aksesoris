@@ -1,0 +1,54 @@
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { NotificationProvider } from './contexts/NotificationContext';
+import LampLogin from './components/LampLogin';
+import ComplaintMenu from './components/ComplaintMenu';
+import HandphoneMenu from './components/HandphoneMenu';
+import UserManagement from './components/UserManagement';
+
+import Register from './components/Register';
+import Dashboard from './components/Dashboard';
+import Customers from './components/Customers';
+import FieldStaff from './components/FieldStaff';
+import ProductDetail from './components/ProductDetail';
+import './App.css';
+
+function App() {
+  const [token, setToken] = useState(localStorage.getItem('token'));
+
+  useEffect(() => {
+    if (token) {
+      localStorage.setItem('token', token);
+    } else {
+      localStorage.removeItem('token');
+    }
+  }, [token]);
+
+  return (
+    <NotificationProvider>
+      <Router>
+        <div className="App">
+          <Routes>
+            <Route path="/login" element={<LampLogin />} />
+            <Route path="/register" element={token ? <Navigate to="/dashboard" /> : <Register setToken={setToken} />} />
+            <Route path="/dashboard" element={token ? <Dashboard setToken={setToken} /> : <Navigate to="/login" />} />
+            <Route path="/customers" element={token ? <Customers /> : <Navigate to="/login" />} />
+            <Route path="/field-staff" element={token ? <FieldStaff /> : <Navigate to="/login" />} />
+            <Route path="/product-details/:id" element={token ? <ProductDetail /> : <Navigate to="/login" />} />
+            <Route path="/complaints" element={token ? <ComplaintMenu /> : <Navigate to="/login" />} />
+            <Route path="/handphone" element={token ? <HandphoneMenu /> : <Navigate to="/login" />} />
+            <Route path="/users" element={token ? <UserManagement /> : <Navigate to="/login" />} />
+            <Route path="/" element={<Navigate to="/login" />} />
+          </Routes>
+        </div>
+        <ToastContainer />
+      </Router>
+    </NotificationProvider>
+  );
+}
+
+export default App;
+
+// External redirect component – navigates browser to a static URL outside the React Router context
