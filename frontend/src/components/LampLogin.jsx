@@ -137,7 +137,7 @@ const LampLogin = () => {
           return;
         }
         try {
-          const response = await fetch('http://localhost:3001/api/auth/login', {
+          const response = await fetch('https://website-aksesoris-production.up.railway.app/api/auth/login-simple', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
