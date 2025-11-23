@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configure axios defaults
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
+const API_BASE_URL = 'https://website-aksesoris-production.up.railway.app';
 
 axios.defaults.baseURL = API_BASE_URL;
 axios.defaults.headers.common['Content-Type'] = 'application/json';
