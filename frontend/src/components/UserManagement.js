@@ -5,7 +5,7 @@ import {
   TableHead, TableRow, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, FormControl, InputLabel, Select, MenuItem,
   Chip, IconButton, Alert, Card, Grid, Pagination,
-  Tabs, Tab, FormControlLabel, Switch
+  Tabs, Tab, FormControlLabel, Switch, useMediaQuery, useTheme
 } from '@mui/material';
 import { Edit, Delete, PersonAdd, Block, CheckCircle } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
@@ -13,6 +13,8 @@ import SidebarLayout from './SidebarLayout';
 
 const UserManagement = () => {
   const { showSuccess, showError } = useNotification();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -270,16 +272,30 @@ const UserManagement = () => {
   return (
     <SidebarLayout>
       <Container maxWidth="lg">
-        <Box sx={{ mt: 4, mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-            <Typography variant="h4" component="h1">
+        <Box sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            justifyContent: { xs: 'center', sm: 'space-between' },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 2,
+            mb: 3
+          }}>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{ textAlign: { xs: 'center', sm: 'left' } }}
+            >
               User Management
             </Typography>
             <Button
               variant="contained"
               startIcon={<PersonAdd />}
               onClick={() => handleOpen()}
-              sx={{ borderRadius: 2 }}
+              sx={{
+                borderRadius: 2,
+                width: { xs: '100%', sm: 'auto' }
+              }}
             >
               Add User
             </Button>
@@ -292,25 +308,27 @@ const UserManagement = () => {
           )}
 
           <Card sx={{ borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
-            <TableContainer>
-              <Table>
+            <TableContainer sx={{ overflowX: 'auto' }}>
+              <Table sx={{ minWidth: 600 }}>
                 <TableHead sx={{ bgcolor: 'grey.100' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Username</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Role</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Active</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Created</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', minWidth: 100 }}>Username</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', minWidth: 150 }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', minWidth: 80 }}>Role</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', minWidth: 80 }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', minWidth: 100, display: { xs: 'none', md: 'table-cell' } }}>Last Login</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', minWidth: 100, display: { xs: 'none', sm: 'table-cell' } }}>Created</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {users.map((user) => (
                     <TableRow key={user._id} hover>
                       <TableCell>{user.username}</TableCell>
-                      <TableCell>{user.email}</TableCell>
+                      <TableCell sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {user.email}
+                      </TableCell>
                       <TableCell>{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '-'}</TableCell>
                       <TableCell>
                         <Chip
@@ -327,7 +345,7 @@ const UserManagement = () => {
                           size="small"
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                         {user.lastLogin ? (
                           <Chip
                             label={new Date(user.lastLogin).toLocaleDateString('id-ID')}
@@ -344,21 +362,25 @@ const UserManagement = () => {
                           />
                         )}
                       </TableCell>
-                      <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                        {new Date(user.createdAt).toLocaleDateString()}
+                      </TableCell>
                       <TableCell>
-                        <IconButton onClick={() => handleOpen(user)} color="primary" size="small">
-                          <Edit />
-                        </IconButton>
-                        <IconButton
-                          onClick={() => handleToggleStatus(user._id, user.isActive)}
-                          color={user.isActive ? 'warning' : 'success'}
-                          size="small"
-                        >
-                          {user.isActive ? <Block /> : <CheckCircle />}
-                        </IconButton>
-                        <IconButton onClick={() => handleDelete(user._id)} color="error" size="small">
-                          <Delete />
-                        </IconButton>
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                          <IconButton onClick={() => handleOpen(user)} color="primary" size="small">
+                            <Edit />
+                          </IconButton>
+                          <IconButton
+                            onClick={() => handleToggleStatus(user._id, user.isActive)}
+                            color={user.isActive ? 'warning' : 'success'}
+                            size="small"
+                          >
+                            {user.isActive ? <Block /> : <CheckCircle />}
+                          </IconButton>
+                          <IconButton onClick={() => handleDelete(user._id)} color="error" size="small">
+                            <Delete />
+                          </IconButton>
+                        </Box>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -379,8 +401,19 @@ const UserManagement = () => {
           </Card>
 
           {/* Add/Edit User Dialog */}
-          <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-            <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
+          <Dialog
+            open={open}
+            onClose={handleClose}
+            maxWidth="md"
+            fullWidth
+            fullScreen={isMobile}
+          >
+            <DialogTitle sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: { xs: '1.1rem', sm: '1.25rem' }
+            }}>
               {editing ? 'Edit User' : 'Add New User'}
             </DialogTitle>
             <form onSubmit={handleSubmit}>
