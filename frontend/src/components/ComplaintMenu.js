@@ -51,7 +51,7 @@ const ComplaintMenu = () => {
     try {
       const token = localStorage.getItem('token');
       const query = new URLSearchParams(filters).toString();
-      const response = await axios.get(`http://localhost:3001/api/products/complaints?${query}`, {
+      const response = await axios.get(`https://website-aksesoris-production.up.railway.app/api/products/complaints?${query}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -73,7 +73,7 @@ const ComplaintMenu = () => {
     const fetchProducts = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:3001/api/products', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await axios.get('https://website-aksesoris-production.up.railway.app/api/products', { headers: { Authorization: `Bearer ${token}` } });
         setProductOptions(res.data.data || []);
       } catch (err) {
         console.error('Error fetching products:', err);
@@ -114,7 +114,7 @@ const ComplaintMenu = () => {
         setError('Pilih produk terlebih dahulu');
         return;
       }
-      await axios.put(`http://localhost:3001/api/products/${formAdd.productId}`, { sisaSaldo: formAdd.sisaSaldo, complaint: formAdd.complaint }, { headers: { 'x-auth-token': token } });
+      await axios.put(`https://website-aksesoris-production.up.railway.app/api/products/${formAdd.productId}`, { sisaSaldo: formAdd.sisaSaldo, complaint: formAdd.complaint }, { headers: { 'x-auth-token': token } });
       setOpenAdd(false);
       fetchComplaints();
       showSuccess('Komplain berhasil ditambahkan!');

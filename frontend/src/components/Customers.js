@@ -27,9 +27,9 @@ const Customers = () => {
           navigate('/login');
           return;
         }
-        let url = 'http://localhost:3001/api/products/customers';
+        let url = 'https://website-aksesoris-production.up.railway.app/api/products/customers';
         if (selectedCustomer) {
-          url = `http://localhost:3001/api/products/customers?customerName=${encodeURIComponent(selectedCustomer)}`;
+          url = `https://website-aksesoris-production.up.railway.app/api/products/customers?customerName=${encodeURIComponent(selectedCustomer)}`;
         }
         const response = await axios.get(url, {
           headers: {
