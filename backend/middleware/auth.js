@@ -11,6 +11,7 @@ module.exports = function (req, res, next) {
   }
 
   console.log('Auth middleware: Token received:', token ? 'Token present' : 'No token');
+  console.log('Auth middleware: Full Authorization header:', req.header('Authorization'));
 
   // Check if not token
   if (!token) {
@@ -21,15 +22,18 @@ module.exports = function (req, res, next) {
   try {
     // It's a good practice to include the JWT secret in your .env file
     // and access it via process.env.JWT_SECRET
-    console.log('Auth middleware: JWT_SECRET:', process.env.JWT_SECRET ? 'Secret present' : 'Secret missing');
+    console.log('Auth middleware: JWT_SECRET available:', !!process.env.JWT_SECRET);
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('Auth middleware: Token decoded successfully:', decoded);
-    console.log('Auth middleware: User role:', decoded.user.role);
+    console.log('Auth middleware: Token decoded successfully');
+    console.log('Auth middleware: Decoded payload:', JSON.stringify(decoded, null, 2));
+    console.log('Auth middleware: User ID:', decoded.user?.id);
+    console.log('Auth middleware: User role:', decoded.user?.role);
 
     req.user = decoded.user;
     next();
   } catch (err) {
     console.log('Auth middleware: JWT verification failed:', err.message);
+    console.log('Auth middleware: Error details:', err);
     // Check for expired token specifically
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ msg: 'Token has expired' });
