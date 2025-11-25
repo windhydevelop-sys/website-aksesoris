@@ -14,6 +14,7 @@ import Customers from './components/Customers';
 import FieldStaff from './components/FieldStaff';
 import FieldStaffManagement from './components/FieldStaffManagement';
 import OrderManagement from './components/OrderManagement';
+import CashflowManagement from './components/CashflowManagement';
 import ProductDetail from './components/ProductDetail';
 import './App.css';
 
@@ -40,6 +41,7 @@ function App() {
             <Route path="/field-staff" element={token ? <FieldStaff /> : <Navigate to="/login" />} />
             <Route path="/field-staff-management" element={token ? <FieldStaffManagement /> : <Navigate to="/login" />} />
             <Route path="/orders" element={token ? <OrderManagement /> : <Navigate to="/login" />} />
+            <Route path="/cashflow" element={token ? <CashflowManagement /> : <Navigate to="/login" />} />
             <Route path="/product-details/:id" element={token ? <ProductDetail /> : <Navigate to="/login" />} />
             <Route path="/complaints" element={token ? <ComplaintMenu /> : <Navigate to="/login" />} />
             <Route path="/handphone" element={token ? <HandphoneMenu /> : <Navigate to="/login" />} />

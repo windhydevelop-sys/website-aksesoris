@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Drawer, Toolbar, Box, List, ListItem, ListItemIcon, ListItemText, ListItemButton, AppBar, Avatar, Typography, Chip, IconButton, useMediaQuery, useTheme } from '@mui/material';
-import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart } from '@mui/icons-material';
+import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const drawerWidth = 240;
@@ -216,6 +216,24 @@ const SidebarLayout = ({ children, onLogout }) => {
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><AddShoppingCart /></ListItemIcon>
                   <ListItemText primary="Order Management" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {(userRole === 'admin' || menuPermissions.cashflow) && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={isActive('/cashflow')}
+                  onClick={() => navigate('/cashflow')}
+                  sx={{
+                    color: 'inherit',
+                    borderRadius: 2,
+                    mx: 1,
+                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><AccountBalanceWallet /></ListItemIcon>
+                  <ListItemText primary="Cashflow" sx={{ color: 'inherit' }} />
                 </ListItemButton>
               </ListItem>
             )}
