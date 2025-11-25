@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const telegramRoutes = require('./routes/telegram');
 const userRoutes = require('./routes/users');
 const customerRoutes = require('./routes/customers');
+const fieldStaffRoutes = require('./routes/fieldStaff');
 const path = require('path');
 
 dotenv.config();
@@ -68,6 +69,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/telegram', telegramRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/field-staff', fieldStaffRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint
