@@ -181,6 +181,7 @@ const cleanCardNumber = (value) => {
 
 const initialFormState = {
   noOrder: '',
+  orderNumber: '',
   codeAgen: '',
   customer: '',
   fieldStaff: '',
@@ -226,6 +227,7 @@ const Dashboard = ({ setToken }) => {
   const [chartData, setChartData] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [fieldStaff, setFieldStaff] = useState([]);
+  const [orders, setOrders] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -274,11 +276,21 @@ const Dashboard = ({ setToken }) => {
     }
   }, []);
 
+  const fetchOrders = useCallback(async () => {
+    try {
+      const res = await axios.get('/api/orders');
+      setOrders(res.data.data || []);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProducts();
     fetchCustomers();
     fetchFieldStaff();
-  }, [fetchProducts, fetchCustomers, fetchFieldStaff]);
+    fetchOrders();
+  }, [fetchProducts, fetchCustomers, fetchFieldStaff, fetchOrders]);
 
 
 
@@ -342,6 +354,7 @@ const Dashboard = ({ setToken }) => {
       setEditing(product._id);
       setForm({
         ...product,
+        orderNumber: product.orderNumber || '',
         customer: product.customer || '',
         fieldStaff: product.fieldStaff || '',
         expired: product.expired ? product.expired.split('T')[0] : '',
@@ -807,6 +820,15 @@ const Dashboard = ({ setToken }) => {
             {tabIndex === 0 && (
               <Box>
                 <TextField fullWidth label="No. Order" name="noOrder" placeholder="Bebas, contoh: ORD-001 atau ORDER2024-001" value={form.noOrder} onChange={handleChange} margin="normal" required />
+                <Autocomplete
+                  fullWidth
+                  value={form.orderNumber}
+                  options={orders.map(o => o.noOrder)}
+                  freeSolo
+                  onChange={(event, newValue) => { setForm({ ...form, orderNumber: newValue || '' }); }}
+                  onInputChange={(event, newInputValue) => { setForm({ ...form, orderNumber: newInputValue || '' }); }}
+                  renderInput={(params) => <TextField {...params} label="Order Number" name="orderNumber" placeholder="Pilih nomor order dari daftar atau ketik baru" margin="normal" />}
+                />
                 <TextField fullWidth label="Kode Orlap" name="codeAgen" placeholder="Bebas, contoh: ORL001" value={form.codeAgen} onChange={handleChange} margin="normal" required />
                 <Autocomplete
                   fullWidth
