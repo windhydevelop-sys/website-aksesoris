@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import gsap from 'gsap';
 import { Draggable } from 'gsap/Draggable';
+import axios from 'axios';
 import './LampLogin.css';
 
 gsap.registerPlugin(Draggable);
@@ -137,20 +138,13 @@ const LampLogin = () => {
           return;
         }
         try {
-          const response = await fetch('https://website-aksesoris-production.up.railway.app/api/auth/login-simple', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username, password }),
-          });
-          const data = await response.json();
-          if (data.success && data.token) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+          const response = await axios.post('/api/auth/login-simple', { username, password });
+          if (response.data.success && response.data.token) {
+            localStorage.setItem('token', response.data.token);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
             window.location.href = '/dashboard';
           } else {
-            alert(data.error || 'Login gagal');
+            alert(response.data.error || 'Login gagal');
           }
         } catch (err) {
           console.error('Login error:', err);
