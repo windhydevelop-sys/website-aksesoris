@@ -49,7 +49,6 @@ const ComplaintMenu = () => {
     setLoading(true);
     setError(null);
     try {
-      const token = localStorage.getItem('token');
       const query = new URLSearchParams(filters).toString();
       const response = await axios.get(`/api/products/complaints?${query}`);
       setComplaints(response.data.data);
@@ -104,7 +103,6 @@ const ComplaintMenu = () => {
   const handleSubmitAdd = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       if (!formAdd.productId) {
         setError('Pilih produk terlebih dahulu');
         return;
