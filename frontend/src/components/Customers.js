@@ -402,9 +402,18 @@ const Customers = () => {
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
-                    '&.Mui-focused': { backgroundColor: 'rgba(255,255,255,0.1)' }
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black'
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
                   }
                 }}
               />
@@ -419,9 +428,18 @@ const Customers = () => {
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
-                    '&.Mui-focused': { backgroundColor: 'rgba(255,255,255,0.1)' }
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black'
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
                   }
                 }}
               />
@@ -436,9 +454,18 @@ const Customers = () => {
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     borderRadius: 2,
-                    backgroundColor: 'rgba(255,255,255,0.05)',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)' },
-                    '&.Mui-focused': { backgroundColor: 'rgba(255,255,255,0.1)' }
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black'
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
                   }
                 }}
               />
