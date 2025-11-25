@@ -34,10 +34,7 @@ const Customers = () => {
   // Customer management functions
   const fetchCustomers = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('https://website-aksesoris-production.up.railway.app/api/customers', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get('/api/customers');
       setCustomers(response.data.data);
     } catch (err) {
       console.error('Error fetching customers:', err);
@@ -84,16 +81,11 @@ const Customers = () => {
   const handleSubmitCustomer = async (e) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
       if (editingCustomer) {
-        await axios.put(`https://website-aksesoris-production.up.railway.app/api/customers/${editingCustomer._id}`, customerForm, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`/api/customers/${editingCustomer._id}`, customerForm);
         showSuccess('Customer updated successfully');
       } else {
-        await axios.post('https://website-aksesoris-production.up.railway.app/api/customers', customerForm, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post('/api/customers', customerForm);
         showSuccess('Customer created successfully');
       }
       fetchCustomers();
@@ -107,10 +99,7 @@ const Customers = () => {
   const handleDeleteCustomer = async (customerId) => {
     if (window.confirm('Are you sure you want to delete this customer?')) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`https://website-aksesoris-production.up.railway.app/api/customers/${customerId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.delete(`/api/customers/${customerId}`);
         showSuccess('Customer deleted successfully');
         fetchCustomers();
       } catch (err) {
@@ -134,15 +123,11 @@ const Customers = () => {
         await fetchCustomers();
 
         // Fetch products
-        let url = 'https://website-aksesoris-production.up.railway.app/api/products/customers';
+        let url = '/api/products/customers';
         if (selectedCustomer) {
-          url = `https://website-aksesoris-production.up.railway.app/api/products/customers?customerName=${encodeURIComponent(selectedCustomer)}`;
+          url = `/api/products/customers?customerName=${encodeURIComponent(selectedCustomer)}`;
         }
-        const response = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await axios.get(url);
         setProducts(response.data.data);
       } catch (err) {
         console.error('Error fetching data:', err);

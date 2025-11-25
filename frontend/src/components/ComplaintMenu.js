@@ -51,11 +51,7 @@ const ComplaintMenu = () => {
     try {
       const token = localStorage.getItem('token');
       const query = new URLSearchParams(filters).toString();
-      const response = await axios.get(`https://website-aksesoris-production.up.railway.app/api/products/complaints?${query}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(`/api/products/complaints?${query}`);
       setComplaints(response.data.data);
     } catch (err) {
       console.error('Error fetching complaints:', err);
@@ -72,8 +68,7 @@ const ComplaintMenu = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('https://website-aksesoris-production.up.railway.app/api/products', { headers: { Authorization: `Bearer ${token}` } });
+        const res = await axios.get('/api/products');
         setProductOptions(res.data.data || []);
       } catch (err) {
         console.error('Error fetching products:', err);
@@ -114,7 +109,7 @@ const ComplaintMenu = () => {
         setError('Pilih produk terlebih dahulu');
         return;
       }
-      await axios.put(`https://website-aksesoris-production.up.railway.app/api/products/${formAdd.productId}`, { sisaSaldo: formAdd.sisaSaldo, complaint: formAdd.complaint }, { headers: { 'x-auth-token': token } });
+      await axios.put(`/api/products/${formAdd.productId}`, { sisaSaldo: formAdd.sisaSaldo, complaint: formAdd.complaint });
       setOpenAdd(false);
       fetchComplaints();
       showSuccess('Komplain berhasil ditambahkan!');
