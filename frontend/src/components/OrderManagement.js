@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, FormControl, InputLabel, Select, MenuItem, Card, CardContent, Chip } from '@mui/material';
-import { Edit, Delete, AddShoppingCart, TrendingUp } from '@mui/icons-material';
+import { Container, Typography, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, FormControl, InputLabel, Select, MenuItem, Card, Chip } from '@mui/material';
+import { Edit, Delete, AddShoppingCart } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
