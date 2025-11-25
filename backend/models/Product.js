@@ -31,6 +31,7 @@ const productSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   lastModifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   customer: { type: String },
+  fieldStaff: { type: String }, // New field for field staff
   status: { type: String, enum: ['pending', 'in_progress', 'completed'], default: 'pending' },
   complaint: { type: String }, // New field for complaints
   harga: { type: Number }, // New field for product price

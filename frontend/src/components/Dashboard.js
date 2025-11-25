@@ -183,6 +183,7 @@ const initialFormState = {
   noOrder: '',
   codeAgen: '',
   customer: '',
+  fieldStaff: '',
   bank: '',
   grade: '',
   kcp: '',
@@ -224,6 +225,7 @@ const Dashboard = ({ setToken }) => {
   const [selectedProductForInvoice, setSelectedProductForInvoice] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [fieldStaff, setFieldStaff] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -263,10 +265,20 @@ const Dashboard = ({ setToken }) => {
     }
   }, []);
 
+  const fetchFieldStaff = useCallback(async () => {
+    try {
+      const res = await axios.get('/api/field-staff');
+      setFieldStaff(res.data.data || []);
+    } catch (error) {
+      console.error('Error fetching field staff:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProducts();
     fetchCustomers();
-  }, [fetchProducts, fetchCustomers]);
+    fetchFieldStaff();
+  }, [fetchProducts, fetchCustomers, fetchFieldStaff]);
 
 
 
@@ -331,6 +343,7 @@ const Dashboard = ({ setToken }) => {
       setForm({
         ...product,
         customer: product.customer || '',
+        fieldStaff: product.fieldStaff || '',
         expired: product.expired ? product.expired.split('T')[0] : '',
         status: product.status || 'pending',
         uploadFotoId: product.uploadFotoId || '',
@@ -803,6 +816,15 @@ const Dashboard = ({ setToken }) => {
                   onChange={(event, newValue) => { setForm({ ...form, customer: newValue || '' }); }}
                   onInputChange={(event, newInputValue) => { setForm({ ...form, customer: newInputValue || '' }); }}
                   renderInput={(params) => <TextField {...params} label="Customer" name="customer" placeholder="Pilih customer dari daftar atau ketik baru" margin="normal" required />}
+                />
+                <Autocomplete
+                  fullWidth
+                  value={form.fieldStaff}
+                  options={fieldStaff.map(fs => `${fs.kodeOrlap} - ${fs.namaOrlap}`)}
+                  freeSolo
+                  onChange={(event, newValue) => { setForm({ ...form, fieldStaff: newValue || '' }); }}
+                  onInputChange={(event, newInputValue) => { setForm({ ...form, fieldStaff: newInputValue || '' }); }}
+                  renderInput={(params) => <TextField {...params} label="Orang Lapangan" name="fieldStaff" placeholder="Pilih orang lapangan dari daftar atau ketik baru" margin="normal" />}
                 />
                 <TextField fullWidth label="Harga" name="harga" placeholder="Contoh: 1500000" value={form.harga} onChange={handleChange} margin="normal" type="number" inputProps={{ min: 0 }} />
                 <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" required />
