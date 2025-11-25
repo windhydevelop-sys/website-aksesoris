@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Accordion, AccordionSummary, AccordionDetails, CircularProgress, Alert, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment, Box, Card, CardContent, Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Grid, Tabs, Tab } from '@mui/material';
-import { Search, Add, Edit, Delete, PersonAdd } from '@mui/icons-material';
+import { Container, Typography, Accordion, AccordionSummary, AccordionDetails, CircularProgress, Alert, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment, Box, Card, CardContent, Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Tabs, Tab } from '@mui/material';
+import { Search, Edit, Delete, PersonAdd } from '@mui/icons-material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
@@ -334,61 +334,63 @@ const Customers = () => {
               </CardContent>
             </Card>
 
-        {loading && <CircularProgress />}
-        {error && <Alert severity="error">{error}</Alert>}
+            {loading && <CircularProgress />}
+            {error && <Alert severity="error">{error}</Alert>}
 
-        {!loading && !error && Object.keys(groupedProducts).length === 0 && (
-          <Typography>No products found.</Typography>
-        )}
+            {!loading && !error && Object.keys(groupedProducts).length === 0 && (
+              <Typography>No products found.</Typography>
+            )}
 
-        {!loading && !error && Object.keys(groupedProducts).length > 0 && (
-          <div>
-            <Typography variant="body2" color="text.secondary">Menampilkan {products.length} produk, {Object.keys(groupedProducts).length} pelanggan</Typography>
-            {Object.entries(groupedProducts).map(([customerName, customerProducts]) => (
-              <Accordion key={customerName} sx={{ mt: 2 }}>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  aria-controls={`${customerName}-content`}
-                  id={`${customerName}-header`}
-                >
-                  <Typography variant="h6">{customerName} ({customerProducts.length})</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <TableContainer component={Paper}>
-                    <Table size="small" aria-label="customer products table" stickyHeader>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Nama Customer</TableCell>
-                          <TableCell>Order No</TableCell>
-                          <TableCell>Nama Produk</TableCell>
-                          <TableCell>Bank</TableCell>
-                          <TableCell>Status</TableCell>
-                          <TableCell>Expired</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {customerProducts.map((product) => (
-                          <TableRow
-                            key={product._id}
-                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                          >
-                            <TableCell component="th" scope="row">
-                              {customerName}
-                            </TableCell>
-                            <TableCell>{product.noOrder}</TableCell>
-                            <TableCell>{product.nama}</TableCell>
-                            <TableCell>{product.bank}</TableCell>
-                            <TableCell>{product.status}</TableCell>
-                            <TableCell>{new Date(product.expired).toLocaleDateString('id-ID')}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </div>
+            {!loading && !error && Object.keys(groupedProducts).length > 0 && (
+              <div>
+                <Typography variant="body2" color="text.secondary">Menampilkan {products.length} produk, {Object.keys(groupedProducts).length} pelanggan</Typography>
+                {Object.entries(groupedProducts).map(([customerName, customerProducts]) => (
+                  <Accordion key={customerName} sx={{ mt: 2 }}>
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
+                      aria-controls={`${customerName}-content`}
+                      id={`${customerName}-header`}
+                    >
+                      <Typography variant="h6">{customerName} ({customerProducts.length})</Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <TableContainer component={Paper}>
+                        <Table size="small" aria-label="customer products table" stickyHeader>
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Nama Customer</TableCell>
+                              <TableCell>Order No</TableCell>
+                              <TableCell>Nama Produk</TableCell>
+                              <TableCell>Bank</TableCell>
+                              <TableCell>Status</TableCell>
+                              <TableCell>Expired</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {customerProducts.map((product) => (
+                              <TableRow
+                                key={product._id}
+                                sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                              >
+                                <TableCell component="th" scope="row">
+                                  {customerName}
+                                </TableCell>
+                                <TableCell>{product.noOrder}</TableCell>
+                                <TableCell>{product.nama}</TableCell>
+                                <TableCell>{product.bank}</TableCell>
+                                <TableCell>{product.status}</TableCell>
+                                <TableCell>{new Date(product.expired).toLocaleDateString('id-ID')}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
+              </div>
+            )}
+          </>
         )}
 
         {/* Customer Dialog */}
