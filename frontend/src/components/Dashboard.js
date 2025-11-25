@@ -223,6 +223,7 @@ const Dashboard = ({ setToken }) => {
   const [imeiDuplicate, setImeiDuplicate] = useState(false);
   const [selectedProductForInvoice, setSelectedProductForInvoice] = useState(null);
   const [chartData, setChartData] = useState([]);
+  const [customers, setCustomers] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -253,9 +254,19 @@ const Dashboard = ({ setToken }) => {
     }
   }, [token]);
 
+  const fetchCustomers = useCallback(async () => {
+    try {
+      const res = await axios.get('/api/customers');
+      setCustomers(res.data.data || []);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+    fetchCustomers();
+  }, [fetchProducts, fetchCustomers]);
 
 
 
@@ -468,7 +479,6 @@ const Dashboard = ({ setToken }) => {
     URL.revokeObjectURL(url);
   };
 
-  const customerSuggestions = Array.from(new Set(products.map(p => p.customer).filter(Boolean)));
   const imeiSuggestions = Array.from(new Set(products.map(p => p.imeiHandphone).filter(Boolean)));
 
   return (
@@ -787,13 +797,12 @@ const Dashboard = ({ setToken }) => {
                 <TextField fullWidth label="Kode Orlap" name="codeAgen" placeholder="Bebas, contoh: ORL001" value={form.codeAgen} onChange={handleChange} margin="normal" required />
                 <Autocomplete
                   fullWidth
-
                   value={form.customer}
-                  options={customerSuggestions}
+                  options={customers.map(c => c.namaCustomer)}
                   freeSolo
                   onChange={(event, newValue) => { setForm({ ...form, customer: newValue || '' }); }}
                   onInputChange={(event, newInputValue) => { setForm({ ...form, customer: newInputValue || '' }); }}
-                  renderInput={(params) => <TextField {...params} label="Customer" name="customer" placeholder="Bebas, contoh: PT ABC" margin="normal" required />}
+                  renderInput={(params) => <TextField {...params} label="Customer" name="customer" placeholder="Pilih customer dari daftar atau ketik baru" margin="normal" required />}
                 />
                 <TextField fullWidth label="Harga" name="harga" placeholder="Contoh: 1500000" value={form.harga} onChange={handleChange} margin="normal" type="number" inputProps={{ min: 0 }} />
                 <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" required />
