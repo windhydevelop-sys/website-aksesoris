@@ -1,7 +1,18 @@
 const jwt = require('jsonwebtoken');
 const { securityLog } = require('../utils/audit');
 
-module.exports = function (req, res, next) {
+// Middleware to check if user has admin role
+const requireAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      error: 'Access denied. Admin role required.'
+    });
+  }
+  next();
+};
+
+const auth = function (req, res, next) {
   // Get token from header
   let token = req.header('Authorization');
 
@@ -41,3 +52,6 @@ module.exports = function (req, res, next) {
     res.status(401).json({ msg: 'Token is not valid' });
   }
 };
+
+module.exports = auth;
+module.exports.requireAdmin = requireAdmin;
