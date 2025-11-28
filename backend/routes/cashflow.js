@@ -110,7 +110,7 @@ router.post('/', auth, async (req, res) => {
       date: date ? new Date(date) : new Date(),
       reference: reference?.trim(),
       paymentMethod: paymentMethod || 'cash',
-      createdBy: req.user.userId
+      createdBy: req.user.id
     };
 
     // Auto-set debit/credit based on transaction type (simplified accounting)
@@ -156,7 +156,7 @@ router.post('/', auth, async (req, res) => {
 
     // Log activity
     await logActivity(
-      req.user.userId,
+      req.user.id,
       'CREATE_CASHFLOW',
       `Created ${type} entry: ${category} - Rp ${amount.toLocaleString('id-ID')}`,
       { cashflowId: savedCashflow._id }
@@ -188,7 +188,7 @@ router.put('/:id', auth, async (req, res) => {
     } = req.body;
 
     const updateData = {
-      lastModifiedBy: req.user.userId
+      lastModifiedBy: req.user.id
     };
 
     if (type !== undefined) updateData.type = type;
@@ -257,7 +257,7 @@ router.put('/:id', auth, async (req, res) => {
 
     // Log activity
     await logActivity(
-      req.user.userId,
+      req.user.id,
       'UPDATE_CASHFLOW',
       `Updated ${updatedCashflow.type} entry: ${updatedCashflow.category}`,
       { cashflowId: updatedCashflow._id }
@@ -291,7 +291,7 @@ router.delete('/:id', auth, async (req, res) => {
 
     // Log activity
     await logActivity(
-      req.user.userId,
+      req.user.id,
       'DELETE_CASHFLOW',
       `Deleted ${deletedCashflow.type} entry: ${deletedCashflow.category}`,
       { cashflowId: deletedCashflow._id }
