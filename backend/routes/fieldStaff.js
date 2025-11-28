@@ -1,6 +1,5 @@
 const express = require('express');
 const FieldStaff = require('../models/FieldStaff');
-const { requireRole } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
@@ -86,7 +85,7 @@ router.get('/:id', requireRole(['admin']), async (req, res) => {
 });
 
 // POST /api/field-staff - Create new field staff
-router.post('/', requireRole(['admin']), validateFieldStaff, async (req, res) => {
+router.post('/', validateFieldStaff, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
