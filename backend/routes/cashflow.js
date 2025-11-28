@@ -81,7 +81,10 @@ router.get('/:id', auth, async (req, res) => {
 // Create new cashflow entry
 router.post('/', auth, async (req, res) => {
   try {
-    const { type, category, amount, description, date, reference, paymentMethod } = req.body;
+    const { 
+      type, category, amount, description, date, reference, paymentMethod,
+      debit, credit, accountCode, accountName, journalDescription, referenceNumber
+    } = req.body;
 
     // Validate required fields
     if (!type || !category || !amount) {
@@ -98,7 +101,8 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
-    const newCashflow = new Cashflow({
+    // Enhanced journal entry data
+    const newCashflowData = {
       type,
       category: category.trim(),
       amount: parseFloat(amount),
@@ -107,8 +111,40 @@ router.post('/', auth, async (req, res) => {
       reference: reference?.trim(),
       paymentMethod: paymentMethod || 'cash',
       createdBy: req.user.userId
-    });
+    };
 
+    // Add enhanced journal fields
+    if (debit !== undefined) newCashflowData.debit = parseFloat(debit) || 0;
+    if (credit !== undefined) newCashflowData.credit = parseFloat(credit) || 0;
+    if (accountCode) newCashflowData.accountCode = accountCode.trim();
+    if (accountName) newCashflowData.accountName = accountName.trim();
+    if (journalDescription) newCashflowData.journalDescription = journalDescription.trim();
+    if (referenceNumber) newCashflowData.referenceNumber = referenceNumber.trim();
+
+    // Balance validation
+    const debitAmount = newCashflowData.debit || 0;
+    const creditAmount = newCashflowData.credit || 0;
+    
+    if (debitAmount !== creditAmount) {
+      return res.status(400).json({
+        success: false,
+        error: `Balance Error: Debit (${debitAmount}) must equal Credit (${creditAmount}). Journal entries must be balanced.`,
+        details: {
+          debit: debitAmount,
+          credit: creditAmount,
+          difference: debitAmount - creditAmount
+        }
+      });
+    }
+
+    if (debitAmount === 0 && creditAmount === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Please enter either a debit amount or a credit amount. Journal entries cannot have zero amounts.'
+      });
+    }
+
+    const newCashflow = new Cashflow(newCashflowData);
     const savedCashflow = await newCashflow.save();
 
     // Log activity
@@ -139,7 +175,10 @@ router.post('/', auth, async (req, res) => {
 // Update cashflow entry
 router.put('/:id', auth, async (req, res) => {
   try {
-    const { type, category, amount, description, date, reference, paymentMethod } = req.body;
+    const { 
+      type, category, amount, description, date, reference, paymentMethod,
+      debit, credit, accountCode, accountName, journalDescription, referenceNumber
+    } = req.body;
 
     const updateData = {
       lastModifiedBy: req.user.userId
@@ -160,6 +199,40 @@ router.put('/:id', auth, async (req, res) => {
     if (date !== undefined) updateData.date = new Date(date);
     if (reference !== undefined) updateData.reference = reference?.trim();
     if (paymentMethod !== undefined) updateData.paymentMethod = paymentMethod;
+
+    // Enhanced journal fields
+    if (debit !== undefined) updateData.debit = parseFloat(debit) || 0;
+    if (credit !== undefined) updateData.credit = parseFloat(credit) || 0;
+    if (accountCode !== undefined) updateData.accountCode = accountCode.trim();
+    if (accountName !== undefined) updateData.accountName = accountName.trim();
+    if (journalDescription !== undefined) updateData.journalDescription = journalDescription.trim();
+    if (referenceNumber !== undefined) updateData.referenceNumber = referenceNumber.trim();
+
+    // Balance validation for updates
+    const updateDebit = updateData.debit !== undefined ? updateData.debit : null;
+    const updateCredit = updateData.credit !== undefined ? updateData.credit : null;
+    
+    // Only validate if both debit and credit are being updated
+    if (updateDebit !== null && updateCredit !== null) {
+      if (updateDebit !== updateCredit) {
+        return res.status(400).json({
+          success: false,
+          error: `Balance Error: Debit (${updateDebit}) must equal Credit (${updateCredit}). Journal entries must be balanced.`,
+          details: {
+            debit: updateDebit,
+            credit: updateCredit,
+            difference: updateDebit - updateCredit
+          }
+        });
+      }
+
+      if (updateDebit === 0 && updateCredit === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Please enter either a debit amount or a credit amount. Journal entries cannot have zero amounts.'
+        });
+      }
+    }
 
     const updatedCashflow = await Cashflow.findByIdAndUpdate(
       req.params.id,
@@ -270,6 +343,104 @@ router.get('/summary/overview', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch cashflow summary'
+    });
+  }
+});
+
+// NEW: Enhanced summary with debit/credit totals
+router.get('/summary/debit-credit', auth, async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    let dateFilter = {};
+    if (startDate || endDate) {
+      dateFilter.date = {};
+      if (startDate) dateFilter.date.$gte = new Date(startDate);
+      if (endDate) dateFilter.date.$lte = new Date(endDate);
+    }
+
+    const totalDebit = await Cashflow.aggregate([
+      { $match: dateFilter },
+      { $group: { _id: null, total: { $sum: '$debit' } } }
+    ]);
+
+    const totalCredit = await Cashflow.aggregate([
+      { $match: dateFilter },
+      { $group: { _id: null, total: { $sum: '$credit' } } }
+    ]);
+
+    const debitTotal = totalDebit.length > 0 ? totalDebit[0].total : 0;
+    const creditTotal = totalCredit.length > 0 ? totalCredit[0].total : 0;
+    const balance = debitTotal - creditTotal; // Should be 0 for balanced entries
+
+    res.json({
+      success: true,
+      data: {
+        totalDebit,
+        totalCredit,
+        balance,
+        isBalanced: balance === 0,
+        period: { startDate, endDate }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching debit-credit summary:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch debit-credit summary'
+    });
+  }
+});
+
+// NEW: Get journal-style entries
+router.get('/journal', auth, async (req, res) => {
+  try {
+    const { startDate, endDate, page = 1, limit = 50 } = req.query;
+
+    let query = {};
+    if (startDate || endDate) {
+      query.date = {};
+      if (startDate) query.date.$gte = new Date(startDate);
+      if (endDate) query.date.$lte = new Date(endDate);
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const journalEntries = await Cashflow.find(query)
+      .populate('createdBy', 'username')
+      .populate('lastModifiedBy', 'username')
+      .sort({ date: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .select('date journalDescription referenceNumber debit credit accountCode accountName type amount category');
+
+    const total = await Cashflow.countDocuments(query);
+
+    // Calculate running balance
+    let runningBalance = 0;
+    const entriesWithBalance = journalEntries.map(entry => {
+      runningBalance += entry.debit - entry.credit;
+      return {
+        ...entry.toObject(),
+        runningBalance
+      };
+    });
+
+    res.json({
+      success: true,
+      data: entriesWithBalance,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching journal entries:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch journal entries'
     });
   }
 });

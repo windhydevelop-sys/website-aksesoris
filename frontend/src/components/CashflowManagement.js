@@ -16,7 +16,15 @@ const CashflowManagement = () => {
   const [cashflows, setCashflows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [summary, setSummary] = useState({ totalIncome: 0, totalExpense: 0, netIncome: 0 });
+  const [summary, setSummary] = useState({ 
+    totalIncome: 0, 
+    totalExpense: 0, 
+    netIncome: 0,
+    totalDebit: 0,
+    totalCredit: 0,
+    balance: 0,
+    isBalanced: true
+  });
 
   // Dialog states
   const [openDialog, setOpenDialog] = useState(false);
@@ -28,8 +36,25 @@ const CashflowManagement = () => {
     description: '',
     date: new Date().toISOString().split('T')[0],
     reference: '',
-    paymentMethod: 'cash'
+    paymentMethod: 'cash',
+    // Enhanced journal fields
+    debit: '',
+    credit: '',
+    accountCode: '1101',
+    accountName: 'Cash',
+    journalDescription: '',
+    referenceNumber: ''
   });
+
+  // Balance calculation for real-time validation
+  const calculateBalance = () => {
+    const debitAmount = parseFloat(formData.debit) || 0;
+    const creditAmount = parseFloat(formData.credit) || 0;
+    return debitAmount - creditAmount;
+  };
+
+  const balance = calculateBalance();
+  const isBalanced = balance === 0;
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -53,8 +78,21 @@ const CashflowManagement = () => {
 
   const fetchSummary = useCallback(async () => {
     try {
-      const response = await axios.get('/api/cashflow/summary/overview');
-      setSummary(response.data.data);
+      const [overviewResponse, debitCreditResponse] = await Promise.all([
+        axios.get('/api/cashflow/summary/overview'),
+        axios.get('/api/cashflow/summary/debit-credit')
+      ]);
+      
+      const overviewData = overviewResponse.data.data;
+      const debitCreditData = debitCreditResponse.data.data;
+      
+      setSummary({
+        ...overviewData,
+        totalDebit: debitCreditData.totalDebit,
+        totalCredit: debitCreditData.totalCredit,
+        balance: debitCreditData.balance,
+        isBalanced: debitCreditData.isBalanced
+      });
     } catch (err) {
       console.error('Error fetching summary:', err);
     }
@@ -75,7 +113,14 @@ const CashflowManagement = () => {
         description: cashflow.description || '',
         date: cashflow.date ? new Date(cashflow.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
         reference: cashflow.reference || '',
-        paymentMethod: cashflow.paymentMethod || 'cash'
+        paymentMethod: cashflow.paymentMethod || 'cash',
+        // Enhanced journal fields
+        debit: cashflow.debit || '',
+        credit: cashflow.credit || '',
+        accountCode: cashflow.accountCode || '1101',
+        accountName: cashflow.accountName || 'Cash',
+        journalDescription: cashflow.journalDescription || cashflow.description || '',
+        referenceNumber: cashflow.referenceNumber || cashflow.reference || ''
       });
     } else {
       setEditingCashflow(null);
@@ -86,7 +131,13 @@ const CashflowManagement = () => {
         description: '',
         date: new Date().toISOString().split('T')[0],
         reference: '',
-        paymentMethod: 'cash'
+        paymentMethod: 'cash',
+        debit: '',
+        credit: '',
+        accountCode: '1101',
+        accountName: 'Cash',
+        journalDescription: '',
+        referenceNumber: ''
       });
     }
     setOpenDialog(true);
@@ -102,7 +153,13 @@ const CashflowManagement = () => {
       description: '',
       date: new Date().toISOString().split('T')[0],
       reference: '',
-      paymentMethod: 'cash'
+      paymentMethod: 'cash',
+      debit: '',
+      credit: '',
+      accountCode: '1101',
+      accountName: 'Cash',
+      journalDescription: '',
+      referenceNumber: ''
     });
   };
 
@@ -116,6 +173,21 @@ const CashflowManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Balance validation
+    const debitAmount = parseFloat(formData.debit) || 0;
+    const creditAmount = parseFloat(formData.credit) || 0;
+    
+    if (debitAmount !== creditAmount) {
+      showError(`Balance Error: Debit (Rp ${debitAmount.toLocaleString('id-ID')}) must equal Credit (Rp ${creditAmount.toLocaleString('id-ID')}). Please check your entries.`);
+      return;
+    }
+    
+    if (debitAmount === 0 && creditAmount === 0) {
+      showError('Please enter either a debit amount or a credit amount.');
+      return;
+    }
+    
     try {
       if (editingCashflow) {
         await axios.put(`/api/cashflow/${editingCashflow._id}`, formData);
@@ -129,7 +201,13 @@ const CashflowManagement = () => {
       handleCloseDialog();
     } catch (err) {
       console.error('Error saving cashflow:', err);
-      showError(err.response?.data?.error || 'Failed to save cashflow entry');
+      
+      // Enhanced error handling
+      if (err.response?.data?.error?.includes('balance') || err.response?.data?.error?.includes('Balance')) {
+        showError('Balance Error: Please ensure debit amount equals credit amount.');
+      } else {
+        showError(err.response?.data?.error || 'Failed to save cashflow entry');
+      }
     }
   };
 
@@ -186,9 +264,9 @@ const CashflowManagement = () => {
           </Typography>
         </Box>
 
-        {/* Summary Cards */}
+        {/* Enhanced Summary Cards with Journal Style */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <Card sx={{
               background: 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)',
               color: 'white',
@@ -198,13 +276,14 @@ const CashflowManagement = () => {
               <CardContent sx={{ textAlign: 'center' }}>
                 <TrendingUp sx={{ fontSize: 40, mb: 1 }} />
                 <Typography variant="h4" component="div">
-                  Rp {summary.totalIncome?.toLocaleString('id-ID') || '0'}
+                  Rp {summary.totalDebit?.toLocaleString('id-ID') || '0'}
                 </Typography>
-                <Typography variant="body2">Total Income</Typography>
+                <Typography variant="body2">Total Debit</Typography>
+                <Typography variant="caption">(Cash Inflows)</Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
+          <Grid item xs={12} sm={6} md={3}>
             <Card sx={{
               background: 'linear-gradient(135deg, #f44336 0%, #e57373 100%)',
               color: 'white',
@@ -214,14 +293,15 @@ const CashflowManagement = () => {
               <CardContent sx={{ textAlign: 'center' }}>
                 <TrendingDown sx={{ fontSize: 40, mb: 1 }} />
                 <Typography variant="h4" component="div">
-                  Rp {summary.totalExpense?.toLocaleString('id-ID') || '0'}
+                  Rp {summary.totalCredit?.toLocaleString('id-ID') || '0'}
                 </Typography>
-                <Typography variant="body2">Total Expense</Typography>
+                <Typography variant="body2">Total Credit</Typography>
+                <Typography variant="caption">(Cash Outflows)</Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <Card sx={{
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ 
               background: summary.netIncome >= 0
                 ? 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)'
                 : 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
@@ -236,6 +316,24 @@ const CashflowManagement = () => {
                 </Typography>
                 <Typography variant="body2">
                   {summary.netIncome >= 0 ? 'Net Profit' : 'Net Loss'}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ 
+              backgroundColor: summary.isBalanced ? '#e8f4fd' : '#fff3e0',
+              border: summary.isBalanced ? '2px solid #4caf50' : '2px solid #ff9800'
+            }}>
+              <CardContent sx={{ textAlign: 'center' }}>
+                <Typography variant="h6">
+                  Balance {summary.isBalanced ? '✓' : '⚠'}
+                </Typography>
+                <Typography variant="h5" color={summary.isBalanced ? 'success.main' : 'warning.main'}>
+                  Rp {Math.abs(summary.balance || 0).toLocaleString('id-ID')}
+                </Typography>
+                <Typography variant="body2" color={summary.isBalanced ? 'success.main' : 'warning.main'}>
+                  {summary.isBalanced ? 'Balanced' : 'Check Entries'}
                 </Typography>
               </CardContent>
             </Card>
@@ -341,6 +439,30 @@ const CashflowManagement = () => {
           </DialogTitle>
           <form onSubmit={handleSubmit}>
             <DialogContent>
+              {/* Balance Validation Indicator */}
+              <Box sx={{ 
+                p: 2, 
+                mb: 2, 
+                borderRadius: 2,
+                backgroundColor: isBalanced ? '#e8f5e8' : '#fff3e0',
+                border: `2px solid ${isBalanced ? '#4caf50' : '#ff9800'}`
+              }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {isBalanced ? <Typography color="success.main">✓</Typography> : <Typography color="warning.main">⚠</Typography>}
+                  <Typography variant="h6" color={isBalanced ? 'success.main' : 'warning.main'}>
+                    Balance Check
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ mt: 1 }}>
+                  Debit: Rp {(parseFloat(formData.debit) || 0).toLocaleString('id-ID')} | 
+                  Credit: Rp {(parseFloat(formData.credit) || 0).toLocaleString('id-ID')} | 
+                  Balance: Rp {Math.abs(balance).toLocaleString('id-ID')}
+                </Typography>
+                <Typography variant="caption" color={isBalanced ? 'success.main' : 'warning.main'}>
+                  {isBalanced ? 'Entry is balanced ✓' : 'Debit must equal Credit'}
+                </Typography>
+              </Box>
+
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth margin="normal">
