@@ -1,8 +1,17 @@
 const fs = require('fs');
 const path = require('path');
-const pdfParse = require('pdf-parse');
 const { parseDocument } = require('./documentParser');
 const { logger } = require('./audit');
+
+// Try to load pdf-parse, but make it optional for environments that don't support it
+let pdfParse = null;
+try {
+  pdfParse = require('pdf-parse');
+  logger.info('pdf-parse library loaded successfully');
+} catch (error) {
+  logger.warn('pdf-parse library not available in this environment:', error.message);
+  logger.warn('PDF parsing will use fallback methods only');
+}
 
 /**
  * PDF Parser Utility for extracting product data from PDF files
@@ -11,15 +20,19 @@ const { logger } = require('./audit');
 // Extract text content from PDF buffer using multiple fallback methods
 const extractTextFromPDF = async (pdfBuffer) => {
   try {
-    // Method 1: Try pdf-parse (most reliable for text extraction)
-    try {
-      const data = await pdfParse(pdfBuffer);
-      if (data && data.text && data.text.trim().length > 0) {
-        logger.info('PDF text extracted successfully using pdf-parse');
-        return data.text;
+    // Method 1: Try pdf-parse (most reliable for text extraction) - only if available
+    if (pdfParse) {
+      try {
+        const data = await pdfParse(pdfBuffer);
+        if (data && data.text && data.text.trim().length > 0) {
+          logger.info('PDF text extracted successfully using pdf-parse');
+          return data.text;
+        }
+      } catch (pdfParseError) {
+        logger.warn('pdf-parse failed, trying alternative methods:', pdfParseError.message);
       }
-    } catch (pdfParseError) {
-      logger.warn('pdf-parse failed, trying alternative methods:', pdfParseError.message);
+    } else {
+      logger.warn('pdf-parse not available, using fallback methods only');
     }
 
     // Method 2: Try basic text extraction from buffer (fallback)
