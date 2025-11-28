@@ -82,29 +82,35 @@ const cashflowSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Add validation to ensure debit equals credit for enhanced entries
+// Set debit/credit based on type for proper double-entry accounting
 cashflowSchema.pre('save', function(next) {
   // Set debit/credit based on type if not explicitly set
   if (this.type === 'income' && this.debit === 0 && this.credit === 0) {
+    // Pemasukan: Kas bertambah (Debit), Pendapatan bertambah (Credit)
     this.debit = this.amount;
-    this.credit = 0;
+    this.credit = this.amount;
   } else if (this.type === 'expense' && this.debit === 0 && this.credit === 0) {
-    this.debit = 0;
+    // Pengeluaran: Beban bertambah (Debit), Kas berkurang (Credit)
+    this.debit = this.amount;
     this.credit = this.amount;
   }
 
   // Update journal description if not set
-  if (!this.journalDescription && this.description) {
-    this.journalDescription = this.description;
+  if (!this.journalDescription) {
+    if (this.type === 'income') {
+      this.journalDescription = `Pemasukan: ${this.category}`;
+    } else if (this.type === 'expense') {
+      this.journalDescription = `Pengeluaran: ${this.category}`;
+    }
   }
 
   // Set default account based on type
   if (this.type === 'income') {
-    this.accountCode = this.accountCode || '1101'; // Cash
-    this.accountName = this.accountName || 'Cash';
+    this.accountCode = this.accountCode || '1101'; // Kas
+    this.accountName = this.accountName || 'Kas';
   } else if (this.type === 'expense') {
-    this.accountCode = this.accountCode || '5200'; // Expense
-    this.accountName = this.accountName || 'Expense';
+    this.accountCode = this.accountCode || '1101'; // Kas
+    this.accountName = this.accountName || 'Kas';
   }
 
   next();
@@ -158,12 +164,6 @@ cashflowSchema.virtual('formattedNetBalance').get(function() {
   }).format(Math.abs(balance));
 });
 
-// Pre-save middleware
-cashflowSchema.pre('save', function(next) {
-  if (!this.date) {
-    this.date = new Date();
-  }
-  next();
-});
+// Date will be set automatically by schema default
 
 module.exports = mongoose.model('Cashflow', cashflowSchema);
