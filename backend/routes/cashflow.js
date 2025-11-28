@@ -113,7 +113,24 @@ router.post('/', auth, async (req, res) => {
       createdBy: req.user.userId
     };
 
-    // Add enhanced journal fields
+    // Auto-set debit/credit based on transaction type (simplified accounting)
+    if (type === 'income') {
+      // Pemasukan: Kas bertambah (Debit), Pendapatan bertambah (Credit)
+      newCashflowData.debit = parseFloat(amount);
+      newCashflowData.credit = parseFloat(amount);
+      newCashflowData.accountCode = '1101'; // Kas
+      newCashflowData.accountName = 'Kas';
+      newCashflowData.journalDescription = `Pemasukan: ${category}`;
+    } else if (type === 'expense') {
+      // Pengeluaran: Beban bertambah (Debit), Kas berkurang (Credit)
+      newCashflowData.debit = parseFloat(amount);
+      newCashflowData.credit = parseFloat(amount);
+      newCashflowData.accountCode = '1101'; // Kas
+      newCashflowData.accountName = 'Kas';
+      newCashflowData.journalDescription = `Pengeluaran: ${category}`;
+    }
+
+    // Override with manual values if provided (for advanced users)
     if (debit !== undefined) newCashflowData.debit = parseFloat(debit) || 0;
     if (credit !== undefined) newCashflowData.credit = parseFloat(credit) || 0;
     if (accountCode) newCashflowData.accountCode = accountCode.trim();
@@ -121,26 +138,16 @@ router.post('/', auth, async (req, res) => {
     if (journalDescription) newCashflowData.journalDescription = journalDescription.trim();
     if (referenceNumber) newCashflowData.referenceNumber = referenceNumber.trim();
 
-    // Balance validation
+    // Simplified validation - allow unbalanced entries for cash flow tracking
     const debitAmount = newCashflowData.debit || 0;
     const creditAmount = newCashflowData.credit || 0;
-    
-    if (debitAmount !== creditAmount) {
-      return res.status(400).json({
-        success: false,
-        error: `Balance Error: Debit (${debitAmount}) must equal Credit (${creditAmount}). Journal entries must be balanced.`,
-        details: {
-          debit: debitAmount,
-          credit: creditAmount,
-          difference: debitAmount - creditAmount
-        }
-      });
-    }
 
+    // For simplified cash flow, we allow debit != credit
+    // But ensure at least one has a value
     if (debitAmount === 0 && creditAmount === 0) {
       return res.status(400).json({
         success: false,
-        error: 'Please enter either a debit amount or a credit amount. Journal entries cannot have zero amounts.'
+        error: 'Please enter an amount for the transaction.'
       });
     }
 

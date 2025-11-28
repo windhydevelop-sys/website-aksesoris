@@ -46,15 +46,7 @@ const CashflowManagement = () => {
     referenceNumber: ''
   });
 
-  // Balance calculation for real-time validation
-  const calculateBalance = () => {
-    const debitAmount = parseFloat(formData.debit) || 0;
-    const creditAmount = parseFloat(formData.credit) || 0;
-    return debitAmount - creditAmount;
-  };
-
-  const balance = calculateBalance();
-  const isBalanced = balance === 0;
+  // Simplified - no balance calculation needed for user input
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -220,41 +212,37 @@ const CashflowManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Balance validation
-    const debitAmount = parseFloat(formData.debit) || 0;
-    const creditAmount = parseFloat(formData.credit) || 0;
-    
-    if (debitAmount !== creditAmount) {
-      showError(`Balance Error: Debit (Rp ${debitAmount.toLocaleString('id-ID')}) must equal Credit (Rp ${creditAmount.toLocaleString('id-ID')}). Please check your entries.`);
+
+    // Basic validation
+    if (!formData.amount || formData.amount <= 0) {
+      showError('Silakan masukkan jumlah yang valid.');
       return;
     }
-    
-    if (debitAmount === 0 && creditAmount === 0) {
-      showError('Please enter either a debit amount or a credit amount.');
+
+    if (!formData.category.trim()) {
+      showError('Silakan masukkan kategori transaksi.');
       return;
     }
-    
+
     try {
+      // Remove debit/credit from form data since backend will auto-set them
+      const submitData = { ...formData };
+      delete submitData.debit;
+      delete submitData.credit;
+
       if (editingCashflow) {
-        await axios.put(`/api/cashflow/${editingCashflow._id}`, formData);
-        showSuccess('Cashflow entry updated successfully');
+        await axios.put(`/api/cashflow/${editingCashflow._id}`, submitData);
+        showSuccess('Transaksi berhasil diperbarui');
       } else {
-        await axios.post('/api/cashflow', formData);
-        showSuccess('Cashflow entry created successfully');
+        await axios.post('/api/cashflow', submitData);
+        showSuccess('Transaksi berhasil dibuat');
       }
       fetchCashflows();
       fetchSummary();
       handleCloseDialog();
     } catch (err) {
       console.error('Error saving cashflow:', err);
-      
-      // Enhanced error handling
-      if (err.response?.data?.error?.includes('balance') || err.response?.data?.error?.includes('Balance')) {
-        showError('Balance Error: Please ensure debit amount equals credit amount.');
-      } else {
-        showError(err.response?.data?.error || 'Failed to save cashflow entry');
-      }
+      showError(err.response?.data?.error || 'Gagal menyimpan transaksi');
     }
   };
 
@@ -557,29 +545,6 @@ const CashflowManagement = () => {
           </DialogTitle>
           <form onSubmit={handleSubmit}>
             <DialogContent>
-              {/* Balance Validation Indicator */}
-              <Box sx={{ 
-                p: 2, 
-                mb: 2, 
-                borderRadius: 2,
-                backgroundColor: isBalanced ? '#e8f5e8' : '#fff3e0',
-                border: `2px solid ${isBalanced ? '#4caf50' : '#ff9800'}`
-              }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {isBalanced ? <Typography color="success.main">✓</Typography> : <Typography color="warning.main">⚠</Typography>}
-                  <Typography variant="h6" color={isBalanced ? 'success.main' : 'warning.main'}>
-                    Balance Check
-                  </Typography>
-                </Box>
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  Debit: Rp {(parseFloat(formData.debit) || 0).toLocaleString('id-ID')} | 
-                  Credit: Rp {(parseFloat(formData.credit) || 0).toLocaleString('id-ID')} | 
-                  Balance: Rp {Math.abs(balance).toLocaleString('id-ID')}
-                </Typography>
-                <Typography variant="caption" color={isBalanced ? 'success.main' : 'warning.main'}>
-                  {isBalanced ? 'Entry is balanced ✓' : 'Debit must equal Credit'}
-                </Typography>
-              </Box>
 
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
@@ -606,13 +571,13 @@ const CashflowManagement = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Category"
+                    label="Kategori"
                     name="category"
                     value={formData.category}
                     onChange={handleFormChange}
                     margin="normal"
                     required
-                    placeholder="e.g., Sales, Salary, Utilities, Marketing"
+                    placeholder="contoh: Penjualan, Gaji, Utilitas, Marketing"
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -642,7 +607,7 @@ const CashflowManagement = () => {
                     onChange={handleFormChange}
                     margin="normal"
                     required
-                    helperText="Mengubah jumlah akan mengisi debit/kredit secara otomatis berdasarkan jenis"
+                    helperText="Masukkan jumlah transaksi"
                     InputProps={{
                       startAdornment: 'Rp ',
                     }}
@@ -668,7 +633,7 @@ const CashflowManagement = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Date"
+                    label="Tanggal"
                     name="date"
                     type="date"
                     value={formData.date}
@@ -697,12 +662,12 @@ const CashflowManagement = () => {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth margin="normal">
-                    <InputLabel id="payment-method-label">Payment Method</InputLabel>
+                    <InputLabel id="payment-method-label">Metode Pembayaran</InputLabel>
                     <Select
                       labelId="payment-method-label"
                       name="paymentMethod"
                       value={formData.paymentMethod}
-                      label="Payment Method"
+                      label="Metode Pembayaran"
                       onChange={handleFormChange}
                       sx={{
                         borderRadius: 2,
@@ -727,7 +692,7 @@ const CashflowManagement = () => {
                     value={formData.reference}
                     onChange={handleFormChange}
                     margin="normal"
-                    placeholder="Invoice number, receipt number, etc."
+                    placeholder="Nomor invoice, nomor kwitansi, dll."
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -757,7 +722,7 @@ const CashflowManagement = () => {
                     margin="normal"
                     multiline
                     rows={3}
-                    placeholder="Additional details about this transaction"
+                    placeholder="Detail tambahan tentang transaksi ini"
                     sx={{
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 2,
@@ -780,9 +745,9 @@ const CashflowManagement = () => {
               </Grid>
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleCloseDialog}>Cancel</Button>
+              <Button onClick={handleCloseDialog}>Batal</Button>
               <Button type="submit" variant="contained" sx={{ borderRadius: 2 }}>
-                {editingCashflow ? 'Update' : 'Create'}
+                {editingCashflow ? 'Perbarui' : 'Buat'}
               </Button>
             </DialogActions>
           </form>
