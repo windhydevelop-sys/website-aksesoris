@@ -3,7 +3,7 @@ const router = express.Router();
 const Order = require('../models/Order');
 const auth = require('../middleware/auth');
 const { requireRole } = auth;
-const { logActivity } = require('../utils/audit');
+const { auditLog } = require('../utils/audit');
 
 // Get all orders
 router.get('/', auth, async (req, res) => {
@@ -73,17 +73,19 @@ router.post('/', auth, async (req, res) => {
       status: status || 'pending',
       notes: notes?.trim(),
       totalAmount: totalAmount || 0,
-      createdBy: req.user.userId
+      createdBy: req.user.id
     });
 
     const savedOrder = await newOrder.save();
 
     // Log activity
-    await logActivity(
-      req.user.userId,
+    await auditLog(
       'CREATE_ORDER',
-      `Created order ${noOrder}`,
-      { orderId: savedOrder._id }
+      req.user.id,
+      'order',
+      savedOrder._id,
+      { noOrder },
+      req
     );
 
     const populatedOrder = await Order.findById(savedOrder._id)
@@ -124,7 +126,7 @@ router.put('/:id', auth, async (req, res) => {
     const { noOrder, customer, fieldStaff, status, notes, totalAmount } = req.body;
 
     const updateData = {
-      lastModifiedBy: req.user.userId
+      lastModifiedBy: req.user.id
     };
 
     if (noOrder !== undefined) updateData.noOrder = noOrder.trim();
@@ -149,11 +151,13 @@ router.put('/:id', auth, async (req, res) => {
     }
 
     // Log activity
-    await logActivity(
-      req.user.userId,
+    await auditLog(
       'UPDATE_ORDER',
-      `Updated order ${updatedOrder.noOrder}`,
-      { orderId: updatedOrder._id }
+      req.user.id,
+      'order',
+      updatedOrder._id,
+      { noOrder: updatedOrder.noOrder },
+      req
     );
 
     res.json({
@@ -191,11 +195,13 @@ router.delete('/:id', auth, requireRole(['admin']), async (req, res) => {
     }
 
     // Log activity
-    await logActivity(
-      req.user.userId,
+    await auditLog(
       'DELETE_ORDER',
-      `Deleted order ${deletedOrder.noOrder}`,
-      { orderId: deletedOrder._id }
+      req.user.id,
+      'order',
+      deletedOrder._id,
+      { noOrder: deletedOrder.noOrder },
+      req
     );
 
     res.json({
