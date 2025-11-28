@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const auth = require('../middleware/auth');
+const { requireRole } = auth;
 const { logActivity } = require('../utils/audit');
 
 // Get all orders
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const orders = await Order.find()
       .populate('createdBy', 'username')
@@ -26,7 +27,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get order by ID
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
       .populate('createdBy', 'username')
@@ -53,7 +54,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Create new order
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const { noOrder, customer, fieldStaff, status, notes, totalAmount } = req.body;
 
@@ -118,7 +119,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Update order
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
     const { noOrder, customer, fieldStaff, status, notes, totalAmount } = req.body;
 
@@ -178,7 +179,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // Delete order
-router.delete('/:id', authenticateToken, requireRole(['admin']), async (req, res) => {
+router.delete('/:id', auth, requireRole(['admin']), async (req, res) => {
   try {
     const deletedOrder = await Order.findByIdAndDelete(req.params.id);
 
@@ -211,7 +212,7 @@ router.delete('/:id', authenticateToken, requireRole(['admin']), async (req, res
 });
 
 // Get orders by status
-router.get('/status/:status', authenticateToken, async (req, res) => {
+router.get('/status/:status', auth, async (req, res) => {
   try {
     const { status } = req.params;
     const orders = await Order.find({ status })

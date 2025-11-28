@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Cashflow = require('../models/Cashflow');
-const { authenticateToken, requireRole } = require('../middleware/auth');
+const auth = require('../middleware/auth');
+const { requireRole } = auth;
 const { logActivity } = require('../utils/audit');
 
 // Get all cashflow entries
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', auth, async (req, res) => {
   try {
     const { type, category, startDate, endDate, page = 1, limit = 50 } = req.query;
 
@@ -51,7 +52,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get cashflow by ID
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', auth, async (req, res) => {
   try {
     const cashflow = await Cashflow.findById(req.params.id)
       .populate('createdBy', 'username')
@@ -78,7 +79,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 });
 
 // Create new cashflow entry
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', auth, async (req, res) => {
   try {
     const { type, category, amount, description, date, reference, paymentMethod } = req.body;
 
@@ -136,7 +137,7 @@ router.post('/', authenticateToken, async (req, res) => {
 });
 
 // Update cashflow entry
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
   try {
     const { type, category, amount, description, date, reference, paymentMethod } = req.body;
 
@@ -197,7 +198,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // Delete cashflow entry
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
   try {
     const deletedCashflow = await Cashflow.findByIdAndDelete(req.params.id);
 
@@ -230,7 +231,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 });
 
 // Get cashflow summary
-router.get('/summary/overview', authenticateToken, async (req, res) => {
+router.get('/summary/overview', auth, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 

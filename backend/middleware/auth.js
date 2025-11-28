@@ -53,5 +53,32 @@ const auth = function (req, res, next) {
   }
 };
 
+// Middleware to check if user has specific role(s)
+const requireRole = (roles) => {
+  return (req, res, next) => {
+    if (!req.user || !req.user.role) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. Role not specified.'
+      });
+    }
+
+    const userRoles = Array.isArray(req.user.role) ? req.user.role : [req.user.role];
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+
+    const hasRole = allowedRoles.some(role => userRoles.includes(role));
+
+    if (!hasRole) {
+      return res.status(403).json({
+        success: false,
+        error: `Access denied. Required role(s): ${allowedRoles.join(', ')}`
+      });
+    }
+
+    next();
+  };
+};
+
 module.exports = auth;
 module.exports.requireAdmin = requireAdmin;
+module.exports.requireRole = requireRole;

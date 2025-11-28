@@ -31,12 +31,34 @@ This backend provides a secure REST API for managing sensitive financial and per
 
 ## Quick Start
 
-### Prerequisites
+Choose your deployment method:
+
+### 🚀 Railway Deployment (Recommended for Production)
+
+Railway provides easy deployment with built-in SSL, automatic scaling, and environment management.
+
+**Quick Deploy:**
+```bash
+# Make deployment script executable and run
+chmod +x deploy-railway.sh
+./deploy-railway.sh
+```
+
+**Manual Deploy:**
+1. Follow the detailed guide: [`RAILWAY_DEPLOYMENT.md`](RAILWAY_DEPLOYMENT.md)
+2. Use the verification script after deployment:
+```bash
+./verify-deployment.sh <your-railway-app-url>
+```
+
+### 💻 Local Development
+
+**Prerequisites:**
 - Node.js 16+
-- MongoDB
+- MongoDB (local or Atlas)
 - npm or yarn
 
-### Installation
+**Installation:**
 
 1. **Clone and install dependencies:**
 ```bash
@@ -136,19 +158,39 @@ backend/
 │   └── audit.js         # Logging and audit functions
 ├── models/
 │   ├── Product.js       # Product model with encryption
-│   └── User.js          # User model
+│   ├── User.js          # User model
+│   └── TelegramUser.js  # Telegram bot user model
 ├── routes/
 │   ├── auth.js          # Authentication routes
-│   └── products.js      # Product CRUD routes
+│   ├── products.js      # Product CRUD routes
+│   ├── cashflow.js      # Cash flow management
+│   ├── customers.js     # Customer management
+│   ├── orders.js        # Order management
+│   ├── fieldStaff.js    # Field staff management
+│   ├── users.js         # User management
+│   └── telegram.js      # Telegram bot routes
 ├── middleware/
 │   └── auth.js          # JWT authentication middleware
 ├── scripts/
-│   └── backup.js        # Database backup utilities
+│   ├── backup.js        # Database backup utilities
+│   ├── seedAdmin.js     # Admin user seeding
+│   └── checkExpiredProducts.js # Product expiry checking
+├── controllers/
+│   └── telegramController.js # Telegram bot logic
+├── config/
+│   └── db.js            # Database connection
 ├── uploads/             # File upload directory
 ├── logs/               # Application logs
 ├── backups/            # Database backups
 ├── .env                # Environment variables (gitignored)
 ├── .env.example        # Environment template
+├── .env.production     # Production environment template
+├── .gitignore          # Git ignore rules
+├── Procfile            # Railway deployment configuration
+├── railway.json        # Railway deployment settings
+├── RAILWAY_DEPLOYMENT.md # Complete deployment guide
+├── deploy-railway.sh   # Quick deployment script
+├── verify-deployment.sh # Deployment verification script
 ├── server.js           # Main application file
 └── package.json
 ```
