@@ -390,8 +390,8 @@ router.get('/summary/debit-credit', auth, async (req, res) => {
     res.json({
       success: true,
       data: {
-        totalDebit,
-        totalCredit,
+        totalDebit: debitTotal,
+        totalCredit: creditTotal,
         balance,
         isBalanced: balance === 0,
         period: { startDate, endDate }
