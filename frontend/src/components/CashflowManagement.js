@@ -109,21 +109,23 @@ const CashflowManagement = () => {
       const amount = parseFloat(formData.amount) || 0;
 
       if (formData.type === 'income') {
+        // Pemasukan: Kas bertambah → Debit
         // Only auto-fill if debit/credit haven't been manually set or are still default
         if (formData.debit === '' || formData.debit === 0) {
           setFormData(prev => ({
             ...prev,
-            debit: 0,
-            credit: amount
+            debit: amount,
+            credit: 0
           }));
         }
       } else if (formData.type === 'expense') {
+        // Pengeluaran: Kas berkurang → Credit
         // Only auto-fill if debit/credit haven't been manually set or are still default
         if (formData.credit === '' || formData.credit === 0) {
           setFormData(prev => ({
             ...prev,
-            debit: amount,
-            credit: 0
+            debit: 0,
+            credit: amount
           }));
         }
       }
@@ -203,11 +205,13 @@ const CashflowManagement = () => {
       const type = name === 'type' ? value : updatedFormData.type;
 
       if (type === 'income' && amount > 0) {
-        updatedFormData.debit = 0;
-        updatedFormData.credit = amount;
-      } else if (type === 'expense' && amount > 0) {
+        // Pemasukan: Kas bertambah → Debit
         updatedFormData.debit = amount;
         updatedFormData.credit = 0;
+      } else if (type === 'expense' && amount > 0) {
+        // Pengeluaran: Kas berkurang → Credit
+        updatedFormData.debit = 0;
+        updatedFormData.credit = amount;
       }
     }
 
@@ -303,7 +307,7 @@ const CashflowManagement = () => {
             component="h1"
             sx={{ textAlign: { xs: 'center', sm: 'left' } }}
           >
-            Cashflow Management
+            Manajemen Arus Kas
           </Typography>
         </Box>
 
@@ -400,7 +404,7 @@ const CashflowManagement = () => {
               width: { xs: '100%', sm: 'auto' }
             }}
           >
-            Add Transaction
+            Tambah Transaksi
           </Button>
         </Box>
 
@@ -413,13 +417,13 @@ const CashflowManagement = () => {
             <Table>
               <TableHead sx={{ bgcolor: 'grey.100' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Category</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Amount</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Date</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Payment Method</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Jenis</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Kategori</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Jumlah</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Deskripsi</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Tanggal</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Metode Pembayaran</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Aksi</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -428,7 +432,7 @@ const CashflowManagement = () => {
                     <TableCell>
                       <Chip
                         icon={getTypeIcon(cashflow.type)}
-                        label={cashflow.type === 'income' ? 'Income' : 'Expense'}
+                        label={cashflow.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                         color={getTypeColor(cashflow.type)}
                         size="small"
                         variant="outlined"
@@ -466,6 +470,77 @@ const CashflowManagement = () => {
           )}
         </Card>
 
+        {/* Journal Table - Menampilkan Debit/Credit */}
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" sx={{ mb: 2, fontWeight: 'bold' }}>
+            📖 Buku Journal - Pencatatan Debit/Kredit
+          </Typography>
+          <Card sx={{
+            borderRadius: 3,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+            overflow: 'hidden'
+          }}>
+            <TableContainer>
+              <Table>
+                <TableHead sx={{ bgcolor: 'primary.main' }}>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Tanggal</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Deskripsi</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'white' }}>Referensi</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'right' }}>Debit</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'right' }}>Kredit</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', color: 'white', textAlign: 'right' }}>Saldo</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {cashflows.map((cashflow, index) => {
+                    // Hitung running balance
+                    const previousEntries = cashflows.slice(0, index);
+                    const runningBalance = previousEntries.reduce((sum, entry) => {
+                      return sum + (entry.debit || 0) - (entry.credit || 0);
+                    }, 0) + (cashflow.debit || 0) - (cashflow.credit || 0);
+
+                    return (
+                      <TableRow key={cashflow._id} hover>
+                        <TableCell>{new Date(cashflow.date).toLocaleDateString('id-ID')}</TableCell>
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                              {cashflow.category}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {cashflow.description}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>{cashflow.reference || '-'}</TableCell>
+                        <TableCell sx={{ textAlign: 'right', fontWeight: 'bold', color: 'success.main' }}>
+                          {cashflow.debit ? `Rp ${cashflow.debit.toLocaleString('id-ID')}` : '-'}
+                        </TableCell>
+                        <TableCell sx={{ textAlign: 'right', fontWeight: 'bold', color: 'error.main' }}>
+                          {cashflow.credit ? `Rp ${cashflow.credit.toLocaleString('id-ID')}` : '-'}
+                        </TableCell>
+                        <TableCell sx={{ textAlign: 'right', fontWeight: 'bold' }}>
+                          <Typography color={runningBalance >= 0 ? 'success.main' : 'error.main'}>
+                            Rp {Math.abs(runningBalance).toLocaleString('id-ID')}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {cashflows.length === 0 && !loading && (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="body1" color="text.secondary">
+                  Belum ada data transaksi untuk ditampilkan di journal.
+                </Typography>
+              </Box>
+            )}
+          </Card>
+        </Box>
+
         {loading && <CircularProgress sx={{ mt: 2 }} />}
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
@@ -478,7 +553,7 @@ const CashflowManagement = () => {
           sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}
         >
           <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
-            {editingCashflow ? 'Edit Transaction' : 'Add New Transaction'}
+            {editingCashflow ? 'Edit Transaksi' : 'Tambah Transaksi Baru'}
           </DialogTitle>
           <form onSubmit={handleSubmit}>
             <DialogContent>
@@ -509,7 +584,7 @@ const CashflowManagement = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <FormControl fullWidth margin="normal">
-                    <InputLabel id="type-label">Type</InputLabel>
+                    <InputLabel id="type-label">Jenis Transaksi</InputLabel>
                     <Select
                       labelId="type-label"
                       name="type"
@@ -523,8 +598,8 @@ const CashflowManagement = () => {
                         '&.Mui-focused': { backgroundColor: 'white' }
                       }}
                     >
-                      <MenuItem value="income">Income (Auto: Debit=0, Credit=Amount)</MenuItem>
-                      <MenuItem value="expense">Expense (Auto: Debit=Amount, Credit=0)</MenuItem>
+                      <MenuItem value="income">Pemasukan (Otomatis: Debit=Jumlah, Kredit=0)</MenuItem>
+                      <MenuItem value="expense">Pengeluaran (Otomatis: Debit=0, Kredit=Jumlah)</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -567,7 +642,7 @@ const CashflowManagement = () => {
                     onChange={handleFormChange}
                     margin="normal"
                     required
-                    helperText="Changing amount will auto-fill debit/credit based on type"
+                    helperText="Mengubah jumlah akan mengisi debit/kredit secara otomatis berdasarkan jenis"
                     InputProps={{
                       startAdornment: 'Rp ',
                     }}
