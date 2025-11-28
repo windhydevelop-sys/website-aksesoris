@@ -3,7 +3,7 @@ const router = express.Router();
 const Cashflow = require('../models/Cashflow');
 const auth = require('../middleware/auth');
 const { requireRole } = auth;
-const { logActivity } = require('../utils/audit');
+const { auditLog } = require('../utils/audit');
 
 // Get all cashflow entries
 router.get('/', auth, async (req, res) => {
@@ -81,9 +81,6 @@ router.get('/:id', auth, async (req, res) => {
 // Create new cashflow entry
 router.post('/', auth, async (req, res) => {
   try {
-    console.log('=== CASHFLOW CREATE REQUEST ===');
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
-    console.log('User from auth:', JSON.stringify(req.user, null, 2));
 
     const {
       type, category, amount, description, date, reference, paymentMethod,
@@ -91,9 +88,7 @@ router.post('/', auth, async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    console.log('Validating required fields...');
     if (!type || !category || !amount) {
-      console.log('Validation failed: missing required fields', { type, category, amount });
       return res.status(400).json({
         success: false,
         error: 'Type, category, and amount are required'
@@ -101,13 +96,11 @@ router.post('/', auth, async (req, res) => {
     }
 
     if (amount <= 0) {
-      console.log('Validation failed: amount <= 0', { amount });
       return res.status(400).json({
         success: false,
         error: 'Amount must be greater than 0'
       });
     }
-    console.log('Validation passed');
 
     // Enhanced journal entry data
     const newCashflowData = {
@@ -159,18 +152,17 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
-    console.log('Creating Cashflow document with data:', JSON.stringify(newCashflowData, null, 2));
     const newCashflow = new Cashflow(newCashflowData);
-    console.log('Cashflow model created, attempting to save...');
     const savedCashflow = await newCashflow.save();
-    console.log('Cashflow saved successfully:', savedCashflow._id);
 
     // Log activity
-    await logActivity(
-      req.user.id,
+    await auditLog(
       'CREATE_CASHFLOW',
-      `Created ${type} entry: ${category} - Rp ${amount.toLocaleString('id-ID')}`,
-      { cashflowId: savedCashflow._id }
+      req.user.id,
+      'cashflow',
+      savedCashflow._id,
+      { type, category, amount },
+      req
     );
 
     const populatedCashflow = await Cashflow.findById(savedCashflow._id)
@@ -182,17 +174,10 @@ router.post('/', auth, async (req, res) => {
       message: 'Cashflow entry created successfully'
     });
   } catch (error) {
-    console.error('=== ERROR CREATING CASHFLOW ENTRY ===');
-    console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    console.error('Error name:', error.name);
-    console.error('Full error object:', JSON.stringify(error, null, 2));
-
+    console.error('Error creating cashflow entry:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to create cashflow entry',
-      details: error.message,
-      errorType: error.name
+      error: 'Failed to create cashflow entry'
     });
   }
 });
@@ -274,11 +259,13 @@ router.put('/:id', auth, async (req, res) => {
     }
 
     // Log activity
-    await logActivity(
-      req.user.id,
+    await auditLog(
       'UPDATE_CASHFLOW',
-      `Updated ${updatedCashflow.type} entry: ${updatedCashflow.category}`,
-      { cashflowId: updatedCashflow._id }
+      req.user.id,
+      'cashflow',
+      updatedCashflow._id,
+      { type: updatedCashflow.type, category: updatedCashflow.category },
+      req
     );
 
     res.json({
@@ -308,11 +295,13 @@ router.delete('/:id', auth, async (req, res) => {
     }
 
     // Log activity
-    await logActivity(
-      req.user.id,
+    await auditLog(
       'DELETE_CASHFLOW',
-      `Deleted ${deletedCashflow.type} entry: ${deletedCashflow.category}`,
-      { cashflowId: deletedCashflow._id }
+      req.user.id,
+      'cashflow',
+      deletedCashflow._id,
+      { type: deletedCashflow.type, category: deletedCashflow.category },
+      req
     );
 
     res.json({
