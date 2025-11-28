@@ -103,6 +103,33 @@ const CashflowManagement = () => {
     fetchSummary();
   }, [fetchCashflows, fetchSummary]);
 
+  // Auto-fill debit/credit when type or amount changes
+  useEffect(() => {
+    if (formData.type && formData.amount > 0) {
+      const amount = parseFloat(formData.amount) || 0;
+
+      if (formData.type === 'income') {
+        // Only auto-fill if debit/credit haven't been manually set or are still default
+        if (formData.debit === '' || formData.debit === 0) {
+          setFormData(prev => ({
+            ...prev,
+            debit: 0,
+            credit: amount
+          }));
+        }
+      } else if (formData.type === 'expense') {
+        // Only auto-fill if debit/credit haven't been manually set or are still default
+        if (formData.credit === '' || formData.credit === 0) {
+          setFormData(prev => ({
+            ...prev,
+            debit: amount,
+            credit: 0
+          }));
+        }
+      }
+    }
+  }, [formData.type, formData.amount]);
+
   const handleOpenDialog = (cashflow = null) => {
     if (cashflow) {
       setEditingCashflow(cashflow);
@@ -165,10 +192,26 @@ const CashflowManagement = () => {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
+    const updatedFormData = {
       ...formData,
       [name]: value
-    });
+    };
+
+    // Auto-fill debit/credit based on type and amount
+    if (name === 'type' || name === 'amount') {
+      const amount = name === 'amount' ? parseFloat(value) || 0 : parseFloat(updatedFormData.amount) || 0;
+      const type = name === 'type' ? value : updatedFormData.type;
+
+      if (type === 'income' && amount > 0) {
+        updatedFormData.debit = 0;
+        updatedFormData.credit = amount;
+      } else if (type === 'expense' && amount > 0) {
+        updatedFormData.debit = amount;
+        updatedFormData.credit = 0;
+      }
+    }
+
+    setFormData(updatedFormData);
   };
 
   const handleSubmit = async (e) => {
@@ -480,8 +523,8 @@ const CashflowManagement = () => {
                         '&.Mui-focused': { backgroundColor: 'white' }
                       }}
                     >
-                      <MenuItem value="income">Income</MenuItem>
-                      <MenuItem value="expense">Expense</MenuItem>
+                      <MenuItem value="income">Income (Auto: Debit=0, Credit=Amount)</MenuItem>
+                      <MenuItem value="expense">Expense (Auto: Debit=Amount, Credit=0)</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -524,6 +567,7 @@ const CashflowManagement = () => {
                     onChange={handleFormChange}
                     margin="normal"
                     required
+                    helperText="Changing amount will auto-fill debit/credit based on type"
                     InputProps={{
                       startAdornment: 'Rp ',
                     }}
