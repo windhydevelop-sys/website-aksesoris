@@ -1,5 +1,6 @@
 const express = require('express');
 const FieldStaff = require('../models/FieldStaff');
+const { requireRole } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
@@ -60,7 +61,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/field-staff/:id - Get field staff by ID
-router.get('/:id', requireRole(['admin']), async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const fieldStaff = await FieldStaff.findById(req.params.id);
 
@@ -130,7 +131,7 @@ router.post('/', validateFieldStaff, async (req, res) => {
 });
 
 // PUT /api/field-staff/:id - Update field staff
-router.put('/:id', requireRole(['admin']), validateFieldStaff, async (req, res) => {
+router.put('/:id', validateFieldStaff, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -183,7 +184,7 @@ router.put('/:id', requireRole(['admin']), validateFieldStaff, async (req, res) 
 });
 
 // DELETE /api/field-staff/:id - Delete field staff
-router.delete('/:id', requireRole(['admin']), async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const fieldStaff = await FieldStaff.findByIdAndDelete(req.params.id);
 
