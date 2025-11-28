@@ -1,6 +1,6 @@
 const express = require('express');
 const FieldStaff = require('../models/FieldStaff');
-const { requireAdmin } = require('../middleware/auth');
+const { requireRole } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 
 const router = express.Router();
@@ -28,7 +28,7 @@ const validateFieldStaff = [
 ];
 
 // GET /api/field-staff - Get all field staff
-router.get('/', requireAdmin, async (req, res) => {
+router.get('/', requireRole(['admin']), async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
@@ -61,7 +61,7 @@ router.get('/', requireAdmin, async (req, res) => {
 });
 
 // GET /api/field-staff/:id - Get field staff by ID
-router.get('/:id', requireAdmin, async (req, res) => {
+router.get('/:id', requireRole(['admin']), async (req, res) => {
   try {
     const fieldStaff = await FieldStaff.findById(req.params.id);
 
@@ -86,7 +86,7 @@ router.get('/:id', requireAdmin, async (req, res) => {
 });
 
 // POST /api/field-staff - Create new field staff
-router.post('/', requireAdmin, validateFieldStaff, async (req, res) => {
+router.post('/', requireRole(['admin']), validateFieldStaff, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -131,7 +131,7 @@ router.post('/', requireAdmin, validateFieldStaff, async (req, res) => {
 });
 
 // PUT /api/field-staff/:id - Update field staff
-router.put('/:id', requireAdmin, validateFieldStaff, async (req, res) => {
+router.put('/:id', requireRole(['admin']), validateFieldStaff, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -184,7 +184,7 @@ router.put('/:id', requireAdmin, validateFieldStaff, async (req, res) => {
 });
 
 // DELETE /api/field-staff/:id - Delete field staff
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireRole(['admin']), async (req, res) => {
   try {
     const fieldStaff = await FieldStaff.findByIdAndDelete(req.params.id);
 
