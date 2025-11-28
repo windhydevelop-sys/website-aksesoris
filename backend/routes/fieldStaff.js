@@ -27,8 +27,8 @@ const validateFieldStaff = [
     .withMessage('No Handphone must be a valid Indonesian mobile number')
 ];
 
-// GET /api/field-staff - Get all field staff
-router.get('/', requireRole(['admin']), async (req, res) => {
+// GET /api/field-staff - Get all field staff (temporarily allow all authenticated users for testing)
+router.get('/', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
