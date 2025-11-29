@@ -235,6 +235,7 @@ const Dashboard = ({ setToken }) => {
   const [customers, setCustomers] = useState([]);
   const [fieldStaff, setFieldStaff] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [availableHandphones, setAvailableHandphones] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -298,13 +299,26 @@ const Dashboard = ({ setToken }) => {
     }
   }, []);
 
+  const fetchAvailableHandphones = useCallback(async () => {
+    try {
+      const res = await axios.get('/api/handphones');
+      // Filter only available handphones
+      const available = res.data.data.filter(h => h.status === 'available') || [];
+      setAvailableHandphones(available);
+    } catch (error) {
+      console.error('Error fetching available handphones:', error);
+      setAvailableHandphones([]);
+    }
+  }, []);
+
 
   useEffect(() => {
     fetchProducts();
     fetchCustomers();
     fetchFieldStaff();
     fetchOrders();
-  }, [fetchProducts, fetchCustomers, fetchFieldStaff, fetchOrders]);
+    fetchAvailableHandphones();
+  }, [fetchProducts, fetchCustomers, fetchFieldStaff, fetchOrders, fetchAvailableHandphones]);
 
 
 
@@ -861,10 +875,42 @@ const Dashboard = ({ setToken }) => {
                   onInputChange={(event, newInputValue) => { setForm({ ...form, fieldStaff: newInputValue || '' }); }}
                   renderInput={(params) => <TextField {...params} label="Orang Lapangan" name="fieldStaff" placeholder="Pilih orang lapangan dari daftar atau ketik baru" margin="normal" />}
                 />
-                {/* Handphone assignment is now automatic based on field staff selection */}
-                <Alert severity="info" sx={{ mt: 2, mb: 1 }}>
-                  <strong>Handphone Assignment:</strong> Handphone akan otomatis di-assign berdasarkan field staff yang dipilih saat menyimpan produk.
-                </Alert>
+                {/* Manual handphone selection */}
+                <Autocomplete
+                  fullWidth
+                  value={availableHandphones.find(h => h._id === form.handphoneId) || null}
+                  options={availableHandphones}
+                  getOptionLabel={(option) => option ? `${option.merek} ${option.tipe} - IMEI: ${option.imei}` : ''}
+                  onChange={(event, newValue) => {
+                    setForm({ ...form, handphoneId: newValue ? newValue._id : '' });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Pilih Handphone"
+                      name="handphoneId"
+                      placeholder="Pilih handphone yang tersedia untuk di-assign ke produk ini"
+                      margin="normal"
+                      required
+                      helperText="Handphone yang dipilih akan di-assign ke produk ini"
+                    />
+                  )}
+                  sx={{
+                    mt: 2,
+                    mb: 1,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      backgroundColor: 'rgba(255,255,255,0.9)',
+                      '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                      '&.Mui-focused': { backgroundColor: 'white' }
+                    }
+                  }}
+                />
+                {availableHandphones.length === 0 && (
+                  <Alert severity="warning" sx={{ mt: 1, mb: 1 }}>
+                    <strong>Tidak ada handphone tersedia!</strong> Silakan tambahkan handphone baru di menu "Detail Handphone" terlebih dahulu.
+                  </Alert>
+                )}
                 <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Grade" name="grade" placeholder="Bebas, contoh: A, VIP, PREMIUM, GOLD" value={form.grade} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="KCP" name="kcp" placeholder="Bebas, contoh: KCP001 atau CABANG-JAKARTA" value={form.kcp} onChange={handleChange} margin="normal" required />

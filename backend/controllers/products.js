@@ -99,20 +99,66 @@ const createProduct = async (req, res) => {
       data.complaint = req.body.complaint;
     }
 
-    // Auto-assign handphone based on fieldStaff
+    // Handle handphone assignment - manual selection or auto-assign
     let handphoneAssignment = null;
-    try {
-      handphoneAssignment = await autoAssignHandphone(data, req.userId);
-      data.handphoneId = handphoneAssignment.handphoneId;
-      data.handphone = handphoneAssignment.handphone;
-      data.imeiHandphone = handphoneAssignment.imei;
-      data.handphoneAssignmentDate = handphoneAssignment.assignmentDate;
-    } catch (assignmentError) {
-      return res.status(400).json({
-        success: false,
-        error: assignmentError.message
-      });
+    if (data.handphoneId) {
+      // Manual handphone selection
+      try {
+        const handphone = await Handphone.findById(data.handphoneId);
+        if (!handphone) {
+          return res.status(400).json({
+            success: false,
+            error: 'Handphone tidak ditemukan'
+          });
+        }
+
+        if (handphone.status !== 'available') {
+          return res.status(400).json({
+            success: false,
+            error: 'Handphone tidak tersedia untuk di-assign'
+          });
+        }
+
+        // Update handphone status and assignment
+        handphone.status = 'in_use';
+        handphone.currentProduct = null; // Will be set after product creation
+        handphone.assignmentHistory.push({
+          product: null, // Will be set after product creation
+          assignedAt: new Date(),
+          assignedBy: req.userId
+        });
+        await handphone.save();
+
+        handphoneAssignment = {
+          handphoneId: handphone._id,
+          handphone: `${handphone.merek} ${handphone.tipe}`,
+          imei: handphone.imei,
+          assignmentDate: new Date()
+        };
+
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          error: 'Gagal assign handphone: ' + error.message
+        });
+      }
+    } else {
+      // Auto-assign handphone based on fieldStaff (fallback)
+      try {
+        handphoneAssignment = await autoAssignHandphone(data, req.userId);
+      } catch (assignmentError) {
+        return res.status(400).json({
+          success: false,
+          error: assignmentError.message
+        });
+      }
     }
+
+    // Set handphone data
+    data.handphoneId = handphoneAssignment.handphoneId;
+    data.handphone = handphoneAssignment.handphone;
+    data.imeiHandphone = handphoneAssignment.imei;
+    data.handphoneAssignmentDate = handphoneAssignment.assignmentDate;
 
     // Add audit fields
     data.createdBy = req.userId;
@@ -124,7 +170,8 @@ const createProduct = async (req, res) => {
     // Update handphone with current product reference
     if (handphoneAssignment) {
       await Handphone.findByIdAndUpdate(handphoneAssignment.handphoneId, {
-        currentProduct: product._id
+        currentProduct: product._id,
+        'assignmentHistory.$[].product': product._id // Update latest assignment history
       });
     }
 
