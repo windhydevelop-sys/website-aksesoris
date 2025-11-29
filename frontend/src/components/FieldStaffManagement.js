@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Card } from '@mui/material';
-import { Edit, Delete, PersonAdd } from '@mui/icons-material';
+import { Container, Typography, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Card, Chip, Select, MenuItem, FormControl, InputLabel, Divider, List, ListItem, ListItemText, ListItemSecondaryAction } from '@mui/material';
+import { Edit, Delete, PersonAdd, PhoneAndroid, Assignment, AssignmentTurnedIn } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -22,6 +22,13 @@ const FieldStaffManagement = () => {
     noHandphone: ''
   });
 
+  // Handphone assignment states
+  const [assignedHandphones, setAssignedHandphones] = useState([]);
+  const [availableHandphones, setAvailableHandphones] = useState([]);
+  const [openAssignDialog, setOpenAssignDialog] = useState(false);
+  const [selectedStaffForAssign, setSelectedStaffForAssign] = useState(null);
+  const [selectedHandphoneId, setSelectedHandphoneId] = useState('');
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
@@ -39,6 +46,26 @@ const FieldStaffManagement = () => {
       showError('Failed to fetch field staff');
     } finally {
       setLoading(false);
+    }
+  }, [showError]);
+
+  const fetchAvailableHandphones = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/field-staff/available-handphones');
+      setAvailableHandphones(response.data.data);
+    } catch (err) {
+      console.error('Error fetching available handphones:', err);
+      showError('Failed to fetch available handphones');
+    }
+  }, [showError]);
+
+  const fetchAssignedHandphones = useCallback(async (staffId) => {
+    try {
+      const response = await axios.get(`/api/field-staff/${staffId}/handphones`);
+      setAssignedHandphones(response.data.data);
+    } catch (err) {
+      console.error('Error fetching assigned handphones:', err);
+      showError('Failed to fetch assigned handphones');
     }
   }, [showError]);
 
@@ -113,6 +140,50 @@ const FieldStaffManagement = () => {
     }
   };
 
+  const handleOpenAssignDialog = (staff) => {
+    setSelectedStaffForAssign(staff);
+    setSelectedHandphoneId('');
+    fetchAvailableHandphones();
+    setOpenAssignDialog(true);
+  };
+
+  const handleCloseAssignDialog = () => {
+    setOpenAssignDialog(false);
+    setSelectedStaffForAssign(null);
+    setSelectedHandphoneId('');
+  };
+
+  const handleAssignHandphone = async () => {
+    if (!selectedHandphoneId || !selectedStaffForAssign) return;
+
+    try {
+      await axios.post(`/api/field-staff/${selectedStaffForAssign._id}/assign-handphone`, {
+        handphoneId: selectedHandphoneId
+      });
+      showSuccess('Handphone assigned successfully');
+      fetchFieldStaff();
+      fetchAvailableHandphones();
+      handleCloseAssignDialog();
+    } catch (err) {
+      console.error('Error assigning handphone:', err);
+      showError(err.response?.data?.error || 'Failed to assign handphone');
+    }
+  };
+
+  const handleUnassignHandphone = async (staffId, handphoneId) => {
+    if (window.confirm('Are you sure you want to unassign this handphone?')) {
+      try {
+        await axios.delete(`/api/field-staff/${staffId}/unassign-handphone/${handphoneId}`);
+        showSuccess('Handphone unassigned successfully');
+        fetchFieldStaff();
+        fetchAvailableHandphones();
+      } catch (err) {
+        console.error('Error unassigning handphone:', err);
+        showError('Failed to unassign handphone');
+      }
+    }
+  };
+
   return (
     <SidebarLayout onLogout={handleLogout}>
       <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
@@ -166,6 +237,7 @@ const FieldStaffManagement = () => {
                   <TableCell sx={{ fontWeight: 'bold' }}>Kode Orlap</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Nama Orlap</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>No. Handphone</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Assigned Handphones</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Created</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                 </TableRow>
@@ -176,8 +248,31 @@ const FieldStaffManagement = () => {
                     <TableCell>{staff.kodeOrlap}</TableCell>
                     <TableCell>{staff.namaOrlap}</TableCell>
                     <TableCell>{staff.noHandphone}</TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {staff.handphones && staff.handphones.length > 0 ? (
+                          staff.handphones.map((handphone) => (
+                            <Chip
+                              key={handphone._id}
+                              label={`${handphone.merek} ${handphone.tipe}`}
+                              size="small"
+                              onDelete={() => handleUnassignHandphone(staff._id, handphone._id)}
+                              color="primary"
+                              variant="outlined"
+                            />
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No handphones assigned
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
                     <TableCell>{new Date(staff.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
+                      <IconButton onClick={() => handleOpenAssignDialog(staff)} color="secondary" size="small" title="Assign Handphone">
+                        <PhoneAndroid />
+                      </IconButton>
                       <IconButton onClick={() => handleOpenDialog(staff)} color="primary" size="small">
                         <Edit />
                       </IconButton>
@@ -301,6 +396,56 @@ const FieldStaffManagement = () => {
               </Button>
             </DialogActions>
           </form>
+        </Dialog>
+
+        {/* Assign Handphone Dialog */}
+        <Dialog
+          open={openAssignDialog}
+          onClose={handleCloseAssignDialog}
+          maxWidth="sm"
+          fullWidth
+          sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}
+        >
+          <DialogTitle sx={{ bgcolor: 'secondary.main', color: 'white', fontWeight: 'bold' }}>
+            <PhoneAndroid sx={{ mr: 1, verticalAlign: 'middle' }} />
+            Assign Handphone to {selectedStaffForAssign?.namaOrlap}
+          </DialogTitle>
+          <DialogContent sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Select a handphone to assign to this field staff.
+            </Typography>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel>Available Handphones</InputLabel>
+              <Select
+                value={selectedHandphoneId}
+                onChange={(e) => setSelectedHandphoneId(e.target.value)}
+                label="Available Handphones"
+              >
+                {availableHandphones.map((handphone) => (
+                  <MenuItem key={handphone._id} value={handphone._id}>
+                    {handphone.merek} {handphone.tipe} {handphone.imei ? `(IMEI: ${handphone.imei})` : ''}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            {availableHandphones.length === 0 && (
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
+                No available handphones to assign
+              </Typography>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseAssignDialog}>Cancel</Button>
+            <Button
+              onClick={handleAssignHandphone}
+              variant="contained"
+              color="secondary"
+              disabled={!selectedHandphoneId}
+              startIcon={<AssignmentTurnedIn />}
+            >
+              Assign Handphone
+            </Button>
+          </DialogActions>
         </Dialog>
       </Container>
     </SidebarLayout>

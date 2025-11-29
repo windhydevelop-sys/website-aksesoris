@@ -1,5 +1,6 @@
 const express = require('express');
 const FieldStaff = require('../models/FieldStaff');
+const Handphone = require('../models/Handphone');
 const { requireRole } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 
@@ -27,6 +28,8 @@ const validateFieldStaff = [
     .withMessage('No Handphone must be a valid Indonesian mobile number')
 ];
 
+
+
 // GET /api/field-staff - Get all field staff (temporarily allow all authenticated users for testing)
 router.get('/', async (req, res) => {
   try {
@@ -35,6 +38,7 @@ router.get('/', async (req, res) => {
     const skip = (page - 1) * limit;
 
     const fieldStaff = await FieldStaff.find({})
+      .populate('handphones')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -56,6 +60,164 @@ router.get('/', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch field staff'
+    });
+  }
+});
+
+// GET /api/field-staff/:id/handphones - Get handphones assigned to field staff
+router.get('/:id/handphones', async (req, res) => {
+  try {
+    const fieldStaff = await FieldStaff.findById(req.params.id).populate('handphones');
+
+    if (!fieldStaff) {
+      return res.status(404).json({
+        success: false,
+        error: 'Field staff not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: fieldStaff.handphones
+    });
+  } catch (error) {
+    console.error('Error fetching field staff handphones:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch field staff handphones'
+    });
+  }
+});
+
+// POST /api/field-staff/:id/assign-handphone - Assign handphone to field staff
+router.post('/:id/assign-handphone', [
+  body('handphoneId')
+    .isMongoId()
+    .withMessage('Valid handphone ID is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation failed',
+        details: errors.array()
+      });
+    }
+
+    const { handphoneId } = req.body;
+    const fieldStaffId = req.params.id;
+
+    // Check if field staff exists
+    const fieldStaff = await FieldStaff.findById(fieldStaffId);
+    if (!fieldStaff) {
+      return res.status(404).json({
+        success: false,
+        error: 'Field staff not found'
+      });
+    }
+
+    // Check if handphone exists and is available
+    const handphone = await Handphone.findById(handphoneId);
+    if (!handphone) {
+      return res.status(404).json({
+        success: false,
+        error: 'Handphone not found'
+      });
+    }
+
+    if (handphone.assignedTo && handphone.assignedTo.toString() !== fieldStaffId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Handphone is already assigned to another field staff'
+      });
+    }
+
+    // Assign handphone to field staff
+    if (!handphone.assignedTo) {
+      handphone.assignedTo = fieldStaffId;
+      handphone.status = 'assigned';
+      await handphone.save();
+    }
+
+    // Add handphone to field staff's handphones array if not already present
+    if (!fieldStaff.handphones.includes(handphoneId)) {
+      fieldStaff.handphones.push(handphoneId);
+      await fieldStaff.save();
+    }
+
+    // Populate handphones for response
+    await fieldStaff.populate('handphones');
+
+    res.json({
+      success: true,
+      data: fieldStaff,
+      message: 'Handphone assigned successfully'
+    });
+  } catch (error) {
+    console.error('Error assigning handphone:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to assign handphone'
+    });
+  }
+});
+
+// DELETE /api/field-staff/:id/unassign-handphone/:handphoneId - Unassign handphone from field staff
+router.delete('/:id/unassign-handphone/:handphoneId', async (req, res) => {
+  try {
+    const { id: fieldStaffId, handphoneId } = req.params;
+
+    // Check if field staff exists
+    const fieldStaff = await FieldStaff.findById(fieldStaffId);
+    if (!fieldStaff) {
+      return res.status(404).json({
+        success: false,
+        error: 'Field staff not found'
+      });
+    }
+
+    // Check if handphone exists
+    const handphone = await Handphone.findById(handphoneId);
+    if (!handphone) {
+      return res.status(404).json({
+        success: false,
+        error: 'Handphone not found'
+      });
+    }
+
+    // Check if handphone is assigned to this field staff
+    if (!handphone.assignedTo || handphone.assignedTo.toString() !== fieldStaffId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Handphone is not assigned to this field staff'
+      });
+    }
+
+    // Unassign handphone
+    handphone.assignedTo = null;
+    handphone.status = 'available';
+    await handphone.save();
+
+    // Remove handphone from field staff's handphones array
+    fieldStaff.handphones = fieldStaff.handphones.filter(
+      id => id.toString() !== handphoneId
+    );
+    await fieldStaff.save();
+
+    // Populate handphones for response
+    await fieldStaff.populate('handphones');
+
+    res.json({
+      success: true,
+      data: fieldStaff,
+      message: 'Handphone unassigned successfully'
+    });
+  } catch (error) {
+    console.error('Error unassigning handphone:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to unassign handphone'
     });
   }
 });
@@ -204,6 +366,31 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to delete field staff'
+    });
+  }
+});
+
+
+// GET /api/field-staff/available-handphones - Get available handphones for assignment
+router.get('/available-handphones', async (req, res) => {
+  try {
+    const availableHandphones = await Handphone.find({
+      $or: [
+        { assignedTo: null },
+        { assignedTo: { $exists: false } }
+      ],
+      status: { $in: ['available', 'assigned'] }
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: availableHandphones
+    });
+  } catch (error) {
+    console.error('Error fetching available handphones:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch available handphones'
     });
   }
 });
