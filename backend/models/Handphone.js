@@ -6,7 +6,7 @@ const handphoneSchema = new mongoose.Schema({
   imei: { type: String, unique: true, sparse: true }, // optional but unique if provided
   spesifikasi: { type: String, required: true },
   kepemilikan: { type: String, required: true },
-  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'FieldStaff', required: true },
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'FieldStaff' }, // optional
   status: { type: String, enum: ['available', 'assigned', 'in_use', 'maintenance'], default: 'available' },
   currentProduct: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }, // optional
   assignmentHistory: [{

@@ -73,10 +73,10 @@ const createHandphone = async (req, res) => {
     const { merek, tipe, imei, spesifikasi, kepemilikan, assignedTo, status } = req.body;
 
     // Validate required fields
-    if (!merek || !tipe || !imei) {
+    if (!merek || !tipe) {
       return res.status(400).json({
         success: false,
-        error: 'Merek, tipe, dan IMEI wajib diisi'
+        error: 'Merek dan tipe wajib diisi'
       });
     }
 
@@ -92,14 +92,16 @@ const createHandphone = async (req, res) => {
     const handphoneData = {
       merek: merek.trim(),
       tipe: tipe.trim(),
-      imei: imei.trim(),
       spesifikasi: spesifikasi?.trim(),
       kepemilikan: kepemilikan || 'Perusahaan',
-      assignedTo: assignedTo || null,
       status: status || 'available',
       createdBy: req.userId,
       lastModifiedBy: req.userId
     };
+
+    // Optional fields
+    if (imei) handphoneData.imei = imei.trim();
+    if (assignedTo) handphoneData.assignedTo = assignedTo;
 
     const handphone = new Handphone(handphoneData);
     await handphone.save();
