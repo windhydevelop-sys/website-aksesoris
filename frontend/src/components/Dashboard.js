@@ -247,6 +247,16 @@ const Dashboard = ({ setToken }) => {
       formattedValue = formatCardNumber(value);
     }
 
+    // Special handling for date fields to ensure proper state updates
+    if (name === 'expired') {
+      // Ensure date is properly formatted and state is updated immediately
+      setForm(prevForm => ({
+        ...prevForm,
+        [name]: formattedValue
+      }));
+      return; // Prevent the setForm below from overriding
+    }
+
     setForm({ ...form, [name]: formattedValue });
 
     // Validate IMEI
@@ -957,7 +967,29 @@ const Dashboard = ({ setToken }) => {
                 <TextField fullWidth label="Email" name="email" placeholder="Format email valid, contoh: user@example.com" value={form.email} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Password Email" name="passEmail" placeholder="Minimal 6 karakter, contoh: emailpass123" value={form.passEmail} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Harga" name="harga" type="number" placeholder="Harga dalam Rupiah" value={form.harga} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Expired" name="expired" type="date" placeholder="Pilih tanggal expired" value={form.expired} onChange={handleChange} margin="normal" required InputLabelProps={{ shrink: true }} />
+                <TextField
+                  fullWidth
+                  label="Expired"
+                  name="expired"
+                  type="date"
+                  placeholder="Pilih tanggal expired"
+                  value={form.expired || ''}
+                  onChange={handleChange}
+                  onBlur={(e) => {
+                    // Ensure date value is properly set on blur
+                    const value = e.target.value;
+                    if (value) {
+                      setForm(prev => ({ ...prev, expired: value }));
+                    }
+                  }}
+                  margin="normal"
+                  required
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{
+                    // Ensure proper date format handling
+                    min: new Date().toISOString().split('T')[0], // Prevent past dates
+                  }}
+                />
                 <FormControl fullWidth margin="normal">
                   <InputLabel id="status-label">Status</InputLabel>
                   <Select labelId="status-label" id="status" name="status" value={form.status} label="Status" onChange={handleChange}>

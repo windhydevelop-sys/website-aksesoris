@@ -2,14 +2,12 @@ const Joi = require('joi');
 
 // Product validation schema
 const productSchema = Joi.object({
-  noOrder: Joi.string().trim().min(1).required().messages({
-    'string.empty': 'No. Order tidak boleh kosong',
-    'any.required': 'No. Order wajib diisi'
+  noOrder: Joi.string().trim().optional().messages({
+    'string.empty': 'No. Order tidak boleh kosong'
   }),
 
-  codeAgen: Joi.string().trim().min(1).required().label('Kode Orlap').messages({
-    'string.empty': 'Kode Orlap tidak boleh kosong',
-    'any.required': 'Kode Orlap wajib diisi'
+  codeAgen: Joi.string().trim().optional().label('Kode Orlap').messages({
+    'string.empty': 'Kode Orlap tidak boleh kosong'
   }),
 
   customer: Joi.string().trim().min(1).required().messages({
@@ -76,11 +74,11 @@ const productSchema = Joi.object({
     'any.required': 'No. HP wajib diisi'
   }),
 
-  handphone: Joi.string().optional().messages({
+  handphone: Joi.string().trim().allow('').optional().messages({
     'string.base': 'Handphone harus berupa string'
   }),
 
-  imeiHandphone: Joi.string().optional().messages({
+  imeiHandphone: Joi.string().trim().allow('').optional().messages({
     'string.base': 'IMEI Handphone harus berupa string'
   }),
 

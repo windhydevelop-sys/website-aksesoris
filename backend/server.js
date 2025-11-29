@@ -14,6 +14,7 @@ const orderRoutes = require('./routes/orders');
 const cashflowRoutes = require('./routes/cashflow');
 const handphoneRoutes = require('./routes/handphone');
 const backupRoutes = require('./routes/backup');
+const menuPermissionRoutes = require('./routes/menuPermissions');
 const path = require('path');
 
 dotenv.config();
@@ -97,6 +98,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/cashflow', cashflowRoutes);
 app.use('/api/handphones', handphoneRoutes);
 app.use('/api/backup', backupRoutes);
+app.use('/api/menu-permissions', menuPermissionRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Health check endpoint

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Drawer, Toolbar, Box, List, ListItem, ListItemIcon, ListItemText, ListItemButton, AppBar, Avatar, Typography, Chip, IconButton, useMediaQuery, useTheme } from '@mui/material';
-import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet, Backup } from '@mui/icons-material';
+import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet, Backup, Settings } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
+import axios from '../utils/axios';
 
 const drawerWidth = 240;
 
@@ -23,7 +24,33 @@ const SidebarLayout = ({ children, onLogout }) => {
 
   const user = getCurrentUser();
   const userRole = user.role || 'user';
-  const menuPermissions = user.menuPermissions || {};
+  const [menuPermissions, setMenuPermissions] = useState({});
+
+  // Fetch menu permissions based on user role
+  useEffect(() => {
+    const fetchMenuPermissions = async () => {
+      if (!userRole) return;
+
+      try {
+        const response = await axios.get(`/api/menu-permissions/role/${userRole}`);
+        const permissions = response.data.data || [];
+
+        // Convert array to object for easier checking
+        const permissionsObj = {};
+        permissions.forEach(perm => {
+          permissionsObj[perm.menuKey] = perm.isEnabled;
+        });
+
+        setMenuPermissions(permissionsObj);
+      } catch (error) {
+        console.warn('Failed to fetch menu permissions:', error);
+        // Fallback to empty permissions - admin can see all menus
+        setMenuPermissions({});
+      }
+    };
+
+    fetchMenuPermissions();
+  }, [userRole]);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -111,7 +138,7 @@ const SidebarLayout = ({ children, onLogout }) => {
         <Toolbar />
         <Box sx={{ overflow: 'auto' }}>
           <List>
-            {(userRole === 'admin' || menuPermissions.dashboard) && (
+            {(userRole === 'admin' || menuPermissions.input_product) && (
               <ListItem disablePadding>
                 <ListItemButton
                   selected={isActive('/dashboard')}
@@ -129,7 +156,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 </ListItemButton>
               </ListItem>
             )}
-            {(userRole === 'admin' || menuPermissions.inputProduct) && (
+            {(userRole === 'admin' || menuPermissions.detail_produk) && (
               <ListItem disablePadding>
                 <ListItemButton
                   selected={isActive('/product-details')}
@@ -288,6 +315,24 @@ const SidebarLayout = ({ children, onLogout }) => {
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><Backup /></ListItemIcon>
                   <ListItemText primary="Database Backup" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {userRole === 'admin' && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={isActive('/menu-permissions')}
+                  onClick={() => navigate('/menu-permissions')}
+                  sx={{
+                    color: 'inherit',
+                    borderRadius: 2,
+                    mx: 1,
+                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><Settings /></ListItemIcon>
+                  <ListItemText primary="Menu Permissions" sx={{ color: 'inherit' }} />
                 </ListItemButton>
               </ListItem>
             )}
