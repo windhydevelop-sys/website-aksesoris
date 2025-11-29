@@ -374,6 +374,13 @@ router.delete('/:id', async (req, res) => {
 // GET /api/field-staff/available-handphones - Get available handphones for assignment
 router.get('/available-handphones', async (req, res) => {
   try {
+    console.log('Handphone model:', typeof Handphone);
+    console.log('Handphone model name:', Handphone?.modelName);
+
+    // First try a simple query to test if model works
+    const totalHandphones = await Handphone.countDocuments();
+    console.log('Total handphones in database:', totalHandphones);
+
     const availableHandphones = await Handphone.find({
       $and: [
         {
@@ -386,15 +393,28 @@ router.get('/available-handphones', async (req, res) => {
       ]
     }).sort({ createdAt: -1 });
 
+    console.log('Available handphones found:', availableHandphones.length);
+
     res.json({
       success: true,
-      data: availableHandphones
+      data: availableHandphones,
+      debug: {
+        totalHandphones,
+        availableCount: availableHandphones.length
+      }
     });
   } catch (error) {
     console.error('Error fetching available handphones:', error);
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch available handphones'
+      error: 'Failed to fetch available handphones',
+      details: error.message,
+      debug: {
+        handphoneModel: typeof Handphone,
+        modelName: Handphone?.modelName
+      }
     });
   }
 });
