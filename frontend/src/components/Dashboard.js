@@ -7,7 +7,7 @@ import {
   TableHead, TableRow, TextField, Dialog, DialogActions, DialogContent,
   DialogTitle, IconButton, Alert, Autocomplete,
   FormControl, InputLabel, Select, MenuItem, Chip, InputAdornment,
-  Tabs, Tab, Grid, Card, CardContent
+  Grid, Card, CardContent
 } from '@mui/material';
 import { Search, Event, TrendingUp, People, Smartphone, Inventory } from '@mui/icons-material';
 import { Edit, Delete, Add, CloudUpload, CloudDownload, PictureAsPdf } from '@mui/icons-material';
@@ -230,7 +230,6 @@ const Dashboard = ({ setToken }) => {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(initialFormState);
   const [imeiError, setImeiError] = useState('');
-  const [imeiDuplicate, setImeiDuplicate] = useState(false);
   const [selectedProductForInvoice, setSelectedProductForInvoice] = useState(null);
   const [chartData, setChartData] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -253,7 +252,6 @@ const Dashboard = ({ setToken }) => {
     if (name === 'imeiHandphone') {
       const error = validateIMEI(formattedValue, products, editing);
       setImeiError(error);
-      setImeiDuplicate(!!error && error.includes('sudah digunakan'));
     }
   };
 
@@ -421,7 +419,6 @@ const Dashboard = ({ setToken }) => {
         passEmail: product.passEmail || '',
       });
       setImeiError(validateIMEI(product.imeiHandphone || '', products, product._id));
-      setImeiDuplicate(products.some(p => p.imeiHandphone === product.imeiHandphone && p._id !== product._id));
 
       // Fetch available handphones for the selected field staff
       const selectedStaff = fieldStaff.find(fs => `${fs.kodeOrlap} - ${fs.namaOrlap}` === product.fieldStaff);
@@ -433,7 +430,6 @@ const Dashboard = ({ setToken }) => {
       setEditing(null);
       setForm(initialFormState);
       setImeiError('');
-      setImeiDuplicate(false);
       setAvailableHandphones([]);
 
     }
@@ -552,7 +548,6 @@ const Dashboard = ({ setToken }) => {
     URL.revokeObjectURL(url);
   };
 
-  const imeiSuggestions = Array.from(new Set(products.map(p => p.imeiHandphone).filter(Boolean)));
 
   return (
     <SidebarLayout onLogout={handleLogout}>

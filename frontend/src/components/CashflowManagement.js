@@ -122,7 +122,7 @@ const CashflowManagement = () => {
         }
       }
     }
-  }, [formData.type, formData.amount]);
+  }, [formData.type, formData.amount, formData.debit, formData.credit]);
 
   const handleOpenDialog = (cashflow = null) => {
     if (cashflow) {
