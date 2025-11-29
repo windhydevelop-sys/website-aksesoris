@@ -18,7 +18,9 @@ const productSchema = new mongoose.Schema({
   noHp: { type: String, required: true },
   handphone: { type: String }, // New field for handphone
   imeiHandphone: { type: String }, // New field for IMEI handphone
-  handphoneId: { type: mongoose.Schema.Types.ObjectId, ref: 'Handphone' }, // Optional reference to Handphone
+  handphoneId: { type: mongoose.Schema.Types.ObjectId, ref: 'Handphone', required: true }, // Required reference to Handphone
+  handphoneAssignmentDate: { type: Date, default: Date.now }, // When handphone was assigned
+  handphoneReturnDate: { type: Date }, // When handphone was returned
   // Encrypted sensitive fields
   pinAtm: { type: String, required: true },
   pinWondr: { type: String, required: true },

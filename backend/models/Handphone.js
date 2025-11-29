@@ -10,9 +10,12 @@ const handphoneSchema = new mongoose.Schema({
   status: { type: String, enum: ['available', 'assigned', 'in_use', 'maintenance'], default: 'available' },
   currentProduct: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }, // optional
   assignmentHistory: [{
-    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' }, // Reference to order
     assignedAt: { type: Date, required: true },
-    returnedAt: { type: Date }
+    assignedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    returnedAt: { type: Date },
+    status: { type: String, enum: ['active', 'completed', 'returned'], default: 'active' }
   }]
 }, { timestamps: true });
 

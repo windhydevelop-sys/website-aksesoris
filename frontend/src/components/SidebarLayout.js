@@ -273,6 +273,24 @@ const SidebarLayout = ({ children, onLogout }) => {
                 </ListItemButton>
               </ListItem>
             )}
+            {(userRole === 'admin' || user.fieldStaff) && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={isActive('/field-staff-dashboard')}
+                  onClick={() => navigate('/field-staff-dashboard')}
+                  sx={{
+                    color: 'inherit',
+                    borderRadius: 2,
+                    mx: 1,
+                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
+                  <ListItemText primary="Dashboard Field Staff" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
             {userRole === 'admin' && (
               <ListItem disablePadding>
                 <ListItemButton

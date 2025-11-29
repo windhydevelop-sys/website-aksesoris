@@ -1,49 +1,68 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const {
-  getHandphones,
-  getHandphoneById,
-  createHandphone,
-  updateHandphone,
-  deleteHandphone,
-  assignToProduct,
-  returnFromProduct
-} = require('../controllers/handphoneController');
+const { getHandphoneAssignmentSummary, getProductsByHandphone } = require('../utils/handphoneAssignment');
+const { auditLog } = require('../utils/audit');
 
-// Middleware to add user info to request
-const addUserInfo = (req, res, next) => {
-  req.userId = req.user ? req.user.id : null;
-  next();
-};
+// Get handphone assignment summary for field staff
+router.get('/field-staff/:fieldStaffId', auth, async (req, res) => {
+  try {
+    const { fieldStaffId } = req.params;
 
-// Apply authentication to all routes
-router.use(auth);
-router.use(addUserInfo);
+    // Verify user has access to this field staff data
+    // For now, allow admin or if field staff matches user's assigned field staff
+    if (req.user.role !== 'admin' && req.user.fieldStaff !== fieldStaffId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied'
+      });
+    }
 
-// GET /api/handphones - get all handphones
-router.get('/', getHandphones);
+    const summary = await getHandphoneAssignmentSummary(fieldStaffId);
 
-// GET /api/handphones/:id - get handphone by ID
-router.get('/:id', getHandphoneById);
+    auditLog('READ', req.user.userId, 'Handphone', 'assignment_summary', {
+      fieldStaffId,
+      totalHandphones: summary.totalHandphones
+    }, req);
 
-// POST /api/handphones - create new handphone
-router.post('/', createHandphone);
+    res.json({
+      success: true,
+      data: summary
+    });
 
-// PUT /api/handphones/:id - update handphone
-router.put('/:id', updateHandphone);
+  } catch (error) {
+    console.error('Error getting handphone assignment summary:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get handphone assignment summary'
+    });
+  }
+});
 
-// DELETE /api/handphones/:id - delete handphone
-router.delete('/:id', deleteHandphone);
+// Get products handled by a specific handphone
+router.get('/:handphoneId/products', auth, async (req, res) => {
+  try {
+    const { handphoneId } = req.params;
 
-// PUT /api/handphones/:id/assign/:productId - assign handphone to product
-router.put('/:id/assign/:productId', (req, res, next) => {
-  // Move productId from params to body for controller compatibility
-  req.body.productId = req.params.productId;
-  next();
-}, assignToProduct);
+    const products = await getProductsByHandphone(handphoneId);
 
-// PUT /api/handphones/:id/return - return handphone from product
-router.put('/:id/return', returnFromProduct);
+    auditLog('READ', req.user.userId, 'Handphone', handphoneId, {
+      action: 'get_products',
+      productCount: products.length
+    }, req);
+
+    res.json({
+      success: true,
+      data: products
+    });
+
+  } catch (error) {
+    console.error('Error getting products by handphone:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get products by handphone'
+    });
+  }
+});
 
 module.exports = router;

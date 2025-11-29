@@ -235,7 +235,6 @@ const Dashboard = ({ setToken }) => {
   const [customers, setCustomers] = useState([]);
   const [fieldStaff, setFieldStaff] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [availableHandphones, setAvailableHandphones] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -299,24 +298,6 @@ const Dashboard = ({ setToken }) => {
     }
   }, []);
 
-  const fetchAvailableHandphones = useCallback(async (fieldStaffId) => {
-    if (!fieldStaffId) {
-      setAvailableHandphones([]);
-      return;
-    }
-    try {
-      const res = await axios.get('/api/handphones');
-      const handphones = res.data.data || [];
-      // Filter handphones by assignedTo (fieldStaffId) and status 'available'
-      const available = handphones.filter(h =>
-        h.assignedTo && h.assignedTo._id === fieldStaffId && h.status === 'available'
-      );
-      setAvailableHandphones(available);
-    } catch (error) {
-      console.error('Error fetching available handphones:', error);
-      setAvailableHandphones([]);
-    }
-  }, []);
 
   useEffect(() => {
     fetchProducts();
@@ -420,17 +401,11 @@ const Dashboard = ({ setToken }) => {
       });
       setImeiError(validateIMEI(product.imeiHandphone || '', products, product._id));
 
-      // Fetch available handphones for the selected field staff
-      const selectedStaff = fieldStaff.find(fs => `${fs.kodeOrlap} - ${fs.namaOrlap}` === product.fieldStaff);
-      if (selectedStaff) {
-        fetchAvailableHandphones(selectedStaff._id);
-      }
 
     } else {
       setEditing(null);
       setForm(initialFormState);
       setImeiError('');
-      setAvailableHandphones([]);
 
     }
     setOpen(true);
@@ -882,44 +857,14 @@ const Dashboard = ({ setToken }) => {
                   freeSolo
                   onChange={(event, newValue) => {
                     setForm({ ...form, fieldStaff: newValue || '', handphoneId: '' });
-                    // Find the selected field staff ID to fetch available handphones
-                    const selectedStaff = fieldStaff.find(fs => `${fs.kodeOrlap} - ${fs.namaOrlap}` === newValue);
-                    fetchAvailableHandphones(selectedStaff ? selectedStaff._id : null);
                   }}
                   onInputChange={(event, newInputValue) => { setForm({ ...form, fieldStaff: newInputValue || '' }); }}
                   renderInput={(params) => <TextField {...params} label="Orang Lapangan" name="fieldStaff" placeholder="Pilih orang lapangan dari daftar atau ketik baru" margin="normal" />}
                 />
-                <Autocomplete
-                  fullWidth
-                  value={availableHandphones.find(h => h._id === form.handphoneId) || null}
-                  options={availableHandphones}
-                  getOptionLabel={(option) => option ? `${option.merek} ${option.tipe} - IMEI: ${option.imei || 'N/A'}` : ''}
-                  onChange={(event, newValue) => {
-                    if (newValue) {
-                      setForm({
-                        ...form,
-                        handphoneId: newValue._id,
-                        handphone: newValue.merek,
-                        tipeHandphone: newValue.tipe,
-                        imeiHandphone: newValue.imei || '',
-                        spesifikasi: newValue.spesifikasi,
-                        kepemilikan: newValue.kepemilikan
-                      });
-                    } else {
-                      setForm({
-                        ...form,
-                        handphoneId: '',
-                        handphone: '',
-                        tipeHandphone: '',
-                        imeiHandphone: '',
-                        spesifikasi: '',
-                        kepemilikan: ''
-                      });
-                    }
-                  }}
-                  renderInput={(params) => <TextField {...params} label="Handphone" placeholder="Pilih handphone yang tersedia (opsional)" margin="normal" />}
-                  disabled={!form.fieldStaff || availableHandphones.length === 0}
-                />
+                {/* Handphone assignment is now automatic based on field staff selection */}
+                <Alert severity="info" sx={{ mt: 2, mb: 1 }}>
+                  <strong>Handphone Assignment:</strong> Handphone akan otomatis di-assign berdasarkan field staff yang dipilih saat menyimpan produk.
+                </Alert>
                 <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Grade" name="grade" placeholder="Bebas, contoh: A, VIP, PREMIUM, GOLD" value={form.grade} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="KCP" name="kcp" placeholder="Bebas, contoh: KCP001 atau CABANG-JAKARTA" value={form.kcp} onChange={handleChange} margin="normal" required />
