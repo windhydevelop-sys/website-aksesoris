@@ -1,68 +1,38 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const { getHandphoneAssignmentSummary, getProductsByHandphone } = require('../utils/handphoneAssignment');
-const { auditLog } = require('../utils/audit');
+const {
+  getHandphones,
+  getHandphoneById,
+  createHandphone,
+  updateHandphone,
+  deleteHandphone
+} = require('../controllers/handphones');
 
-// Get handphone assignment summary for field staff
-router.get('/field-staff/:fieldStaffId', auth, async (req, res) => {
-  try {
-    const { fieldStaffId } = req.params;
+// Middleware to add user info to request
+const addUserInfo = (req, res, next) => {
+  req.userId = req.user ? req.user.id : null;
+  next();
+};
 
-    // Verify user has access to this field staff data
-    // For now, allow admin or if field staff matches user's assigned field staff
-    if (req.user.role !== 'admin' && req.user.fieldStaff !== fieldStaffId) {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied'
-      });
-    }
-
-    const summary = await getHandphoneAssignmentSummary(fieldStaffId);
-
-    auditLog('READ', req.user.userId, 'Handphone', 'assignment_summary', {
-      fieldStaffId,
-      totalHandphones: summary.totalHandphones
-    }, req);
-
-    res.json({
-      success: true,
-      data: summary
-    });
-
-  } catch (error) {
-    console.error('Error getting handphone assignment summary:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get handphone assignment summary'
-    });
-  }
+router.use((req, res, next) => {
+  console.log(`Handphones router: Incoming request to ${req.method} ${req.originalUrl}`);
+  next();
 });
 
-// Get products handled by a specific handphone
-router.get('/:handphoneId/products', auth, async (req, res) => {
-  try {
-    const { handphoneId } = req.params;
+// Get all handphones
+router.get('/', auth, addUserInfo, getHandphones);
 
-    const products = await getProductsByHandphone(handphoneId);
+// Get handphone by ID
+router.get('/:id', auth, addUserInfo, getHandphoneById);
 
-    auditLog('READ', req.user.userId, 'Handphone', handphoneId, {
-      action: 'get_products',
-      productCount: products.length
-    }, req);
+// Create new handphone
+router.post('/', auth, addUserInfo, createHandphone);
 
-    res.json({
-      success: true,
-      data: products
-    });
+// Update handphone
+router.put('/:id', auth, addUserInfo, updateHandphone);
 
-  } catch (error) {
-    console.error('Error getting products by handphone:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get products by handphone'
-    });
-  }
-});
+// Delete handphone
+router.delete('/:id', auth, addUserInfo, deleteHandphone);
 
 module.exports = router;
