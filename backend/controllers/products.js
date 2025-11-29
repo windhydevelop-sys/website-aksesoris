@@ -112,20 +112,21 @@ const createProduct = async (req, res) => {
           });
         }
 
-        if (handphone.status !== 'available') {
+        // Allow handphones that are available or already assigned (for multiple product assignment)
+        if (handphone.status !== 'available' && handphone.status !== 'assigned') {
           return res.status(400).json({
             success: false,
-            error: 'Handphone tidak tersedia untuk di-assign'
+            error: 'Handphone sedang digunakan atau dalam maintenance'
           });
         }
 
-        // Update handphone status and assignment
-        handphone.status = 'in_use';
-        handphone.currentProduct = null; // Will be set after product creation
+        // For multiple product assignment, don't change status to 'in_use'
+        // Just add to assignment history
         handphone.assignmentHistory.push({
           product: null, // Will be set after product creation
           assignedAt: new Date(),
-          assignedBy: req.userId
+          assignedBy: req.userId,
+          status: 'active'
         });
         await handphone.save();
 
@@ -167,11 +168,16 @@ const createProduct = async (req, res) => {
     const product = new Product(data);
     await product.save();
 
-    // Update handphone with current product reference
+    // Update handphone assignment history with product reference
     if (handphoneAssignment) {
       await Handphone.findByIdAndUpdate(handphoneAssignment.handphoneId, {
-        currentProduct: product._id,
-        'assignmentHistory.$[].product': product._id // Update latest assignment history
+        $set: {
+          'assignmentHistory.$[elem].product': product._id
+        }
+      }, {
+        arrayFilters: [
+          { 'elem.assignedAt': { $gte: new Date(Date.now() - 1000) } } // Update recent assignment
+        ]
       });
     }
 
@@ -309,8 +315,8 @@ const updateProduct = async (req, res) => {
         });
       }
 
-      // Check if handphone is available
-      if (handphone.status !== 'available') {
+      // Check if handphone is available or already assigned (for multiple product assignment)
+      if (handphone.status !== 'available' && handphone.status !== 'assigned') {
         return res.status(400).json({
           success: false,
           error: 'Handphone is not available for assignment'
