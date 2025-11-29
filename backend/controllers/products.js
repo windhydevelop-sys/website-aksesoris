@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Handphone = require('../models/Handphone');
 const FieldStaff = require('../models/FieldStaff');
@@ -120,14 +121,19 @@ const createProduct = async (req, res) => {
           });
         }
 
-        // For multiple product assignment, don't change status to 'in_use'
-        // Just add to assignment history
+        // For multiple product assignment, add complete assignment history entry
         handphone.assignmentHistory.push({
-          product: null, // Will be set after product creation
+          product: null, // Will be set after product creation - temporary placeholder
           assignedAt: new Date(),
           assignedBy: req.userId,
           status: 'active'
         });
+
+        // Temporarily set required fields to pass validation
+        // We'll update with actual product ID after product creation
+        const tempProductId = new mongoose.Types.ObjectId(); // Temporary ID
+        handphone.assignmentHistory[handphone.assignmentHistory.length - 1].product = tempProductId;
+
         await handphone.save();
 
         handphoneAssignment = {
@@ -168,17 +174,15 @@ const createProduct = async (req, res) => {
     const product = new Product(data);
     await product.save();
 
-    // Update handphone assignment history with product reference
+    // Update handphone assignment history with actual product reference
     if (handphoneAssignment) {
-      await Handphone.findByIdAndUpdate(handphoneAssignment.handphoneId, {
-        $set: {
-          'assignmentHistory.$[elem].product': product._id
-        }
-      }, {
-        arrayFilters: [
-          { 'elem.assignedAt': { $gte: new Date(Date.now() - 1000) } } // Update recent assignment
-        ]
-      });
+      const handphone = await Handphone.findById(handphoneAssignment.handphoneId);
+      if (handphone && handphone.assignmentHistory.length > 0) {
+        // Update the last assignment history entry with actual product ID
+        const lastAssignment = handphone.assignmentHistory[handphone.assignmentHistory.length - 1];
+        lastAssignment.product = product._id;
+        await handphone.save();
+      }
     }
 
     // Audit log
