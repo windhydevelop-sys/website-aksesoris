@@ -375,11 +375,15 @@ router.delete('/:id', async (req, res) => {
 router.get('/available-handphones', async (req, res) => {
   try {
     const availableHandphones = await Handphone.find({
-      $or: [
-        { assignedTo: null },
-        { assignedTo: { $exists: false } }
-      ],
-      status: { $in: ['available', 'assigned'] }
+      $and: [
+        {
+          $or: [
+            { assignedTo: null },
+            { assignedTo: { $exists: false } }
+          ]
+        },
+        { status: 'available' }
+      ]
     }).sort({ createdAt: -1 });
 
     res.json({
