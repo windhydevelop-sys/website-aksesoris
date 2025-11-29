@@ -78,6 +78,10 @@ const productSchema = Joi.object({
     'string.base': 'Handphone harus berupa string'
   }),
 
+  handphoneId: Joi.string().optional().messages({
+    'string.base': 'Handphone ID harus berupa string'
+  }),
+
   imeiHandphone: Joi.string().trim().allow('').optional().messages({
     'string.base': 'IMEI Handphone harus berupa string'
   }),
