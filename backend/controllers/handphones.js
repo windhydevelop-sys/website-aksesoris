@@ -6,6 +6,7 @@ const getHandphones = async (req, res) => {
   try {
     const handphones = await Handphone.find()
       .populate('assignedTo', 'kodeOrlap namaOrlap')
+      .populate('assignedProducts', 'noOrder nama customer')
       .populate('currentProduct', 'noOrder nama')
       .sort({ createdAt: -1 });
 
@@ -36,6 +37,7 @@ const getHandphoneById = async (req, res) => {
   try {
     const handphone = await Handphone.findById(req.params.id)
       .populate('assignedTo', 'kodeOrlap namaOrlap')
+      .populate('assignedProducts', 'noOrder nama customer')
       .populate('currentProduct', 'noOrder nama');
 
     if (!handphone) {
@@ -70,7 +72,7 @@ const getHandphoneById = async (req, res) => {
 // Create new handphone
 const createHandphone = async (req, res) => {
   try {
-    const { merek, tipe, imei, spesifikasi, kepemilikan, assignedTo, status } = req.body;
+    const { merek, tipe, imei, spesifikasi, kepemilikan, harga, assignedTo, status } = req.body;
 
     // Validate required fields
     if (!merek || !tipe) {
@@ -94,6 +96,7 @@ const createHandphone = async (req, res) => {
       tipe: tipe.trim(),
       spesifikasi: spesifikasi?.trim(),
       kepemilikan: kepemilikan || 'Perusahaan',
+      harga: harga || 0,
       status: status || 'available',
       createdBy: req.userId,
       lastModifiedBy: req.userId
@@ -133,7 +136,7 @@ const createHandphone = async (req, res) => {
 // Update handphone
 const updateHandphone = async (req, res) => {
   try {
-    const { merek, tipe, imei, spesifikasi, kepemilikan, assignedTo, status } = req.body;
+    const { merek, tipe, imei, spesifikasi, kepemilikan, harga, assignedTo, status } = req.body;
 
     const updateData = {
       lastModifiedBy: req.userId
@@ -157,6 +160,7 @@ const updateHandphone = async (req, res) => {
     }
     if (spesifikasi !== undefined) updateData.spesifikasi = spesifikasi?.trim();
     if (kepemilikan !== undefined) updateData.kepemilikan = kepemilikan;
+    if (harga !== undefined) updateData.harga = harga;
     if (assignedTo !== undefined) updateData.assignedTo = assignedTo;
     if (status !== undefined) updateData.status = status;
 
@@ -165,6 +169,7 @@ const updateHandphone = async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     ).populate('assignedTo', 'kodeOrlap namaOrlap')
+     .populate('assignedProducts', 'noOrder nama customer')
      .populate('currentProduct', 'noOrder nama');
 
     if (!handphone) {

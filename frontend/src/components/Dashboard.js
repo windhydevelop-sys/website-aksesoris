@@ -314,8 +314,8 @@ const Dashboard = ({ setToken }) => {
     try {
       const res = await axios.get('/api/handphones');
       const allHandphones = res.data.data || [];
-      // Filter only available handphones
-      const available = allHandphones.filter(h => h.status === 'available');
+      // Allow handphones that are available or already assigned (for multiple product assignment)
+      const available = allHandphones.filter(h => h.status === 'available' || h.status === 'assigned');
       setAvailableHandphones(available);
       setTotalHandphones(allHandphones.length);
     } catch (error) {
@@ -497,6 +497,18 @@ const Dashboard = ({ setToken }) => {
         response = await axios.post('/api/products', formData, {
           headers: { 'x-auth-token': token, 'Content-Type': 'multipart/form-data' }
         });
+      }
+
+      // If handphoneId is provided, update handphone's assignedProducts
+      if (form.handphoneId && !editing) {
+        try {
+          await axios.post(`/api/handphones/${form.handphoneId}/assign-product`, {
+            productId: response.data.data._id
+          });
+        } catch (handphoneError) {
+          console.error('Error assigning product to handphone:', handphoneError);
+          // Don't fail the whole operation, just log the error
+        }
       }
 
       // console.log('Response:', response.data); // Debug log

@@ -57,6 +57,7 @@ const HandphoneManagement = () => {
     imei: '',
     spesifikasi: '',
     kepemilikan: '',
+    harga: '',
     assignedTo: '',
     status: 'available'
   });
@@ -65,8 +66,14 @@ const HandphoneManagement = () => {
   const [filters, setFilters] = useState({
     status: '',
     assignedTo: '',
+    product: '',
+    customer: '',
     search: ''
   });
+
+  // Additional data states
+  const [products, setProducts] = useState([]);
+  const [customers, setCustomers] = useState([]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -98,10 +105,30 @@ const HandphoneManagement = () => {
     }
   }, [showError]);
 
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/products');
+      setProducts(response.data.data || []);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+    }
+  }, []);
+
+  const fetchCustomers = useCallback(async () => {
+    try {
+      const response = await axios.get('/api/customers');
+      setCustomers(response.data.data || []);
+    } catch (err) {
+      console.error('Error fetching customers:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchHandphones();
     fetchFieldStaff();
-  }, [fetchHandphones, fetchFieldStaff]);
+    fetchProducts();
+    fetchCustomers();
+  }, [fetchHandphones, fetchFieldStaff, fetchProducts, fetchCustomers]);
 
   const handleOpenDialog = (handphone = null) => {
     if (handphone) {
@@ -112,7 +139,8 @@ const HandphoneManagement = () => {
         imei: handphone.imei || '',
         spesifikasi: handphone.spesifikasi,
         kepemilikan: handphone.kepemilikan,
-        assignedTo: handphone.assignedTo._id,
+        harga: handphone.harga || '',
+        assignedTo: handphone.assignedTo?._id || '',
         status: handphone.status
       });
     } else {
@@ -123,6 +151,7 @@ const HandphoneManagement = () => {
         imei: '',
         spesifikasi: '',
         kepemilikan: '',
+        harga: '',
         assignedTo: '',
         status: 'available'
       });
@@ -139,6 +168,7 @@ const HandphoneManagement = () => {
       imei: '',
       spesifikasi: '',
       kepemilikan: '',
+      harga: '',
       assignedTo: '',
       status: 'available'
     });
@@ -196,13 +226,15 @@ const HandphoneManagement = () => {
 
   const filteredHandphones = handphones.filter(handphone => {
     const matchesStatus = !filters.status || handphone.status === filters.status;
-    const matchesAssignedTo = !filters.assignedTo || handphone.assignedTo._id === filters.assignedTo;
+    const matchesAssignedTo = !filters.assignedTo || handphone.assignedTo?._id === filters.assignedTo;
+    const matchesProduct = !filters.product || handphone.currentProduct?._id === filters.product;
+    const matchesCustomer = !filters.customer || (handphone.currentProduct && handphone.currentProduct.customer === filters.customer);
     const matchesSearch = !filters.search ||
       handphone.merek.toLowerCase().includes(filters.search.toLowerCase()) ||
       handphone.tipe.toLowerCase().includes(filters.search.toLowerCase()) ||
       (handphone.imei && handphone.imei.toLowerCase().includes(filters.search.toLowerCase()));
 
-    return matchesStatus && matchesAssignedTo && matchesSearch;
+    return matchesStatus && matchesAssignedTo && matchesProduct && matchesCustomer && matchesSearch;
   });
 
   const getStatusChip = (status) => {
@@ -220,22 +252,6 @@ const HandphoneManagement = () => {
   return (
     <SidebarLayout onLogout={handleLogout}>
       <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: { xs: 'center', sm: 'space-between' },
-          alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
-        }}>
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{ textAlign: { xs: 'center', sm: 'left' } }}
-          >
-            Handphone Management
-          </Typography>
-        </Box>
 
         {/* Filters */}
         <Card sx={{ mb: 3, p: 2 }}>
@@ -244,7 +260,7 @@ const HandphoneManagement = () => {
             Filters
           </Typography>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={2}>
               <TextField
                 fullWidth
                 label="Search"
@@ -261,7 +277,7 @@ const HandphoneManagement = () => {
                 size="small"
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={2}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -279,16 +295,16 @@ const HandphoneManagement = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={2}>
               <FormControl fullWidth size="small">
-                <InputLabel>Assigned To</InputLabel>
+                <InputLabel>Orlap</InputLabel>
                 <Select
                   name="assignedTo"
                   value={filters.assignedTo}
                   onChange={handleFilterChange}
-                  label="Assigned To"
+                  label="Orlap"
                 >
-                  <MenuItem value="">All Staff</MenuItem>
+                  <MenuItem value="">All Orlap</MenuItem>
                   {fieldStaff.map(staff => (
                     <MenuItem key={staff._id} value={staff._id}>
                       {staff.kodeOrlap} - {staff.namaOrlap}
@@ -297,10 +313,46 @@ const HandphoneManagement = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid item xs={12} sm={6} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Product</InputLabel>
+                <Select
+                  name="product"
+                  value={filters.product}
+                  onChange={handleFilterChange}
+                  label="Product"
+                >
+                  <MenuItem value="">All Products</MenuItem>
+                  {products.map(product => (
+                    <MenuItem key={product._id} value={product._id}>
+                      {product.noOrder} - {product.nama}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={2}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Customer</InputLabel>
+                <Select
+                  name="customer"
+                  value={filters.customer}
+                  onChange={handleFilterChange}
+                  label="Customer"
+                >
+                  <MenuItem value="">All Customers</MenuItem>
+                  {customers.map(customer => (
+                    <MenuItem key={customer._id} value={customer.namaCustomer}>
+                      {customer.namaCustomer}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6} md={2}>
               <Button
                 variant="outlined"
-                onClick={() => setFilters({ status: '', assignedTo: '', search: '' })}
+                onClick={() => setFilters({ status: '', assignedTo: '', product: '', customer: '', search: '' })}
                 sx={{ height: '40px' }}
               >
                 Clear Filters
@@ -341,10 +393,10 @@ const HandphoneManagement = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>Merek</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Tipe</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>IMEI</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Harga</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Assigned To</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Current Product</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Assigned Products</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -353,13 +405,36 @@ const HandphoneManagement = () => {
                   <TableRow key={handphone._id} hover>
                     <TableCell>{handphone.merek}</TableCell>
                     <TableCell>{handphone.tipe}</TableCell>
-                    <TableCell>{handphone.imei || '-'}</TableCell>
+                    <TableCell>Rp {handphone.harga ? handphone.harga.toLocaleString('id-ID') : '-'}</TableCell>
                     <TableCell>{getStatusChip(handphone.status)}</TableCell>
                     <TableCell>
                       {handphone.assignedTo ? `${handphone.assignedTo.kodeOrlap} - ${handphone.assignedTo.namaOrlap}` : '-'}
                     </TableCell>
                     <TableCell>
-                      {handphone.currentProduct ? `${handphone.currentProduct.noOrder} - ${handphone.currentProduct.nama}` : '-'}
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {handphone.assignedProducts && handphone.assignedProducts.length > 0 ? (
+                          handphone.assignedProducts.map((product) => (
+                            <Chip
+                              key={product._id}
+                              label={`${product.noOrder} - ${product.nama}`}
+                              size="small"
+                              color="primary"
+                              variant="outlined"
+                            />
+                          ))
+                        ) : handphone.currentProduct ? (
+                          <Chip
+                            label={`${handphone.currentProduct.noOrder} - ${handphone.currentProduct.nama}`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            No products assigned
+                          </Typography>
+                        )}
+                      </Box>
                     </TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleOpenDialog(handphone)} color="primary" size="small">
@@ -436,6 +511,21 @@ const HandphoneManagement = () => {
                     onChange={handleFormChange}
                     margin="normal"
                     helperText="Optional"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Harga Handphone"
+                    name="harga"
+                    type="number"
+                    value={formData.harga}
+                    onChange={handleFormChange}
+                    margin="normal"
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
+                    }}
+                    helperText="Harga handphone dalam Rupiah"
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
