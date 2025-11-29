@@ -16,6 +16,7 @@ import FieldStaffManagement from './components/FieldStaffManagement';
 import OrderManagement from './components/OrderManagement';
 import CashflowManagement from './components/CashflowManagement';
 import ProductDetail from './components/ProductDetail';
+import HandphoneManagement from './components/HandphoneManagement';
 import './App.css';
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
             <Route path="/product-details/:id" element={token ? <ProductDetail /> : <Navigate to="/login" />} />
             <Route path="/complaints" element={token ? <ComplaintMenu /> : <Navigate to="/login" />} />
             <Route path="/handphone" element={token ? <HandphoneMenu /> : <Navigate to="/login" />} />
+            <Route path="/handphones" element={token ? <HandphoneManagement /> : <Navigate to="/login" />} />
             <Route path="/users" element={token ? <UserManagement /> : <Navigate to="/login" />} />
             <Route path="/" element={<Navigate to="/login" />} />
           </Routes>

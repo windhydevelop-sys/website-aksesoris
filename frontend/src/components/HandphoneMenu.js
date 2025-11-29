@@ -146,8 +146,10 @@ const HandphoneMenu = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Merek Handphone</TableCell>
+                <TableCell>Tipe Handphone</TableCell>
                 <TableCell>IMEI</TableCell>
                 <TableCell>Spesifikasi</TableCell>
+                <TableCell>Kepemilikan</TableCell>
                 <TableCell>Kode Orlap</TableCell>
               </TableRow>
             </TableHead>
@@ -155,10 +157,12 @@ const HandphoneMenu = () => {
               {(filteredProducts || []).map((product) => (
                 <TableRow key={product._id} hover>
                   <TableCell>{product.handphone || '-'}</TableCell>
+                  <TableCell>{product.tipeHandphone || '-'}</TableCell>
                   <TableCell sx={{ cursor: product._id ? 'pointer' : 'default', color: 'primary.main' }} onClick={() => product._id && navigate(`/product-details/${product._id}`)}>
                     {product.imeiHandphone || '-'}
                   </TableCell>
                   <TableCell>{product.spesifikasi || '-'}</TableCell>
+                  <TableCell>{product.kepemilikan || '-'}</TableCell>
                   <TableCell>{product.codeAgen || '-'}</TableCell>
                 </TableRow>
               ))}

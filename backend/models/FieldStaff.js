@@ -16,7 +16,8 @@ const fieldStaffSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
-  }
+  },
+  handphones: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Handphone' }]
 }, {
   timestamps: true
 });

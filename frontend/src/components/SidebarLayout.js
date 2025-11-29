@@ -276,6 +276,24 @@ const SidebarLayout = ({ children, onLogout }) => {
             {userRole === 'admin' && (
               <ListItem disablePadding>
                 <ListItemButton
+                  selected={isActive('/handphone-management')}
+                  onClick={() => navigate('/handphone-management')}
+                  sx={{
+                    color: 'inherit',
+                    borderRadius: 2,
+                    mx: 1,
+                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><Android /></ListItemIcon>
+                  <ListItemText primary="Kelola Handphone" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {userRole === 'admin' && (
+              <ListItem disablePadding>
+                <ListItemButton
                   selected={isActive('/users')}
                   onClick={() => navigate('/users')}
                   sx={{

@@ -136,19 +136,19 @@ const InvoicePdfDocument = ({ product }) => (
         <Text style={styles.subHeader}>Detail Produk</Text>
         <View style={styles.table}>
           <View style={styles.tableRow}>
-            <Text style={styles.tableColHeader}>Deskripsi</Text>
+            <Text style={styles.tableColHeader}>Merek</Text>
+            <Text style={styles.tableColHeader}>Tipe</Text>
             <Text style={styles.tableColHeader}>IMEI</Text>
-            <Text style={styles.tableColHeader}>Merek HP</Text>
-            <Text style={styles.tableColHeader}>Jumlah</Text>
-            <Text style={styles.tableColHeader}>Harga Satuan</Text>
-            <Text style={styles.tableColHeader}>Total</Text>
+            <Text style={styles.tableColHeader}>Spesifikasi</Text>
+            <Text style={styles.tableColHeader}>Kepemilikan</Text>
+            <Text style={styles.tableColHeader}>Harga</Text>
           </View>
           <View style={styles.tableRow}>
-            <Text style={styles.tableCol}>{product.spesifikasi || '-'}</Text>
-            <Text style={styles.tableCol}>{product.imeiHandphone || '-'}</Text>
             <Text style={styles.tableCol}>{product.handphone || '-'}</Text>
-            <Text style={styles.tableCol}>1</Text>
-            <Text style={styles.tableCol}>Rp {product.harga ? product.harga.toLocaleString('id-ID') : '-'}</Text>
+            <Text style={styles.tableCol}>{product.tipeHandphone || '-'}</Text>
+            <Text style={styles.tableCol}>{product.imeiHandphone || '-'}</Text>
+            <Text style={styles.tableCol}>{product.spesifikasi || '-'}</Text>
+            <Text style={styles.tableCol}>{product.kepemilikan || '-'}</Text>
             <Text style={styles.tableCol}>Rp {product.harga ? product.harga.toLocaleString('id-ID') : '-'}</Text>
           </View>
         </View>
@@ -179,6 +179,14 @@ const cleanCardNumber = (value) => {
   return value.replace(/\s/g, '');
 };
 
+const validateIMEI = (imei, products, editingId) => {
+  if (!imei) return '';
+  if (!/^\d{15}$/.test(imei)) return 'IMEI harus 15 digit angka';
+  const isDuplicate = products.some(p => p.imeiHandphone === imei && (!editingId || p._id !== editingId));
+  if (isDuplicate) return 'IMEI sudah digunakan';
+  return '';
+};
+
 const initialFormState = {
   orderNumber: '',
   customer: '',
@@ -191,9 +199,12 @@ const initialFormState = {
   uploadFotoId: null,
   uploadFotoSelfie: null,
   handphone: '',
+  tipeHandphone: '',
   imeiHandphone: '',
   spesifikasi: '',
+  kepemilikan: '',
   harga: '',
+  handphoneId: '',
   nik: '',
   nama: '',
   namaIbuKandung: '',
@@ -225,6 +236,7 @@ const Dashboard = ({ setToken }) => {
   const [customers, setCustomers] = useState([]);
   const [fieldStaff, setFieldStaff] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [availableHandphones, setAvailableHandphones] = useState([]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -236,6 +248,13 @@ const Dashboard = ({ setToken }) => {
     }
 
     setForm({ ...form, [name]: formattedValue });
+
+    // Validate IMEI
+    if (name === 'imeiHandphone') {
+      const error = validateIMEI(formattedValue, products, editing);
+      setImeiError(error);
+      setImeiDuplicate(!!error && error.includes('sudah digunakan'));
+    }
   };
 
 
@@ -279,6 +298,25 @@ const Dashboard = ({ setToken }) => {
       setOrders(res.data.data || []);
     } catch (error) {
       console.error('Error fetching orders:', error);
+    }
+  }, []);
+
+  const fetchAvailableHandphones = useCallback(async (fieldStaffId) => {
+    if (!fieldStaffId) {
+      setAvailableHandphones([]);
+      return;
+    }
+    try {
+      const res = await axios.get('/api/handphones');
+      const handphones = res.data.data || [];
+      // Filter handphones by assignedTo (fieldStaffId) and status 'available'
+      const available = handphones.filter(h =>
+        h.assignedTo && h.assignedTo._id === fieldStaffId && h.status === 'available'
+      );
+      setAvailableHandphones(available);
+    } catch (error) {
+      console.error('Error fetching available handphones:', error);
+      setAvailableHandphones([]);
     }
   }, []);
 
@@ -359,9 +397,12 @@ const Dashboard = ({ setToken }) => {
         uploadFotoId: product.uploadFotoId || '',
         uploadFotoSelfie: product.uploadFotoSelfie || '',
         handphone: product.handphone || '',
+        tipeHandphone: product.tipeHandphone || '',
         imeiHandphone: product.imeiHandphone || '',
         spesifikasi: product.spesifikasi || '',
+        kepemilikan: product.kepemilikan || '',
         harga: product.harga || '',
+        handphoneId: product.handphoneId || '',
         bank: product.bank || '',
         grade: product.grade || '',
         kcp: product.kcp || '',
@@ -379,10 +420,21 @@ const Dashboard = ({ setToken }) => {
         email: product.email || '',
         passEmail: product.passEmail || '',
       });
+      setImeiError(validateIMEI(product.imeiHandphone || '', products, product._id));
+      setImeiDuplicate(products.some(p => p.imeiHandphone === product.imeiHandphone && p._id !== product._id));
+
+      // Fetch available handphones for the selected field staff
+      const selectedStaff = fieldStaff.find(fs => `${fs.kodeOrlap} - ${fs.namaOrlap}` === product.fieldStaff);
+      if (selectedStaff) {
+        fetchAvailableHandphones(selectedStaff._id);
+      }
 
     } else {
       setEditing(null);
       setForm(initialFormState);
+      setImeiError('');
+      setImeiDuplicate(false);
+      setAvailableHandphones([]);
 
     }
     setOpen(true);
@@ -758,6 +810,7 @@ const Dashboard = ({ setToken }) => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>No. Order</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Nama</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Handphone</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Expired</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Complaint</TableCell>
@@ -778,6 +831,7 @@ const Dashboard = ({ setToken }) => {
                   >
                     <TableCell>{product.noOrder}</TableCell>
                     <TableCell>{product.nama}</TableCell>
+                    <TableCell>{product.handphone ? `${product.handphone} ${product.tipeHandphone || ''}` : '-'}</TableCell>
                     <TableCell>{new Date(product.expired).toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>
                       <Chip
@@ -831,9 +885,45 @@ const Dashboard = ({ setToken }) => {
                   value={form.fieldStaff}
                   options={fieldStaff.map(fs => `${fs.kodeOrlap} - ${fs.namaOrlap}`)}
                   freeSolo
-                  onChange={(event, newValue) => { setForm({ ...form, fieldStaff: newValue || '' }); }}
+                  onChange={(event, newValue) => {
+                    setForm({ ...form, fieldStaff: newValue || '', handphoneId: '' });
+                    // Find the selected field staff ID to fetch available handphones
+                    const selectedStaff = fieldStaff.find(fs => `${fs.kodeOrlap} - ${fs.namaOrlap}` === newValue);
+                    fetchAvailableHandphones(selectedStaff ? selectedStaff._id : null);
+                  }}
                   onInputChange={(event, newInputValue) => { setForm({ ...form, fieldStaff: newInputValue || '' }); }}
                   renderInput={(params) => <TextField {...params} label="Orang Lapangan" name="fieldStaff" placeholder="Pilih orang lapangan dari daftar atau ketik baru" margin="normal" />}
+                />
+                <Autocomplete
+                  fullWidth
+                  value={availableHandphones.find(h => h._id === form.handphoneId) || null}
+                  options={availableHandphones}
+                  getOptionLabel={(option) => option ? `${option.merek} ${option.tipe} - IMEI: ${option.imei || 'N/A'}` : ''}
+                  onChange={(event, newValue) => {
+                    if (newValue) {
+                      setForm({
+                        ...form,
+                        handphoneId: newValue._id,
+                        handphone: newValue.merek,
+                        tipeHandphone: newValue.tipe,
+                        imeiHandphone: newValue.imei || '',
+                        spesifikasi: newValue.spesifikasi,
+                        kepemilikan: newValue.kepemilikan
+                      });
+                    } else {
+                      setForm({
+                        ...form,
+                        handphoneId: '',
+                        handphone: '',
+                        tipeHandphone: '',
+                        imeiHandphone: '',
+                        spesifikasi: '',
+                        kepemilikan: ''
+                      });
+                    }
+                  }}
+                  renderInput={(params) => <TextField {...params} label="Handphone" placeholder="Pilih handphone yang tersedia (opsional)" margin="normal" />}
+                  disabled={!form.fieldStaff || availableHandphones.length === 0}
                 />
                 <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Grade" name="grade" placeholder="Bebas, contoh: A, VIP, PREMIUM, GOLD" value={form.grade} onChange={handleChange} margin="normal" required />
@@ -852,6 +942,12 @@ const Dashboard = ({ setToken }) => {
                 <TextField fullWidth label="Password Mbanking" name="passWondr" placeholder="Minimal 6 karakter, contoh: wondrpass123" value={form.passWondr} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Email" name="email" placeholder="Format email valid, contoh: user@example.com" value={form.email} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Password Email" name="passEmail" placeholder="Minimal 6 karakter, contoh: emailpass123" value={form.passEmail} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="Merek Handphone" name="handphone" placeholder="Merek HP, contoh: Samsung" value={form.handphone} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="Tipe Handphone" name="tipeHandphone" placeholder="Tipe/model HP, contoh: Galaxy A50" value={form.tipeHandphone} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="IMEI Handphone" name="imeiHandphone" placeholder="15 digit angka, contoh: 123456789012345" value={form.imeiHandphone} onChange={handleChange} margin="normal" error={!!imeiError} helperText={imeiError} />
+                <TextField fullWidth label="Spesifikasi" name="spesifikasi" placeholder="Detail spesifikasi HP" value={form.spesifikasi} onChange={handleChange} margin="normal" multiline rows={3} required />
+                <TextField fullWidth label="Kepemilikan" name="kepemilikan" placeholder="Status kepemilikan, contoh: Milik Sendiri" value={form.kepemilikan} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="Harga" name="harga" type="number" placeholder="Harga dalam Rupiah" value={form.harga} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Expired" name="expired" type="date" placeholder="Pilih tanggal expired" value={form.expired} onChange={handleChange} margin="normal" required InputLabelProps={{ shrink: true }} />
                 <FormControl fullWidth margin="normal">
                   <InputLabel id="status-label">Status</InputLabel>
@@ -891,8 +987,7 @@ const Dashboard = ({ setToken }) => {
                   <Typography variant="caption" display="block" gutterBottom>Upload Foto Selfie (opsional)</Typography>
                 </Box>
               </Box>
-            )}
-          </DialogContent>
+        </DialogContent>
           <DialogActions>
             <Button onClick={handleClose}>Cancel</Button>
             <Button type="submit" disabled={!!imeiError}>Save</Button>
