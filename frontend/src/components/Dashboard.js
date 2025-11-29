@@ -216,8 +216,6 @@ const Dashboard = ({ setToken }) => {
   const [search, setSearch] = useState('');
   const [filterExpired, setFilterExpired] = useState('');
   const [open, setOpen] = useState(false);
-  const [tabIndex, setTabIndex] = useState(0);
-  const [handphoneSubTab, setHandphoneSubTab] = useState(0);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(initialFormState);
   const [imeiError, setImeiError] = useState('');
@@ -385,7 +383,6 @@ const Dashboard = ({ setToken }) => {
     } else {
       setEditing(null);
       setForm(initialFormState);
-      setHandphoneSubTab(0); // Reset sub-tab ke default
 
     }
     setOpen(true);
@@ -393,7 +390,6 @@ const Dashboard = ({ setToken }) => {
 
   const handleClose = () => {
     setOpen(false);
-    setHandphoneSubTab(0); // Reset sub-tab
     // Only clear selectedProductForInvoice if the product is not completed
     // This ensures the invoice button remains visible for completed products
     if (selectedProductForInvoice && selectedProductForInvoice.status !== 'completed') {
@@ -811,12 +807,6 @@ const Dashboard = ({ setToken }) => {
           <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>{editing ? 'Edit Product' : 'Add Product'}</DialogTitle>
           <form onSubmit={handleSubmit}>
           <DialogContent>
-            <Tabs value={tabIndex} onChange={(e, v) => setTabIndex(v)} sx={{ mb: 2 }}>
-              <Tab label="Umum" />
-              <Tab label="Handphone" />
-            </Tabs>
-
-            {tabIndex === 0 && (
               <Box>
                 <Autocomplete
                   fullWidth
@@ -902,71 +892,13 @@ const Dashboard = ({ setToken }) => {
                 </Box>
               </Box>
             )}
-
-            {tabIndex === 1 && (
-              <Box>
-                <Tabs value={handphoneSubTab} onChange={(e, v) => setHandphoneSubTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-                  <Tab label="Detail Handphone" />
-                  <Tab label="Data Handphone" />
-                </Tabs>
-
-                {handphoneSubTab === 0 && (
-                  <Box>
-                    <TextField fullWidth label="Merek Handphone" name="handphone" value={form.handphone} onChange={handleChange} margin="normal" placeholder="Contoh: Samsung Galaxy A52, iPhone 13 Pro" />
-                    <TextField fullWidth label="Spesifikasi" name="spesifikasi" value={form.spesifikasi} onChange={handleChange} margin="normal" multiline rows={3} placeholder="RAM, Storage, Processor, dll" />
-                    <TextField fullWidth label="Harga" name="harga" placeholder="Contoh: 1500000" value={form.harga} onChange={handleChange} margin="normal" type="number" inputProps={{ min: 0 }} />
-                  </Box>
-                )}
-
-                {handphoneSubTab === 1 && (
-                  <Box>
-                    <Autocomplete
-                      fullWidth
-                      value={form.imeiHandphone}
-                      options={imeiSuggestions}
-                      freeSolo
-                      onChange={(event, newValue) => {
-                        let value = newValue || '';
-                        value = value.replace(/\D/g, '').slice(0, 16);
-                        const lengthValid = value.length >= 14 && value.length <= 16;
-                        setImeiError(lengthValid || value.length === 0 ? '' : 'IMEI harus 14-16 digit angka');
-                        const duplicate = products.some(p => p.imeiHandphone === value && (!editing || p._id !== editing));
-                        setImeiDuplicate(!!duplicate);
-                        setForm({ ...form, imeiHandphone: value });
-                      }}
-                      onInputChange={(event, newInputValue) => {
-                        let value = newInputValue || '';
-                        value = value.replace(/\D/g, '').slice(0, 16);
-                        const lengthValid = value.length >= 14 && value.length <= 16;
-                        setImeiError(lengthValid || value.length === 0 ? '' : 'IMEI harus 14-16 digit angka');
-                        const duplicate = products.some(p => p.imeiHandphone === value && (!editing || p._id !== editing));
-                        setImeiDuplicate(!!duplicate);
-                        setForm({ ...form, imeiHandphone: value });
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="IMEI Handphone"
-                          name="imeiHandphone"
-                          margin="normal"
-                          error={!!imeiError || imeiDuplicate}
-                          helperText={imeiError || (imeiDuplicate ? 'IMEI sudah ada' : '')}
-                          inputProps={{ ...params.inputProps, maxLength: 16 }}
-                          placeholder="14-16 digit angka"
-                        />
-                      )}
-                    />
-                  </Box>
-                )}
-              </Box>
-            )}
           </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button type="submit" disabled={!!imeiError}>Save</Button>
-            </DialogActions>
-          </form>
-        </Dialog>
+          <DialogActions>
+            <Button onClick={handleClose}>Cancel</Button>
+            <Button type="submit" disabled={!!imeiError}>Save</Button>
+          </DialogActions>
+        </form>
+      </Dialog>
 
         {/* PDF Import Dialog */}
         
