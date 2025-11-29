@@ -370,7 +370,9 @@ const HandphoneMenu = () => {
                     <TableCell sx={{ fontWeight: 'bold' }}>IMEI</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Kepemilikan</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Assigned To (Orlap)</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Current Product</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Customer</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -378,7 +380,7 @@ const HandphoneMenu = () => {
                     <TableRow key={handphone._id} hover>
                       <TableCell sx={{ fontWeight: 'bold' }}>{handphone.merek}</TableCell>
                       <TableCell>{handphone.tipe}</TableCell>
-                      <TableCell sx={{ fontFamily: 'monospace' }}>{handphone.imei}</TableCell>
+                      <TableCell sx={{ fontFamily: 'monospace' }}>{handphone.imei || '-'}</TableCell>
                       <TableCell>
                         <Chip
                           label={handphone.status === 'available' ? 'Tersedia' :
@@ -393,6 +395,20 @@ const HandphoneMenu = () => {
                       </TableCell>
                       <TableCell>{handphone.kepemilikan}</TableCell>
                       <TableCell>
+                        {handphone.assignedTo ? (
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                              {handphone.assignedTo.kodeOrlap}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {handphone.assignedTo.namaOrlap}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">-</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         {handphone.currentProduct ? (
                           <Box>
                             <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
@@ -402,6 +418,15 @@ const HandphoneMenu = () => {
                               {handphone.currentProduct.nama}
                             </Typography>
                           </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">-</Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {handphone.currentProduct ? (
+                          <Typography variant="body2">
+                            {handphone.currentProduct.customer || '-'}
+                          </Typography>
                         ) : (
                           <Typography variant="body2" color="text.secondary">-</Typography>
                         )}

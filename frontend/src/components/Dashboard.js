@@ -880,7 +880,7 @@ const Dashboard = ({ setToken }) => {
                   fullWidth
                   value={availableHandphones.find(h => h._id === form.handphoneId) || null}
                   options={availableHandphones}
-                  getOptionLabel={(option) => option ? `${option.merek} ${option.tipe} - IMEI: ${option.imei}` : ''}
+                  getOptionLabel={(option) => option ? `${option.merek} ${option.tipe}${option.imei ? ` - IMEI: ${option.imei}` : ''}` : ''}
                   onChange={(event, newValue) => {
                     setForm({ ...form, handphoneId: newValue ? newValue._id : '' });
                   }}
@@ -893,17 +893,41 @@ const Dashboard = ({ setToken }) => {
                       margin="normal"
                       required
                       helperText="Handphone yang dipilih akan di-assign ke produk ini"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          backgroundColor: 'white',
+                          '& fieldset': {
+                            borderColor: 'rgba(0, 0, 0, 0.23)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: 'rgba(0, 0, 0, 0.87)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#1976d2',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: 'rgba(0, 0, 0, 0.6)',
+                          '&.Mui-focused': {
+                            color: '#1976d2',
+                          },
+                        },
+                        '& .MuiInputBase-input': {
+                          color: 'rgba(0, 0, 0, 0.87)',
+                        },
+                      }}
                     />
                   )}
                   sx={{
                     mt: 2,
                     mb: 1,
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      backgroundColor: 'rgba(255,255,255,0.9)',
-                      '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
-                      '&.Mui-focused': { backgroundColor: 'white' }
-                    }
+                    '& .MuiAutocomplete-popupIndicator': {
+                      color: 'rgba(0, 0, 0, 0.54)',
+                    },
+                    '& .MuiAutocomplete-clearIndicator': {
+                      color: 'rgba(0, 0, 0, 0.54)',
+                    },
                   }}
                 />
                 {availableHandphones.length === 0 && (
@@ -928,11 +952,6 @@ const Dashboard = ({ setToken }) => {
                 <TextField fullWidth label="Password Mbanking" name="passWondr" placeholder="Minimal 6 karakter, contoh: wondrpass123" value={form.passWondr} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Email" name="email" placeholder="Format email valid, contoh: user@example.com" value={form.email} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Password Email" name="passEmail" placeholder="Minimal 6 karakter, contoh: emailpass123" value={form.passEmail} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Merek Handphone" name="handphone" placeholder="Merek HP, contoh: Samsung" value={form.handphone} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Tipe Handphone" name="tipeHandphone" placeholder="Tipe/model HP, contoh: Galaxy A50" value={form.tipeHandphone} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="IMEI Handphone" name="imeiHandphone" placeholder="15 digit angka, contoh: 123456789012345" value={form.imeiHandphone} onChange={handleChange} margin="normal" error={!!imeiError} helperText={imeiError} />
-                <TextField fullWidth label="Spesifikasi" name="spesifikasi" placeholder="Detail spesifikasi HP" value={form.spesifikasi} onChange={handleChange} margin="normal" multiline rows={3} required />
-                <TextField fullWidth label="Kepemilikan" name="kepemilikan" placeholder="Status kepemilikan, contoh: Milik Sendiri" value={form.kepemilikan} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Harga" name="harga" type="number" placeholder="Harga dalam Rupiah" value={form.harga} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Expired" name="expired" type="date" placeholder="Pilih tanggal expired" value={form.expired} onChange={handleChange} margin="normal" required InputLabelProps={{ shrink: true }} />
                 <FormControl fullWidth margin="normal">

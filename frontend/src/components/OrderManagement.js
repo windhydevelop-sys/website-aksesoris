@@ -232,7 +232,7 @@ const OrderManagement = () => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>No. Order</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Customer</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Field Staff</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Orlap</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Total Amount</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Created</TableCell>
