@@ -222,30 +222,6 @@ router.delete('/:id/unassign-handphone/:handphoneId', async (req, res) => {
   }
 });
 
-// GET /api/field-staff/:id - Get field staff by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const fieldStaff = await FieldStaff.findById(req.params.id);
-
-    if (!fieldStaff) {
-      return res.status(404).json({
-        success: false,
-        error: 'Field staff not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: fieldStaff
-    });
-  } catch (error) {
-    console.error('Error fetching field staff:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch field staff'
-    });
-  }
-});
 
 // POST /api/field-staff - Create new field staff
 router.post('/', validateFieldStaff, async (req, res) => {
@@ -415,6 +391,31 @@ router.get('/available-handphones', async (req, res) => {
         handphoneModel: typeof Handphone,
         modelName: Handphone?.modelName
       }
+    });
+  }
+});
+
+// GET /api/field-staff/:id - Get field staff by ID (MUST BE LAST - catch-all route)
+router.get('/:id', async (req, res) => {
+  try {
+    const fieldStaff = await FieldStaff.findById(req.params.id);
+
+    if (!fieldStaff) {
+      return res.status(404).json({
+        success: false,
+        error: 'Field staff not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: fieldStaff
+    });
+  } catch (error) {
+    console.error('Error fetching field staff:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch field staff'
     });
   }
 });
