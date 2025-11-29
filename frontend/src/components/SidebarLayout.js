@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Drawer, Toolbar, Box, List, ListItem, ListItemIcon, ListItemText, ListItemButton, AppBar, Avatar, Typography, Chip, IconButton, useMediaQuery, useTheme } from '@mui/material';
-import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet } from '@mui/icons-material';
+import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet, Backup } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const drawerWidth = 240;
@@ -165,24 +165,6 @@ const SidebarLayout = ({ children, onLogout }) => {
                 </ListItemButton>
               </ListItem>
             )}
-            {(userRole === 'admin' || menuPermissions.fieldStaff) && (
-              <ListItem disablePadding>
-                <ListItemButton
-                  selected={isActive('/field-staff')}
-                  onClick={() => navigate('/field-staff')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
-                >
-                  <ListItemIcon sx={{ color: 'inherit' }}><Group /></ListItemIcon>
-                  <ListItemText primary="Orang Lapangan" sx={{ color: 'inherit' }} />
-                </ListItemButton>
-              </ListItem>
-            )}
             {userRole === 'admin' && (
               <ListItem disablePadding>
                 <ListItemButton
@@ -198,6 +180,24 @@ const SidebarLayout = ({ children, onLogout }) => {
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><Group /></ListItemIcon>
                   <ListItemText primary="Kelola Orlap" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {(userRole === 'admin' || user.fieldStaff) && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={isActive('/field-staff-dashboard')}
+                  onClick={() => navigate('/field-staff-dashboard')}
+                  sx={{
+                    color: 'inherit',
+                    borderRadius: 2,
+                    mx: 1,
+                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
+                  <ListItemText primary="Dashboard Orlap" sx={{ color: 'inherit' }} />
                 </ListItemButton>
               </ListItem>
             )}
@@ -273,11 +273,11 @@ const SidebarLayout = ({ children, onLogout }) => {
                 </ListItemButton>
               </ListItem>
             )}
-            {(userRole === 'admin' || user.fieldStaff) && (
+            {userRole === 'admin' && (
               <ListItem disablePadding>
                 <ListItemButton
-                  selected={isActive('/field-staff-dashboard')}
-                  onClick={() => navigate('/field-staff-dashboard')}
+                  selected={isActive('/backup')}
+                  onClick={() => navigate('/backup')}
                   sx={{
                     color: 'inherit',
                     borderRadius: 2,
@@ -286,8 +286,8 @@ const SidebarLayout = ({ children, onLogout }) => {
                     '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
                   }}
                 >
-                  <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
-                  <ListItemText primary="Dashboard Field Staff" sx={{ color: 'inherit' }} />
+                  <ListItemIcon sx={{ color: 'inherit' }}><Backup /></ListItemIcon>
+                  <ListItemText primary="Database Backup" sx={{ color: 'inherit' }} />
                 </ListItemButton>
               </ListItem>
             )}

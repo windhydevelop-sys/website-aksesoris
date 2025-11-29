@@ -18,6 +18,7 @@ import CashflowManagement from './components/CashflowManagement';
 import ProductDetail from './components/ProductDetail';
 import HandphoneManagement from './components/HandphoneManagement';
 import FieldStaffDashboard from './components/FieldStaffDashboard';
+import BackupManagement from './components/BackupManagement';
 import './App.css';
 
 function App() {
@@ -49,6 +50,7 @@ function App() {
             <Route path="/handphone" element={token ? <HandphoneMenu /> : <Navigate to="/login" />} />
             <Route path="/handphones" element={token ? <HandphoneManagement /> : <Navigate to="/login" />} />
             <Route path="/field-staff-dashboard" element={token ? <FieldStaffDashboard /> : <Navigate to="/login" />} />
+            <Route path="/backup" element={token ? <BackupManagement /> : <Navigate to="/login" />} />
             <Route path="/users" element={token ? <UserManagement /> : <Navigate to="/login" />} />
             <Route path="/" element={<Navigate to="/login" />} />
           </Routes>

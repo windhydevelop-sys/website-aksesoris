@@ -236,6 +236,7 @@ const Dashboard = ({ setToken }) => {
   const [fieldStaff, setFieldStaff] = useState([]);
   const [orders, setOrders] = useState([]);
   const [availableHandphones, setAvailableHandphones] = useState([]);
+  const [totalHandphones, setTotalHandphones] = useState(0);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -302,12 +303,15 @@ const Dashboard = ({ setToken }) => {
   const fetchAvailableHandphones = useCallback(async () => {
     try {
       const res = await axios.get('/api/handphones');
+      const allHandphones = res.data.data || [];
       // Filter only available handphones
-      const available = res.data.data.filter(h => h.status === 'available') || [];
+      const available = allHandphones.filter(h => h.status === 'available');
       setAvailableHandphones(available);
+      setTotalHandphones(allHandphones.length);
     } catch (error) {
       console.error('Error fetching available handphones:', error);
       setAvailableHandphones([]);
+      setTotalHandphones(0);
     }
   }, []);
 
@@ -578,7 +582,7 @@ const Dashboard = ({ setToken }) => {
             }}>
               <CardContent sx={{ textAlign: 'center' }}>
                 <People sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">{Array.from(new Set(products.map(p => p.customer).filter(Boolean))).length}</Typography>
+                <Typography variant="h4" component="div">{customers.length}</Typography>
                 <Typography variant="body2">Jumlah Customer</Typography>
               </CardContent>
             </Card>
@@ -594,7 +598,7 @@ const Dashboard = ({ setToken }) => {
             }}>
               <CardContent sx={{ textAlign: 'center' }}>
                 <Smartphone sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">{Array.from(new Set(products.map(p => p.handphone).filter(Boolean))).length}</Typography>
+                <Typography variant="h4" component="div">{totalHandphones}</Typography>
                 <Typography variant="body2">Jumlah Handphone</Typography>
               </CardContent>
             </Card>
