@@ -193,11 +193,8 @@ const createProduct = async (req, res) => {
     }, req);
 
     // Return decrypted data with populated handphone
-    const populatedProduct = await Product.findById(product._id).populate('handphoneId', 'merek tipe imei spesifikasi');
-    res.status(201).json({
-      success: true,
-      data: populatedProduct.getDecryptedData()
-    });
+              const populatedProduct = await Product.findById(product._id).populate('handphoneId', 'merek tipe imei spesifikasi');
+              res.status(201).json({ success: true, data: populatedProduct });
 
   } catch (err) {
     console.error('Product creation error:', err);
@@ -265,7 +262,7 @@ const getProductById = async (req, res) => {
 
     res.json({
       success: true,
-      data: product.getDecryptedData()
+      data: product
     });
 
   } catch (err) {
