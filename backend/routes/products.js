@@ -8,15 +8,6 @@ const auth = require('../middleware/auth');
 const { validateProduct } = require('../utils/validation');
 const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
-const {
-  getCustomers,
-  getComplaints,
-  createProduct,
-  getProducts,
-  getProductById,
-  updateProduct,
-  deleteProduct
-} = require('../controllers/products');
 
 const router = express.Router();
 
@@ -32,10 +23,80 @@ router.use((req, res, next) => {
 });
 
 // Get unique customer names for autocomplete
-router.get('/customers', auth, addUserInfo, getCustomers);
+router.get('/customers', auth, addUserInfo, async (req, res) => {
+  console.log('[/api/products/customers] Route hit.');
+  try {
+    const { customerName } = req.query;
+    const { codeAgen } = req.query;
+    let query = {};
+
+    if (customerName) {
+      query.customer = new RegExp(customerName, 'i'); // Case-insensitive search
+    }
+
+    if (codeAgen) {
+      query.codeAgen = new RegExp(codeAgen, 'i'); // Case-insensitive search
+    }
+    const products = await Product.findDecrypted(query);
+
+    auditLog('READ', req.userId, 'Product', 'customer_filtered', {
+      customerName: customerName || 'all',
+      codeAgen: codeAgen || 'all',
+      count: products.length
+    }, req);
+
+    res.json({ success: true, data: products });
+  } catch (err) {
+    console.error('[/api/products/customers] Error fetching products:', err);
+    securityLog('PRODUCT_CUSTOMER_READ_FAILED', 'medium', {
+      error: err.message,
+      userId: req.userId,
+      customerName: req.query.customerName,
+      codeAgen: req.query.codeAgen
+    }, req);
+    res.status(500).json({ success: false, error: 'Failed to fetch products' });
+  }
+});
 
 // Get products with complaints, filterable by codeAgen, nama, and noRek
-router.get('/complaints', auth, addUserInfo, getComplaints);
+router.get('/complaints', auth, addUserInfo, async (req, res) => {
+  console.log('[/api/products/complaints] Route hit.');
+  try {
+    const { codeAgen, nama, noRek } = req.query;
+    let query = { complaint: { $exists: true, $ne: null, $ne: '' } }; // Products with a non-empty complaint
+
+    if (codeAgen) {
+      query.codeAgen = new RegExp(codeAgen, 'i');
+    }
+    if (nama) {
+      query.nama = new RegExp(nama, 'i');
+    }
+    if (noRek) {
+      query.noRek = new RegExp(noRek, 'i');
+    }
+
+    const products = await Product.findDecrypted(query);
+
+    auditLog('READ', req.userId, 'Product', 'complaints_filtered', {
+      codeAgen: codeAgen || 'all',
+      nama: nama || 'all',
+      noRek: noRek || 'all',
+      count: products.length
+    }, req);
+
+    res.json({ success: true, data: products });
+  } catch (err) {
+    console.error('[/api/products/complaints] Error fetching complaints:', err);
+    securityLog('PRODUCT_COMPLAINTS_READ_FAILED', 'medium', {
+      error: err.message,
+      userId: req.userId,
+      codeAgen: req.query.codeAgen,
+      nama: req.query.nama,
+      noRek: req.query.noRek
+    }, req);
+    res.status(500).json({ success: false, error: 'Failed to fetch complaints' });
+  }
+});
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads');
@@ -172,28 +233,249 @@ const pdfUpload = multer({
 
 // Create product with validation and security
 router.post('/',
+  auth,
   addUserInfo,
   handleFileUpload,
   validateProduct,
-  createProduct
-);
+  async (req, res) => {
+    try {
+      const data = { ...req.body };
+
+      // Ensure req.files exists
+      req.files = req.files || {};
+
+      // Handle file uploads
+      if (req.files.uploadFotoId && req.files.uploadFotoId.length > 0) {
+        data.uploadFotoId = req.files.uploadFotoId[0].filename;
+      }
+      if (req.files.uploadFotoSelfie && req.files.uploadFotoSelfie.length > 0) {
+        data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].filename;
+      }
+
+      // Add complaint field if present
+      if (req.body.complaint) {
+        data.complaint = req.body.complaint;
+      }
+
+      // Add audit fields
+      data.createdBy = req.userId;
+      data.lastModifiedBy = req.userId;
+
+      const product = new Product(data);
+      await product.save();
+
+      // Audit log
+      auditLog('CREATE', req.userId, 'Product', product._id, {
+        noOrder: data.noOrder,
+        nama: data.nama
+      }, req);
+
+      // Return decrypted data for immediate use
+      res.status(201).json({
+        success: true,
+        data: product.getDecryptedData()
+      });
+
+    } catch (err) {
+      console.error('Product creation error:', err); // Temporary debug
+      // Temporarily disable security logging to debug
+      // securityLog('PRODUCT_CREATE_FAILED', 'low', {
+      //   error: err.message,
+      //   userId: req.userId
+      // }, req);
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to create product'
+      });
+    }
+});
 
 // Get all products with decryption
-router.get('/', addUserInfo, getProducts);
+router.get('/', addUserInfo, async (req, res) => {
+  try {
+    const products = await Product.findDecrypted();
+
+    // Audit log for data access
+    auditLog('READ', req.userId, 'Product', 'all', {
+      count: products.length
+    }, req);
+
+    res.json({
+      success: true,
+      count: products.length,
+      data: products
+    });
+
+  } catch (err) {
+    securityLog('PRODUCT_READ_FAILED', 'low', {
+      error: err.message,
+      userId: req.userId
+    }, req);
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch products'
+    });
+  }
+});
 
 // Get product by id with decryption
-router.get('/:id', addUserInfo, getProductById);
+router.get('/:id', addUserInfo, async (req, res) => {
+  try {
+    const product = await Product.findOneDecrypted({ _id: req.params.id });
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        error: 'Product not found'
+      });
+    }
+
+    // Audit log
+    auditLog('READ', req.userId, 'Product', req.params.id, {
+      noOrder: product.noOrder,
+      nama: product.nama
+    }, req);
+
+    res.json({
+      success: true,
+      data: product
+    });
+
+  } catch (err) {
+    securityLog('PRODUCT_READ_FAILED', 'low', {
+      error: err.message,
+      productId: req.params.id,
+      userId: req.userId
+    }, req);
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch product'
+    });
+  }
+});
 
 // Update product with validation and security
 router.put('/:id',
   addUserInfo,
   handleFileUpload,
   validateProduct,
-  updateProduct
-);
+  async (req, res) => {
+    try {
+      console.log('Files received:', req.files); // Debug log
+      const data = { ...req.body };
+
+      // Handle file uploads
+      if (req.files && req.files.uploadFotoId) {
+        data.uploadFotoId = req.files.uploadFotoId[0].filename;
+      }
+      if (req.files && req.files.uploadFotoSelfie) {
+        data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].filename;
+      }
+
+      // Add complaint field if present
+      if (req.body.complaint) {
+        data.complaint = req.body.complaint;
+      }
+
+      // Add audit field
+      data.lastModifiedBy = req.userId;
+
+      const product = await Product.findByIdAndUpdate(
+        req.params.id,
+        data,
+        { new: true, runValidators: true }
+      );
+
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          error: 'Product not found'
+        });
+      }
+
+      // Audit log
+      auditLog('UPDATE', req.userId, 'Product', req.params.id, {
+        noOrder: data.noOrder,
+        nama: data.nama
+      }, req);
+
+      res.json({
+        success: true,
+        data: product.getDecryptedData()
+      });
+
+    } catch (err) {
+      securityLog('PRODUCT_UPDATE_FAILED', 'medium', {
+        error: err.message,
+        productId: req.params.id,
+        userId: req.userId
+      }, req);
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update product'
+      });
+    }
+});
 
 // Delete product with security checks
-router.delete('/:id', addUserInfo, deleteProduct);
+router.delete('/:id', addUserInfo, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        error: 'Product not found'
+      });
+    }
+
+    // Check if user can delete (optional: add ownership check)
+    // For now, any authenticated user can delete
+
+    await Product.findByIdAndDelete(req.params.id);
+
+    // Audit log
+    auditLog('DELETE', req.userId, 'Product', req.params.id, {
+      noOrder: product.noOrder,
+      nama: product.nama
+    }, req);
+
+    // Clean up uploaded files
+    if (product.uploadFotoId) {
+      const filePath = path.join(uploadsDir, product.uploadFotoId);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+    if (product.uploadFotoSelfie) {
+      const filePath = path.join(uploadsDir, product.uploadFotoSelfie);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Product deleted successfully'
+    });
+
+  } catch (err) {
+    securityLog('PRODUCT_DELETE_FAILED', 'high', {
+      error: err.message,
+      productId: req.params.id,
+      userId: req.userId
+    }, req);
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete product'
+    });
+  }
+});
 
 // Generic Document Import endpoint - Preview data without saving
 router.post('/import-document',
