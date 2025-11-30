@@ -463,11 +463,20 @@ const Dashboard = ({ setToken }) => {
         if ((key === 'nik' || key === 'noAtm') && typeof value === 'string') {
           value = cleanCardNumber(value);
         }
+
+        // Map frontend field names to backend field names
+        let backendKey = key;
+        if (key === 'orderNumber') {
+          backendKey = 'noOrder';
+        } else if (key === 'fieldStaff') {
+          backendKey = 'codeAgen';
+        }
+
         // Handle date format for 'expired'
         if (key === 'expired' && value) {
-          formData.append(key, new Date(value).toISOString());
+          formData.append(backendKey, new Date(value).toISOString());
         } else {
-          formData.append(key, value);
+          formData.append(backendKey, value);
         }
       }
     }
