@@ -32,6 +32,7 @@ import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useNotification } from '../contexts/NotificationContext';
+import ProductDetailDialog from './ProductDetailDialog';
 
 const STATUS_OPTIONS = [
   { value: 'available', label: 'Available', color: 'success' },
@@ -51,6 +52,8 @@ const HandphoneManagement = () => {
   // Dialog states
   const [openDialog, setOpenDialog] = useState(false);
   const [editingHandphone, setEditingHandphone] = useState(null);
+  const [openProductDialog, setOpenProductDialog] = useState(false);
+  const [selectedHandphone, setSelectedHandphone] = useState(null);
   const [formData, setFormData] = useState({
     merek: '',
     tipe: '',
@@ -172,6 +175,16 @@ const HandphoneManagement = () => {
       assignedTo: '',
       status: 'available'
     });
+  };
+
+  const handleProductChipClick = (handphone) => {
+    setSelectedHandphone(handphone);
+    setOpenProductDialog(true);
+  };
+
+  const handleCloseProductDialog = () => {
+    setOpenProductDialog(false);
+    setSelectedHandphone(null);
   };
 
   const handleFormChange = (e) => {
@@ -419,6 +432,14 @@ const HandphoneManagement = () => {
                               label={`${product.noOrder} - ${product.nama}`}
                               size="small"
                               color="primary"
+                              onClick={() => handleProductChipClick(handphone)}
+                              sx={{ 
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  bgcolor: 'primary.light',
+                                  color: 'white'
+                                }
+                              }}
                               variant="outlined"
                             />
                           ))
@@ -597,6 +618,13 @@ const HandphoneManagement = () => {
             </DialogActions>
           </form>
         </Dialog>
+
+        {/* Product Detail Dialog */}
+        <ProductDetailDialog
+          open={openProductDialog}
+          onClose={handleCloseProductDialog}
+          selectedHandphone={selectedHandphone}
+        />
       </Container>
     </SidebarLayout>
   );

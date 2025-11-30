@@ -6,7 +6,8 @@ const {
   getHandphoneById,
   createHandphone,
   updateHandphone,
-  deleteHandphone
+  deleteHandphone,
+  getProductsDetailsByHandphoneId
 } = require('../controllers/handphones');
 
 // Middleware to add user info to request
@@ -98,5 +99,8 @@ router.delete('/:id/unassign-product/:productId', auth, addUserInfo, async (req,
     });
   }
 });
+
+// Get products details by nadarphone ID
+router.get('/:id/products-details', auth, addUserInfo, getProductsDetailsByHandphoneId);
 
 module.exports = router;

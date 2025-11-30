@@ -246,6 +246,57 @@ const deleteHandphone = async (req, res) => {
       error: 'Failed to delete handphone'
     });
   }
+// Get products details by nadarphone ID
+const getProductsDetailsByHandphoneId = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // First check if nadarphone exists
+    const nadarphone = await Handphone.findById(id);
+    if (!nadarphone) {
+      return res.status(404).json({
+        success: false,
+        error: 'Handphone not found'
+      });
+    }
+
+    // Get products assigned to this nadarphone
+    const products = await require('../models/Product').find({ 
+      _id: { $in: nadarphone.assignedProducts } 
+    })
+    .populate('handphoneId', 'merek tipe imei')
+    .select('noOrder nama customer fieldStaff orderNumber status harga createdAt')
+    .sort({ createdAt: -1 });
+
+    auditLog('READ', req.userId, 'Products', 'byHandphone', {
+      nadarphoneId: id,
+      productsCount: products.length
+    }, req);
+
+    res.json({
+      success: true,
+      data: products,
+      count: products.length,
+      nadarphoneInfo: {
+        id: nadarphone._id,
+        merek: nadarphone.merek,
+        tipe: nadarphone.tipe,
+        imei: nadarphone.imei
+      }
+    });
+  } catch (error) {
+    securityLog('PRODUCTS_BY_HANDPHONE_READ_FAILED', 'medium', {
+      error: error.message,
+      nadarphoneId: req.params.id,
+      userId: req.userId
+    }, req);
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch products for nadarphone'
+    });
+  }
+};
 };
 
 module.exports = {
@@ -253,5 +304,6 @@ module.exports = {
   getHandphoneById,
   createHandphone,
   updateHandphone,
-  deleteHandphone
+  deleteHandphone,
+  getProductsDetailsByHandphoneId
 };
