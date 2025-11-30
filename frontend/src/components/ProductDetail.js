@@ -92,11 +92,11 @@ const ProductDetail = () => {
     noAtm: 'No. ATM',
     validThru: 'Valid Thru',
     noHp: 'No. HP',
-    handphone: 'Merek Handphone',
-    tipeHandphone: 'Tipe Handphone',
-    imeiHandphone: 'IMEI Handphone',
-    spesifikasi: 'Spesifikasi',
-    kepemilikan: 'Kepemilikan',
+    handphoneMerek: 'Merek Handphone',
+    handphoneTipe: 'Tipe Handphone',
+    handphoneImei: 'IMEI Handphone',
+    handphoneSpesifikasi: 'Spesifikasi',
+    handphoneKepemilikan: 'Kepemilikan',
     pinAtm: 'PIN ATM',
     pinWondr: 'PIN Wondr',
     passWondr: 'Password Wondr',
@@ -120,11 +120,11 @@ const ProductDetail = () => {
     'noAtm',
     'validThru',
     'noHp',
-    'handphone',
-    'tipeHandphone',
-    'imeiHandphone',
-    'spesifikasi',
-    'kepemilikan',
+    'handphoneMerek',
+    'handphoneTipe',
+    'handphoneImei',
+    'handphoneSpesifikasi',
+    'handphoneKepemilikan',
     'pinAtm',
     'pinWondr',
     'passWondr',
@@ -157,12 +157,18 @@ const ProductDetail = () => {
                 <Table size="small">
                   <TableBody>
                     {fieldOrder.map((key)=>{
-                      if(!product[key]) return null;
+                      let value = product[key];
+                      if (key.startsWith('handphone') && product.handphoneId) {
+                        const handphoneKey = key.replace('handphone', '').toLowerCase();
+                        value = product.handphoneId[handphoneKey];
+                      }
+
+                      if (value === undefined || value === null || value === '') return null;
                       const label = fieldLabels[key] || key;
                       return (
                         <TableRow key={key}>
                           <TableCell component="th" scope="row" sx={{ fontWeight:'bold', width:'35%' }}>{label}</TableCell>
-                          <TableCell>{key==='expired'? new Date(product[key]).toLocaleDateString('id-ID') : String(product[key])}</TableCell>
+                          <TableCell>{key==='expired'? new Date(value).toLocaleDateString('id-ID') : String(value)}</TableCell>
                         </TableRow>
                       );
                     })}
