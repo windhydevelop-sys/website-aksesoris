@@ -297,7 +297,8 @@ const getProductsDetailsByHandphoneId = async (req, res) => {
     });
   }
 };
-};
+
+}
 
 module.exports = {
   getHandphones,
