@@ -246,7 +246,9 @@ const deleteHandphone = async (req, res) => {
       error: 'Failed to delete handphone'
     });
   }
-// Get products details by nadarphone ID
+}; // Added this closing brace
+
+// Get products details by handphone ID
 const getProductsDetailsByHandphoneId = async (req, res) => {
   try {
     const { id } = req.params;
@@ -297,8 +299,6 @@ const getProductsDetailsByHandphoneId = async (req, res) => {
     });
   }
 };
-
-}
 
 module.exports = {
   getHandphones,
