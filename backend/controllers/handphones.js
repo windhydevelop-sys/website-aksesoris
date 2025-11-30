@@ -38,7 +38,7 @@ const getHandphoneById = async (req, res) => {
     const handphone = await Handphone.findById(req.params.id)
       .populate('assignedTo', 'kodeOrlap namaOrlap')
       .populate('assignedProducts', 'noOrder nama customer')
-      .populate('currentProduct', 'noOrder nama');
+      .populate('currentProduct', 'noOrder nama customer'); // Populate customer for currentProduct
 
     if (!handphone) {
       return res.status(404).json({
