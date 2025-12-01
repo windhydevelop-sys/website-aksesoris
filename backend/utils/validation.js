@@ -155,6 +155,7 @@ const userSchema = Joi.object({
 
 // Validation middleware
 const validateProduct = (req, res, next) => {
+  console.log('Request body before Joi validation:', req.body);
   const { error, value } = productSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
 
   if (error) {

@@ -302,7 +302,6 @@ const getProductById = async (req, res) => {
 // Update product with handphone validation and status change logic
 const updateProduct = async (req, res) => {
   try {
-    console.log('Incoming updateProduct request body:', req.body);
     const data = { ...req.body };
 
     // Handle file uploads
