@@ -52,6 +52,7 @@ router.post('/:id/assign-product', auth, addUserInfo, async (req, res) => {
     // Add product to assignedProducts if not already present
     if (!handphone.assignedProducts.includes(productId)) {
       handphone.assignedProducts.push(productId);
+      console.log('Handphone object before save in assign-product:', handphone);
       await handphone.save();
     }
 
