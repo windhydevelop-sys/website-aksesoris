@@ -134,6 +134,7 @@ const createProduct = async (req, res) => {
         const tempProductId = new mongoose.Types.ObjectId(); // Temporary ID
         handphone.assignmentHistory[handphone.assignmentHistory.length - 1].product = tempProductId;
 
+        console.log('Handphone object before save in createProduct:', handphone);
         await handphone.save();
 
         handphoneAssignment = {
@@ -193,8 +194,8 @@ const createProduct = async (req, res) => {
     }, req);
 
     // Return decrypted data with populated handphone
-              const populatedProduct = await Product.findById(product._id).populate('handphoneId', 'merek tipe imei spesifikasi');
-              res.status(201).json({ success: true, data: populatedProduct });
+    const populatedProduct = await Product.findById(product._id).populate('handphoneId', 'merek tipe imei spesifikasi');
+    res.status(201).json({ success: true, data: populatedProduct.getDecryptedData() });
 
   } catch (err) {
     console.error('Product creation error:', err);
@@ -213,10 +214,29 @@ const createProduct = async (req, res) => {
 // Get all products with decryption and handphone population
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find().populate('handphoneId', 'merek tipe imei spesifikasi');
+    const products = await Product.find();
+
+    // Log handphoneId type before populate
+    products.forEach(product => {
+      if (product.handphoneId) {
+        console.log(`HandphoneId before populate: ${product.handphoneId}, Type: ${typeof product.handphoneId}`);
+      }
+    });
+
+    const populatedProducts = await Product.populate(products, {
+      path: 'handphoneId',
+      select: 'merek tipe imei spesifikasi'
+    });
+
+    // Log handphoneId type after populate
+    populatedProducts.forEach(product => {
+      if (product.handphoneId) {
+        console.log(`HandphoneId after populate: ${product.handphoneId}, Type: ${typeof product.handphoneId}`);
+      }
+    });
 
     // Decrypt each product
-    const decryptedProducts = products.map(product => product.getDecryptedData());
+    const decryptedProducts = populatedProducts.map(product => product.getDecryptedData());
 
     // Audit log for data access
     auditLog('READ', req.userId, 'Product', 'all', {
@@ -262,7 +282,7 @@ const getProductById = async (req, res) => {
 
     res.json({
       success: true,
-      data: product
+      data: product.getDecryptedData()
     });
 
   } catch (err) {
