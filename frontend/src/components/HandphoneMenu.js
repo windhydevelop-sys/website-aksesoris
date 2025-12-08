@@ -1,20 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
-import { Container, Typography, Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, CircularProgress, TableContainer, FormControl, InputLabel, Select, MenuItem, Card, CardContent, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Grid, Alert, Chip } from '@mui/material';
-import { Add, Smartphone } from '@mui/icons-material';
+import { Container, Typography, Box, Paper, Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Grid, Alert, Chip, IconButton, Collapse, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Add, Smartphone, ExpandMore, ExpandLess, Refresh } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
 
 const HandphoneMenu = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [selectedImei, setSelectedImei] = useState('');
-  const [uniqueImeis, setUniqueImeis] = useState([]);
   const [handphones, setHandphones] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
+  const [expandedRows, setExpandedRows] = useState(new Set());
   const [handphoneForm, setHandphoneForm] = useState({
     merek: '',
     tipe: '',
@@ -29,23 +24,6 @@ const HandphoneMenu = () => {
 
   const navigate = useNavigate();
   
-  // Fungsi untuk mengambil data produk dari API
-  const fetchProducts = useCallback(async () => {
-    try {
-      const productsRes = await axios.get('/api/products', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setProducts(productsRes.data.data || []);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Gagal mengambil data produk');
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  const handleSelectedImeiChange = (e) => {
-    setSelectedImei(e.target.value);
-  };
 
   // Fetch handphones data
   const fetchHandphones = useCallback(async () => {
@@ -99,151 +77,233 @@ const HandphoneMenu = () => {
     }
   };
 
-  // Terapkan filter dengan debounce ketika data produk atau nilai filter berubah
-  // Fungsi untuk mengelompokkan produk berdasarkan Merek Handphone dan keterangan
-  
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (Array.isArray(products)) {
-        const tempFilteredProducts = selectedImei
-          ? products.filter(p => p.imeiHandphone && p.imeiHandphone.toLowerCase() === selectedImei.toLowerCase())
-          : products;
-
-        setFilteredProducts(tempFilteredProducts);
-      }
-    }, 250);
-    return () => clearTimeout(handler);
-  }, [products, selectedImei]);
-
-
-  // Ambil data produk dan handphone saat komponen dimuat
-  useEffect(() => {
-    fetchProducts();
-    fetchHandphones();
-  }, [fetchProducts, fetchHandphones]);
-
-  useEffect(() => {
-    if (Array.isArray(products)) {
-      const imeis = [...new Set(products.map(p => p.imeiHandphone).filter(Boolean))];
-      setUniqueImeis(imeis);
+  const toggleRowExpansion = (handphoneId) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(handphoneId)) {
+      newExpanded.delete(handphoneId);
+    } else {
+      newExpanded.add(handphoneId);
     }
-  }, [products]);
+    setExpandedRows(newExpanded);
+  };
+
+  // Fetch handphones data when component mounts
+  useEffect(() => {
+    fetchHandphones();
+  }, [fetchHandphones]);
+
+  // Auto-refresh data when window gains focus
+  useEffect(() => {
+    const handleFocus = () => {
+      fetchHandphones();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [fetchHandphones]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     window.location.href = '/login';
   };
 
-  if (loading) {
-    return (
-      <SidebarLayout onLogout={handleLogout}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 10 }}>
-          <CircularProgress />
-        </Box>
-      </SidebarLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <SidebarLayout onLogout={handleLogout}>
-        <Container maxWidth="md" sx={{ mt: 8 }}>
-          <Typography color="error" variant="h6" gutterBottom>{error}</Typography>
-        </Container>
-      </SidebarLayout>
-    );
-  }
 
   return (
     <SidebarLayout onLogout={handleLogout}>
       <Container maxWidth="lg" sx={{ mt: 8 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <div>
-            <Typography variant="h4" gutterBottom>Detail Handphone</Typography>
-            <Typography variant="body2" color="text.secondary">Kelola inventaris handphone dan lihat data produk yang menggunakan handphone.</Typography>
-          </div>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={handleOpenDialog}
-            sx={{ borderRadius: 2 }}
-          >
-            Tambah Handphone
-          </Button>
-        </Box>
+           <div>
+             <Typography variant="h4" gutterBottom>Detail Handphone</Typography>
+             <Typography variant="body2" color="text.secondary">Kelola inventaris handphone dengan assignment tracking lengkap. Klik expand untuk melihat semua produk yang assigned.</Typography>
+           </div>
+           <Box sx={{ display: 'flex', gap: 1 }}>
+             <Button
+               variant="outlined"
+               startIcon={<Refresh />}
+               onClick={fetchHandphones}
+               sx={{ borderRadius: 2 }}
+             >
+               Refresh
+             </Button>
+             <Button
+               variant="contained"
+               startIcon={<Add />}
+               onClick={handleOpenDialog}
+               sx={{ borderRadius: 2 }}
+             >
+               Tambah Handphone
+             </Button>
+           </Box>
+         </Box>
 
-        <Card sx={{
-          mt: 2,
-          borderRadius: 3,
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-        }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ color: 'rgba(0,0,0,0.8)' }}>Filter</Typography>
-            <Box display="flex" gap={2} flexWrap="wrap">
-              <FormControl sx={{
-                minWidth: 280,
-                flex: 1,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                  backdropFilter: 'blur(5px)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    border: '1px solid rgba(255,255,255,0.4)'
-                  },
-                  '&.Mui-focused': {
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    border: '1px solid rgba(255,255,255,0.5)',
-                    boxShadow: '0 0 10px rgba(255,255,255,0.3)'
-                  }
-                }
-              }}>
-                <InputLabel id="imei-filter-label">Filter IMEI</InputLabel>
-                <Select labelId="imei-filter-label" id="imei-filter" value={selectedImei} label="Filter IMEI" onChange={handleSelectedImeiChange}>
-                  <MenuItem value="">Semua IMEI</MenuItem>
-                  {uniqueImeis.map((imei) => (
-                    <MenuItem key={imei} value={imei}>{imei}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="body2" color="text.secondary">
-                Menampilkan {filteredProducts.length} dari {Array.isArray(products) ? products.length : 0} produk
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
 
+        {/* Single Comprehensive Handphone Table */}
         <TableContainer component={Paper} elevation={2} sx={{ mt: 2, borderRadius: 2 }}>
-          <Table size="medium" aria-label="detail handphone table" stickyHeader sx={{ minWidth: 900 }}>
+          <Table size="medium" aria-label="handphone assignment table" stickyHeader sx={{ minWidth: 1000 }}>
             <TableHead>
-              <TableRow>
-                <TableCell>Merek Handphone</TableCell>
-                <TableCell>Tipe Handphone</TableCell>
-                <TableCell>IMEI</TableCell>
-                <TableCell>Spesifikasi</TableCell>
-                <TableCell>Kepemilikan</TableCell>
-                <TableCell>Kode Orlap</TableCell>
+              <TableRow sx={{ bgcolor: 'grey.100' }}>
+                <TableCell sx={{ fontWeight: 'bold', width: '40px' }}></TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Handphone</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Kepemilikan</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Assigned Orlap</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Current Product</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Customer</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Total Products</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {(filteredProducts || []).map((product) => (
-                <TableRow key={product._id} hover>
-                  <TableCell>{product.handphone || '-'}</TableCell>
-                  <TableCell>{product.tipeHandphone || '-'}</TableCell>
-                  <TableCell sx={{ cursor: product._id ? 'pointer' : 'default', color: 'primary.main' }} onClick={() => product._id && navigate(`/product-details/${product._id}`)}>
-                    {product.imeiHandphone || '-'}
-                  </TableCell>
-                  <TableCell>{product.spesifikasi || '-'}</TableCell>
-                  <TableCell>{product.kepemilikan || '-'}</TableCell>
-                  <TableCell>{product.codeAgen || '-'}</TableCell>
-                </TableRow>
+              {handphones.map((handphone) => (
+                <React.Fragment key={handphone._id}>
+                  {/* Main Row */}
+                  <TableRow hover>
+                    <TableCell>
+                      <IconButton
+                        size="small"
+                        onClick={() => toggleRowExpansion(handphone._id)}
+                        sx={{ p: 0.5 }}
+                      >
+                        {expandedRows.has(handphone._id) ? <ExpandLess /> : <ExpandMore />}
+                      </IconButton>
+                    </TableCell>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                          {handphone.merek}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {handphone.tipe}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={handphone.status === 'available' ? 'Tersedia' :
+                               handphone.status === 'in_use' ? 'Digunakan' :
+                               handphone.status === 'maintenance' ? 'Perbaikan' : handphone.status}
+                        color={handphone.status === 'available' ? 'success' :
+                               handphone.status === 'in_use' ? 'warning' :
+                               handphone.status === 'maintenance' ? 'error' : 'default'}
+                        size="small"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell>{handphone.kepemilikan}</TableCell>
+                    <TableCell>
+                      {handphone.assignedTo ? (
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                            {handphone.assignedTo.kodeOrlap}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {handphone.assignedTo.namaOrlap}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">-</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {handphone.currentProduct ? (
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                            {handphone.currentProduct.noOrder}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {handphone.currentProduct.nama}
+                          </Typography>
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">-</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {handphone.currentProduct ? (
+                        <Typography variant="body2">
+                          {handphone.currentProduct.customer || '-'}
+                        </Typography>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">-</Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={`${handphone.assignedProducts?.length || 0} produk`}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Expanded Rows - Show all assigned products */}
+                  <TableRow>
+                    <TableCell colSpan={8} sx={{ pb: 0, pt: 0 }}>
+                      <Collapse in={expandedRows.has(handphone._id)} timeout="auto" unmountOnExit>
+                        <Box sx={{ margin: 1 }}>
+                          <Typography variant="h6" gutterBottom component="div" sx={{ fontSize: '1rem', fontWeight: 'bold' }}>
+                            📱 Assigned Products ({handphone.assignedProducts?.length || 0})
+                          </Typography>
+                          {handphone.assignedProducts && handphone.assignedProducts.length > 0 ? (
+                            <Table size="small" sx={{ bgcolor: 'grey.50', borderRadius: 1 }}>
+                              <TableHead>
+                                <TableRow sx={{ bgcolor: 'grey.100' }}>
+                                  <TableCell sx={{ fontWeight: 'bold', pl: 3 }}>Product</TableCell>
+                                  <TableCell sx={{ fontWeight: 'bold' }}>Customer</TableCell>
+                                  <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                                  <TableCell sx={{ fontWeight: 'bold' }}>Assigned Date</TableCell>
+                                  <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {handphone.assignedProducts.map((product, index) => (
+                                  <TableRow key={`${handphone._id}-product-${index}`} hover>
+                                    <TableCell sx={{ pl: 3 }}>
+                                      <Box>
+                                        <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                          {product.noOrder}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">
+                                          {product.nama}
+                                        </Typography>
+                                      </Box>
+                                    </TableCell>
+                                    <TableCell>{product.customer || '-'}</TableCell>
+                                    <TableCell>
+                                      <Chip
+                                        label={product.status || 'Unknown'}
+                                        size="small"
+                                        color="secondary"
+                                        variant="outlined"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      {product.createdAt ? new Date(product.createdAt).toLocaleDateString('id-ID') : '-'}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Button
+                                        size="small"
+                                        variant="outlined"
+                                        onClick={() => navigate(`/product-details/${product._id}`)}
+                                        sx={{ minWidth: 'auto', px: 1 }}
+                                      >
+                                        View
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', pl: 2 }}>
+                              No products assigned to this handphone
+                            </Typography>
+                          )}
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>
@@ -344,112 +404,6 @@ const HandphoneMenu = () => {
           </form>
         </Dialog>
 
-        {/* Section untuk menampilkan daftar handphone */}
-        <Card sx={{
-          mt: 4,
-          borderRadius: 3,
-          background: 'rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-        }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom sx={{ color: 'rgba(0,0,0,0.8)' }}>
-              📱 Inventaris Handphone
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Daftar handphone yang tersedia untuk di-assign ke produk.
-            </Typography>
-
-            <TableContainer component={Paper} elevation={1} sx={{ borderRadius: 2 }}>
-              <Table size="small" aria-label="handphone inventory table">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: 'grey.100' }}>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Merek</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Tipe</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>IMEI</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Kepemilikan</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Assigned To (Orlap)</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Current Product</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold' }}>Customer</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {handphones.map((handphone) => (
-                    <TableRow key={handphone._id} hover>
-                      <TableCell sx={{ fontWeight: 'bold' }}>{handphone.merek}</TableCell>
-                      <TableCell>{handphone.tipe}</TableCell>
-                      <TableCell sx={{ fontFamily: 'monospace' }}>{handphone.imei || '-'}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={handphone.status === 'available' ? 'Tersedia' :
-                                 handphone.status === 'in_use' ? 'Digunakan' :
-                                 handphone.status === 'maintenance' ? 'Perbaikan' : handphone.status}
-                          color={handphone.status === 'available' ? 'success' :
-                                 handphone.status === 'in_use' ? 'warning' :
-                                 handphone.status === 'maintenance' ? 'error' : 'default'}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </TableCell>
-                      <TableCell>{handphone.kepemilikan}</TableCell>
-                      <TableCell>
-                        {handphone.assignedTo ? (
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {handphone.assignedTo.kodeOrlap}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {handphone.assignedTo.namaOrlap}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">-</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {handphone.currentProduct ? (
-                          <Box>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                              {handphone.currentProduct.noOrder}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {handphone.currentProduct.nama}
-                            </Typography>
-                          </Box>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">-</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {handphone.currentProduct ? (
-                          <Typography variant="body2">
-                            {handphone.currentProduct.customer || '-'}
-                          </Typography>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">-</Typography>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {handphones.length === 0 && (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Smartphone sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-                <Typography variant="body1" color="text.secondary">
-                  Belum ada handphone yang terdaftar.
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Klik "Tambah Handphone" untuk menambah inventaris handphone pertama.
-                </Typography>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
       </Container>
     </SidebarLayout>
   );

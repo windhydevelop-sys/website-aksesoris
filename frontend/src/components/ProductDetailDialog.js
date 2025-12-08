@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -38,23 +38,16 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch products when dialog opens
-  useEffect(() => {
-    if (open && selectedHandphone) {
-      fetchProductsDetails();
-    }
-  }, [open, selectedHandphone]);
-
-  const fetchProductsDetails = async () => {
+  const fetchProductsDetails = useCallback(async () => {
     if (!selectedHandphone) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       // Use the new endpoint to get products details for this nadarphone
       const response = await axios.get(`/api/handphones/${selectedHandphone._id}/products-details`);
-      
+
       if (response.data.success) {
         setProducts(response.data.data || []);
       } else {
@@ -68,7 +61,14 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedHandphone, showError]);
+
+  // Fetch products when dialog opens
+  useEffect(() => {
+    if (open && selectedHandphone) {
+      fetchProductsDetails();
+    }
+  }, [open, selectedHandphone, fetchProductsDetails]);
 
   const handleEditProduct = (product) => {
     // TODO: Implement edit functionality
@@ -170,14 +170,6 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
                   {selectedHandphone.tipe}
                 </Typography>
               </Box>
-              {selectedHandphone.imei && (
-                <Box>
-                  <Typography variant="body2" color="text.secondary">IMEI</Typography>
-                  <Typography variant="body1" fontWeight="medium">
-                    {selectedHandphone.imei}
-                  </Typography>
-                </Box>
-              )}
               <Box>
                 <Typography variant="body2" color="text.secondary">Status</Typography>
                 <Typography variant="body1" fontWeight="medium">

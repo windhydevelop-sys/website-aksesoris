@@ -94,7 +94,6 @@ const ProductDetail = () => {
     noHp: 'No. HP',
     handphoneMerek: 'Merek Handphone',
     handphoneTipe: 'Tipe Handphone',
-    handphoneImei: 'IMEI Handphone',
     handphoneSpesifikasi: 'Spesifikasi',
     handphoneKepemilikan: 'Kepemilikan',
     pinAtm: 'PIN ATM',
@@ -122,7 +121,6 @@ const ProductDetail = () => {
     'noHp',
     'handphoneMerek',
     'handphoneTipe',
-    'handphoneImei',
     'handphoneSpesifikasi',
     'handphoneKepemilikan',
     'pinAtm',
@@ -158,9 +156,22 @@ const ProductDetail = () => {
                   <TableBody>
                     {fieldOrder.map((key)=>{
                       let value = product[key];
-                      if (key.startsWith('handphone') && product.handphoneId) {
-                        const handphoneKey = key.replace('handphone', '').toLowerCase();
-                        value = product.handphoneId[handphoneKey];
+
+                      // Handle handphone data - use direct fields stored in product
+                      if (key === 'handphoneMerek') {
+                        // Extract merek from handphone string (first word)
+                        value = product.handphone ? product.handphone.split(' ')[0] : '';
+                      } else if (key === 'handphoneTipe') {
+                        // Extract tipe from handphone string (everything after first space)
+                        value = product.handphone ? product.handphone.substring(product.handphone.indexOf(' ') + 1) : '';
+                      } else if (key === 'handphoneSpesifikasi' || key === 'handphoneKepemilikan') {
+                        // These fields are not stored directly in product, try to get from populated handphoneId
+                        if (product.handphoneId && typeof product.handphoneId === 'object') {
+                          const handphoneKey = key.replace('handphone', '').toLowerCase();
+                          value = product.handphoneId[handphoneKey] || '';
+                        } else {
+                          value = '';
+                        }
                       }
 
                       if (value === undefined || value === null || value === '') return null;

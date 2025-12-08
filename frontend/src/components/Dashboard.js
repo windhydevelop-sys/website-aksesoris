@@ -6,8 +6,9 @@ import {
   Button, Container, Typography, Box, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Dialog, DialogActions, DialogContent,
   DialogTitle, IconButton, Alert, Autocomplete,
-  FormControl, InputLabel, Select, MenuItem, Chip, InputAdornment,
-  Grid, Card, CardContent
+  Chip, InputAdornment,
+  Grid, Card, CardContent,
+  MenuItem
 } from '@mui/material';
 import { Search, Event, TrendingUp, People, Smartphone, Inventory } from '@mui/icons-material';
 import { Edit, Delete, Add, CloudUpload, CloudDownload, PictureAsPdf } from '@mui/icons-material';
@@ -194,7 +195,6 @@ const initialFormState = {
   bank: '',
   grade: '',
   kcp: '',
-  status: 'pending',
   expired: '',
   uploadFotoId: null,
   uploadFotoSelfie: null,
@@ -203,7 +203,6 @@ const initialFormState = {
   imeiHandphone: '',
   spesifikasi: '',
   kepemilikan: '',
-  harga: '',
   handphoneId: '',
   nik: '',
   nama: '',
@@ -400,7 +399,6 @@ const Dashboard = ({ setToken }) => {
         customer: product.customer || '',
         fieldStaff: product.fieldStaff || '',
         expired: product.expired ? product.expired.split('T')[0] : '',
-        status: product.status || 'pending',
         uploadFotoId: product.uploadFotoId || '',
         uploadFotoSelfie: product.uploadFotoSelfie || '',
         handphone: product.handphone || '',
@@ -408,7 +406,6 @@ const Dashboard = ({ setToken }) => {
         imeiHandphone: product.imeiHandphone || '',
         spesifikasi: product.spesifikasi || '',
         kepemilikan: product.kepemilikan || '',
-        harga: product.harga || '',
         handphoneId: product.handphoneId || '',
         bank: product.bank || '',
         grade: product.grade || '',
@@ -850,7 +847,7 @@ const Dashboard = ({ setToken }) => {
                   >
                     <TableCell>{product.noOrder}</TableCell>
                     <TableCell>{product.nama}</TableCell>
-                    <TableCell>{product.handphone ? `${product.handphone} ${product.tipeHandphone || ''}` : '-'}</TableCell>
+                    <TableCell>{product.handphoneId ? `${product.handphoneId.merek} ${product.handphoneId.tipe || ''}` : '-'}</TableCell>
                     <TableCell>{new Date(product.expired).toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>
                       <Chip
@@ -917,7 +914,11 @@ const Dashboard = ({ setToken }) => {
                   options={availableHandphones}
                   getOptionLabel={(option) => option ? `${option.merek} ${option.tipe}${option.imei ? ` - IMEI: ${option.imei}` : ''}` : ''}
                   onChange={(event, newValue) => {
-                    setForm({ ...form, handphoneId: newValue ? newValue._id : '' });
+                    setForm({
+                      ...form,
+                      handphoneId: newValue ? newValue._id : '',
+                      handphone: newValue ? newValue.merek : ''
+                    });
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -987,7 +988,7 @@ const Dashboard = ({ setToken }) => {
                 <TextField fullWidth label="Password Mbanking" name="passWondr" placeholder="Minimal 6 karakter, contoh: wondrpass123" value={form.passWondr} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Email" name="email" placeholder="Format email valid, contoh: user@example.com" value={form.email} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Password Email" name="passEmail" placeholder="Minimal 6 karakter, contoh: emailpass123" value={form.passEmail} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Harga" name="harga" type="number" placeholder="Harga dalam Rupiah" value={form.harga} onChange={handleChange} margin="normal" required />
+
                 <TextField
                   fullWidth
                   label="Expired"
@@ -1011,14 +1012,7 @@ const Dashboard = ({ setToken }) => {
                     min: new Date().toISOString().split('T')[0], // Prevent past dates
                   }}
                 />
-                <FormControl fullWidth margin="normal">
-                  <InputLabel id="status-label">Status</InputLabel>
-                  <Select labelId="status-label" id="status" name="status" value={form.status} label="Status" onChange={handleChange}>
-                    <MenuItem value="pending">Tertunda</MenuItem>
-                    <MenuItem value="in_progress">Dalam Proses</MenuItem>
-                    <MenuItem value="completed">Selesai</MenuItem>
-                  </Select>
-                </FormControl>
+
                 {form.status === 'in_progress' && (
                   <TextField fullWidth label="Complaint" name="complaint" placeholder="Deskripsi keluhan atau masalah" value={form.complaint || ''} onChange={handleChange} margin="normal" multiline rows={4} />
                 )}

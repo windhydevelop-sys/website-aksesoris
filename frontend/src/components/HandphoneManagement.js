@@ -29,7 +29,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add, Search, FilterList } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useNotification } from '../contexts/NotificationContext';
 import ProductDetailDialog from './ProductDetailDialog';
@@ -43,6 +43,7 @@ const STATUS_OPTIONS = [
 
 const HandphoneManagement = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess, showError } = useNotification();
   const [handphones, setHandphones] = useState([]);
   const [fieldStaff, setFieldStaff] = useState([]);
@@ -82,6 +83,17 @@ const HandphoneManagement = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
+
+  // Remember last selected orlap for convenience
+  const getLastSelectedOrlap = useCallback(() => {
+    if (fieldStaff.length === 0) return '';
+    const lastSelected = localStorage.getItem('lastSelectedOrlap');
+    if (lastSelected) {
+      const orlapExists = fieldStaff.find(staff => staff._id === lastSelected);
+      return orlapExists ? lastSelected : '';
+    }
+    return '';
+  }, [fieldStaff]);
 
   const fetchHandphones = useCallback(async () => {
     try {
@@ -133,6 +145,15 @@ const HandphoneManagement = () => {
     fetchCustomers();
   }, [fetchHandphones, fetchFieldStaff, fetchProducts, fetchCustomers]);
 
+
+
+  // Auto-refresh when navigated to this component (e.g., from workflow completion)
+  useEffect(() => {
+    // Refresh data when component is navigated to
+    fetchHandphones();
+    fetchProducts();
+  }, [location.key, fetchHandphones, fetchProducts]);
+
   const handleOpenDialog = (handphone = null) => {
     if (handphone) {
       setEditingHandphone(handphone);
@@ -148,6 +169,8 @@ const HandphoneManagement = () => {
       });
     } else {
       setEditingHandphone(null);
+      // Pre-select last chosen orlap for convenience
+      const lastSelected = getLastSelectedOrlap();
       setFormData({
         merek: '',
         tipe: '',
@@ -155,7 +178,7 @@ const HandphoneManagement = () => {
         spesifikasi: '',
         kepemilikan: '',
         harga: '',
-        assignedTo: '',
+        assignedTo: lastSelected,
         status: 'available'
       });
     }
@@ -188,10 +211,16 @@ const HandphoneManagement = () => {
   };
 
   const handleFormChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+
+    // Save last selected orlap to localStorage
+    if (name === 'assignedTo' && value) {
+      localStorage.setItem('lastSelectedOrlap', value);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -244,8 +273,7 @@ const HandphoneManagement = () => {
     const matchesCustomer = !filters.customer || (handphone.currentProduct && handphone.currentProduct.customer === filters.customer);
     const matchesSearch = !filters.search ||
       handphone.merek.toLowerCase().includes(filters.search.toLowerCase()) ||
-      handphone.tipe.toLowerCase().includes(filters.search.toLowerCase()) ||
-      (handphone.imei && handphone.imei.toLowerCase().includes(filters.search.toLowerCase()));
+      handphone.tipe.toLowerCase().includes(filters.search.toLowerCase());
 
     return matchesStatus && matchesAssignedTo && matchesProduct && matchesCustomer && matchesSearch;
   });
@@ -429,7 +457,7 @@ const HandphoneManagement = () => {
                           handphone.assignedProducts.map((product) => (
                             <Chip
                               key={product._id}
-                              label={`${product.noOrder} - ${product.nama}`}
+                              label={`${product.noOrder} - ${product.nama} (${product.customer})`}
                               size="small"
                               color="primary"
                               onClick={() => handleProductChipClick(handphone)}
@@ -445,7 +473,7 @@ const HandphoneManagement = () => {
                           ))
                         ) : handphone.currentProduct ? (
                           <Chip
-                            label={`${handphone.currentProduct.noOrder} - ${handphone.currentProduct.nama}`}
+                            label={`${handphone.currentProduct.noOrder} - ${handphone.currentProduct.nama} (${handphone.currentProduct.customer})`}
                             size="small"
                             color="primary"
                             variant="outlined"
@@ -592,12 +620,12 @@ const HandphoneManagement = () => {
                 </Grid>
                 <Grid item xs={12}>
                   <FormControl fullWidth margin="normal">
-                    <InputLabel>Assigned To</InputLabel>
+                    <InputLabel>Assigned To *</InputLabel>
                     <Select
                       name="assignedTo"
                       value={formData.assignedTo}
                       onChange={handleFormChange}
-                      label="Assigned To"
+                      label="Assigned To *"
                       required
                     >
                       {fieldStaff.map(staff => (
@@ -606,6 +634,11 @@ const HandphoneManagement = () => {
                         </MenuItem>
                       ))}
                     </Select>
+                    {!editingHandphone && formData.assignedTo && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                        💡 Pilihan sebelumnya diingat untuk kemudahan
+                      </Typography>
+                    )}
                   </FormControl>
                 </Grid>
               </Grid>

@@ -6,9 +6,16 @@ const getHandphones = async (req, res) => {
   try {
     const handphones = await Handphone.find()
       .populate('assignedTo', 'kodeOrlap namaOrlap')
-      .populate('assignedProducts', 'noOrder nama customer')
-      .populate('currentProduct', 'noOrder nama')
+      .populate('assignedProducts', 'noOrder nama customer status createdAt')
+      .populate('currentProduct', 'noOrder nama customer')
       .sort({ createdAt: -1 });
+
+    console.log('DEBUG: Handphones fetched:', handphones.map(h => ({
+      id: h._id,
+      assignedProductsCount: h.assignedProducts?.length || 0,
+      assignedProducts: h.assignedProducts,
+      currentProduct: h.currentProduct
+    })));
 
     auditLog('READ', req.userId, 'Handphone', 'all', {
       count: handphones.length
@@ -37,7 +44,7 @@ const getHandphoneById = async (req, res) => {
   try {
     const handphone = await Handphone.findById(req.params.id)
       .populate('assignedTo', 'kodeOrlap namaOrlap')
-      .populate('assignedProducts', 'noOrder nama customer')
+      .populate('assignedProducts', 'noOrder nama customer status createdAt')
       .populate('currentProduct', 'noOrder nama customer'); // Populate customer for currentProduct
 
     if (!handphone) {
@@ -169,7 +176,7 @@ const updateHandphone = async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     ).populate('assignedTo', 'kodeOrlap namaOrlap')
-     .populate('assignedProducts', 'noOrder nama customer')
+     .populate('assignedProducts', 'noOrder nama customer status createdAt')
      .populate('currentProduct', 'noOrder nama');
 
     if (!handphone) {
@@ -300,11 +307,86 @@ const getProductsDetailsByHandphoneId = async (req, res) => {
   }
 };
 
+const assignProductToHandphone = async (req, res) => {
+  try {
+    const { handphoneId } = req.params;
+    const { productId } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ success: false, error: 'Product ID is required' });
+    }
+
+    const handphone = await Handphone.findById(handphoneId);
+    if (!handphone) {
+      return res.status(404).json({ success: false, error: 'Handphone not found' });
+    }
+
+    const product = await require('../models/Product').findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    // Update handphone's currentProduct and assignmentHistory
+    handphone.currentProduct = productId;
+    handphone.status = 'in_use'; // Or 'assigned', depending on desired status
+
+    // Add to assignment history if not already present for this product
+    const existingAssignment = handphone.assignmentHistory.find(
+      (assignment) => assignment.product && assignment.product.toString() === productId
+    );
+
+    if (!existingAssignment) {
+      handphone.assignmentHistory.push({
+        product: productId,
+        assignedAt: new Date(),
+        assignedBy: req.userId,
+        status: 'active',
+      });
+    } else {
+      // If assignment exists, ensure it's active and update assignedAt if needed
+      existingAssignment.status = 'active';
+      existingAssignment.assignedAt = new Date();
+      existingAssignment.returnedAt = undefined; // Clear returnedAt if re-assigning
+    }
+
+    // Add product to assignedProducts if not already present
+    if (!handphone.assignedProducts.includes(productId)) {
+      handphone.assignedProducts.push(productId);
+    }
+
+    await handphone.save();
+
+    // Update product's handphoneId, handphone, imeiHandphone, handphoneAssignmentDate
+    product.handphoneId = handphone._id;
+    product.handphone = `${handphone.merek} ${handphone.tipe}`;
+    product.imeiHandphone = handphone.imei;
+    product.handphoneAssignmentDate = new Date();
+    await product.save();
+
+    auditLog('UPDATE', req.userId, 'Handphone', handphoneId, {
+      action: 'assignProduct',
+      productId: productId,
+      noOrder: product.noOrder,
+    }, req);
+
+    res.json({ success: true, message: 'Product assigned to handphone successfully', data: handphone });
+  } catch (error) {
+    securityLog('HANDPHONE_ASSIGN_PRODUCT_FAILED', 'medium', {
+      error: error.message,
+      handphoneId: req.params.handphoneId,
+      productId: req.body.productId,
+      userId: req.userId
+    }, req);
+    res.status(500).json({ success: false, error: 'Failed to assign product to handphone' });
+  }
+};
+
 module.exports = {
   getHandphones,
   getHandphoneById,
   createHandphone,
   updateHandphone,
   deleteHandphone,
-  getProductsDetailsByHandphoneId
+  getProductsDetailsByHandphoneId,
+  assignProductToHandphone
 };

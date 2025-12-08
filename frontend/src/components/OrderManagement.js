@@ -80,7 +80,7 @@ const OrderManagement = () => {
         fieldStaff: order.fieldStaff,
         status: order.status,
         notes: order.notes || '',
-        totalAmount: order.totalAmount || ''
+        totalAmount: order.harga || ''
       });
     } else {
       setEditingOrder(null);
@@ -129,7 +129,7 @@ const OrderManagement = () => {
     try {
       const submitData = {
         ...formData,
-        totalAmount: formData.totalAmount ? parseFloat(formData.totalAmount) : 0
+        harga: formData.totalAmount ? parseFloat(formData.totalAmount) : 0
       };
 
       if (editingOrder) {
@@ -253,7 +253,7 @@ const OrderManagement = () => {
                         variant="outlined"
                       />
                     </TableCell>
-                    <TableCell>Rp {order.totalAmount?.toLocaleString('id-ID') || '0'}</TableCell>
+                    <TableCell>Rp {order.harga?.toLocaleString('id-ID') || '0'}</TableCell>
                     <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <IconButton onClick={() => handleOpenDialog(order)} color="primary" size="small">

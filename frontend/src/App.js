@@ -15,11 +15,13 @@ import FieldStaff from './components/FieldStaff';
 import FieldStaffManagement from './components/FieldStaffManagement';
 import OrderManagement from './components/OrderManagement';
 import CashflowManagement from './components/CashflowManagement';
+import BalanceTracker from './components/BalanceTracker';
 import ProductDetail from './components/ProductDetail';
 import HandphoneManagement from './components/HandphoneManagement';
 import FieldStaffDashboard from './components/FieldStaffDashboard';
 import BackupManagement from './components/BackupManagement';
 import MenuPermissionsManagement from './components/MenuPermissionsManagement';
+import WorkflowManagement from './components/WorkflowManagement';
 import './App.css';
 
 function App() {
@@ -46,6 +48,7 @@ function App() {
             <Route path="/field-staff-management" element={token ? <FieldStaffManagement /> : <Navigate to="/login" />} />
             <Route path="/orders" element={token ? <OrderManagement /> : <Navigate to="/login" />} />
             <Route path="/cashflow" element={token ? <CashflowManagement /> : <Navigate to="/login" />} />
+            <Route path="/balance-tracker" element={token ? <BalanceTracker /> : <Navigate to="/login" />} />
             <Route path="/product-details/:id" element={token ? <ProductDetail /> : <Navigate to="/login" />} />
             <Route path="/complaints" element={token ? <ComplaintMenu /> : <Navigate to="/login" />} />
             <Route path="/handphone" element={token ? <HandphoneMenu /> : <Navigate to="/login" />} />
@@ -54,6 +57,7 @@ function App() {
             <Route path="/backup" element={token ? <BackupManagement /> : <Navigate to="/login" />} />
             <Route path="/menu-permissions" element={token ? <MenuPermissionsManagement /> : <Navigate to="/login" />} />
             <Route path="/users" element={token ? <UserManagement /> : <Navigate to="/login" />} />
+            <Route path="/workflow" element={token ? <WorkflowManagement /> : <Navigate to="/login" />} />
             <Route path="/" element={<Navigate to="/login" />} />
           </Routes>
         </div>

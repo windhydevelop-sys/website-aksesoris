@@ -4,7 +4,7 @@ import {
   TableHead, TableRow, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions,
   Card, CardContent, Grid, Chip, FormControl, InputLabel, Select, MenuItem
 } from '@mui/material';
-import { Backup, Restore, Delete, Download, Schedule } from '@mui/icons-material';
+import { Backup, Restore, Delete, Download } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';

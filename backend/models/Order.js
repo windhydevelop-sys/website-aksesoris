@@ -26,7 +26,7 @@ const orderSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  totalAmount: {
+  harga: {
     type: Number,
     default: 0,
     min: 0

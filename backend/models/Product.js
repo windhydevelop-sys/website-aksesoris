@@ -36,9 +36,7 @@ const productSchema = new mongoose.Schema({
   customer: { type: String },
   fieldStaff: { type: String }, // New field for field staff
   orderNumber: { type: String }, // New field for order number
-  status: { type: String, enum: ['pending', 'in_progress', 'completed'], default: 'pending' },
   complaint: { type: String }, // New field for complaints
-  harga: { type: Number }, // New field for product price
 }, { timestamps: true });
 
 // Pre-save middleware to encrypt sensitive data

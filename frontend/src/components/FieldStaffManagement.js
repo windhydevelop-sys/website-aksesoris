@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Typography, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Card, Chip, Select, MenuItem, FormControl, InputLabel, Divider, List, ListItem, ListItemText, ListItemSecondaryAction } from '@mui/material';
-import { Edit, Delete, PersonAdd, PhoneAndroid, Assignment, AssignmentTurnedIn } from '@mui/icons-material';
+import { Container, Typography, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Card, Chip, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { Edit, Delete, PersonAdd, PhoneAndroid, AssignmentTurnedIn } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -23,7 +23,6 @@ const FieldStaffManagement = () => {
   });
 
   // Handphone assignment states
-  const [assignedHandphones, setAssignedHandphones] = useState([]);
   const [availableHandphones, setAvailableHandphones] = useState([]);
   const [openAssignDialog, setOpenAssignDialog] = useState(false);
   const [selectedStaffForAssign, setSelectedStaffForAssign] = useState(null);
@@ -56,16 +55,6 @@ const FieldStaffManagement = () => {
     } catch (err) {
       console.error('Error fetching available handphones:', err);
       showError('Failed to fetch available handphones');
-    }
-  }, [showError]);
-
-  const fetchAssignedHandphones = useCallback(async (staffId) => {
-    try {
-      const response = await axios.get(`/api/field-staff/${staffId}/handphones`);
-      setAssignedHandphones(response.data.data);
-    } catch (err) {
-      console.error('Error fetching assigned handphones:', err);
-      showError('Failed to fetch assigned handphones');
     }
   }, [showError]);
 

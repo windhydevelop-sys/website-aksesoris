@@ -81,7 +81,6 @@ const autoAssignHandphone = async (productData, userId) => {
     // Update handphone status and assignment
     await Handphone.findByIdAndUpdate(assignedHandphone._id, {
       status: 'in_use',
-      currentProduct: null, // Will be set after product is created
       $push: {
         assignmentHistory: {
           product: null, // Will be set after product is created

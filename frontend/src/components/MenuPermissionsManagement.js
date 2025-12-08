@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Typography, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions,
-  Card, CardContent, Grid, Chip, Switch, FormControlLabel, Tabs, Tab
+  TableHead, TableRow, Button, Card, CardContent, Chip, Switch, FormControlLabel, Tabs, Tab
 } from '@mui/material';
-import { Settings, Save, Refresh } from '@mui/icons-material';
+import { Save, Refresh } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
@@ -60,7 +59,7 @@ const MenuPermissionsManagement = () => {
       const changes = Object.values(pendingChanges);
       if (changes.length === 0) return;
 
-      const response = await axios.put(`/api/menu-permissions/bulk/role/${selectedRole}`, {
+      await axios.put(`/api/menu-permissions/bulk/role/${selectedRole}`, {
         role: selectedRole,
         permissions: changes
       });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Drawer, Toolbar, Box, List, ListItem, ListItemIcon, ListItemText, ListItemButton, AppBar, Avatar, Typography, Chip, IconButton, useMediaQuery, useTheme } from '@mui/material';
-import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet, Backup, Settings } from '@mui/icons-material';
+import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet, Backup, Settings, Timeline, Calculate } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from '../utils/axios';
 
@@ -139,23 +139,41 @@ const SidebarLayout = ({ children, onLogout }) => {
         <Box sx={{ overflow: 'auto' }}>
           <List>
             {(userRole === 'admin' || menuPermissions.input_product) && (
-              <ListItem disablePadding>
-                <ListItemButton
-                  selected={isActive('/dashboard')}
-                  onClick={() => navigate('/dashboard')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
-                >
-                  <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
-                  <ListItemText primary="Input Product" sx={{ color: 'inherit' }} />
-                </ListItemButton>
-              </ListItem>
-            )}
+               <ListItem disablePadding>
+                 <ListItemButton
+                   selected={isActive('/dashboard')}
+                   onClick={() => navigate('/dashboard')}
+                   sx={{
+                     color: 'inherit',
+                     borderRadius: 2,
+                     mx: 1,
+                     '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
+                     '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                   }}
+                 >
+                   <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
+                   <ListItemText primary="Input Product" sx={{ color: 'inherit' }} />
+                 </ListItemButton>
+               </ListItem>
+             )}
+             {(userRole === 'admin' || menuPermissions.input_product) && (
+               <ListItem disablePadding>
+                 <ListItemButton
+                   selected={isActive('/workflow')}
+                   onClick={() => navigate('/workflow')}
+                   sx={{
+                     color: 'inherit',
+                     borderRadius: 2,
+                     mx: 1,
+                     '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
+                     '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                   }}
+                 >
+                   <ListItemIcon sx={{ color: 'inherit' }}><Timeline /></ListItemIcon>
+                   <ListItemText primary="Workflow Management" sx={{ color: 'inherit' }} />
+                 </ListItemButton>
+               </ListItem>
+             )}
             {(userRole === 'admin' || menuPermissions.detail_produk) && (
               <ListItem disablePadding>
                 <ListItemButton
@@ -261,6 +279,24 @@ const SidebarLayout = ({ children, onLogout }) => {
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><AccountBalanceWallet /></ListItemIcon>
                   <ListItemText primary="Cashflow" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {(userRole === 'admin' || menuPermissions.cashflow) && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={isActive('/balance-tracker')}
+                  onClick={() => navigate('/balance-tracker')}
+                  sx={{
+                    color: 'inherit',
+                    borderRadius: 2,
+                    mx: 1,
+                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><Calculate /></ListItemIcon>
+                  <ListItemText primary="Pencatatan Saldo" sx={{ color: 'inherit' }} />
                 </ListItemButton>
               </ListItem>
             )}

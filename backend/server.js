@@ -12,14 +12,18 @@ const customerRoutes = require('./routes/customers');
 const fieldStaffRoutes = require('./routes/fieldStaff');
 const orderRoutes = require('./routes/orders');
 const cashflowRoutes = require('./routes/cashflow');
+const balanceTransactionRoutes = require('./routes/balance-transactions');
 const handphoneRoutes = require('./routes/handphone');
 const backupRoutes = require('./routes/backup');
 const menuPermissionRoutes = require('./routes/menuPermissions');
 const path = require('path');
 
-dotenv.config();
+if (process.env.NODE_ENV === 'development') {
+  dotenv.config({ path: '.env.development' });
+} else {
+  dotenv.config();
+}
 
-connectDB();
 
 const cron = require('node-cron');
 const { exec } = require('child_process');
@@ -46,7 +50,7 @@ cron.schedule('0 0 * * *', () => {
 const app = express();
 
 console.log('Express app initialized.');
-
+console.log('NODE_ENV:', process.env.NODE_ENV);
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
@@ -57,6 +61,7 @@ const corsOptions = {
       'http://localhost:3000',
       'http://localhost:3001', 
       'http://localhost:3003',
+      'http://localhost:5173',
       'https://website-aksesoris.vercel.app',
       'https://website-aksesoris-git-main-windhydevelop-sys.vercel.app',
       // Railway frontend URLs
@@ -132,6 +137,7 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/field-staff', fieldStaffRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/cashflow', cashflowRoutes);
+app.use('/api/balance-transactions', balanceTransactionRoutes);
 app.use('/api/handphones', handphoneRoutes);
 app.use('/api/backup', backupRoutes);
 app.use('/api/menu-permissions', menuPermissionRoutes);
@@ -192,9 +198,20 @@ app.get('/api/auth/seed-admin', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    const server = app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error(`Error starting server: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 // Keep the process alive
 process.stdin.resume();

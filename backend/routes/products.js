@@ -8,6 +8,7 @@ const auth = require('../middleware/auth');
 const { validateProduct } = require('../utils/validation');
 const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
+const { createProduct } = require('../controllers/products');
 
 const router = express.Router();
 
@@ -236,60 +237,8 @@ router.post('/',
   auth,
   addUserInfo,
   handleFileUpload,
-  validateProduct,
-  async (req, res) => {
-    try {
-      const data = { ...req.body };
-
-      // Ensure req.files exists
-      req.files = req.files || {};
-
-      // Handle file uploads
-      if (req.files.uploadFotoId && req.files.uploadFotoId.length > 0) {
-        data.uploadFotoId = req.files.uploadFotoId[0].filename;
-      }
-      if (req.files.uploadFotoSelfie && req.files.uploadFotoSelfie.length > 0) {
-        data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].filename;
-      }
-
-      // Add complaint field if present
-      if (req.body.complaint) {
-        data.complaint = req.body.complaint;
-      }
-
-      // Add audit fields
-      data.createdBy = req.userId;
-      data.lastModifiedBy = req.userId;
-
-      const product = new Product(data);
-      await product.save();
-
-      // Audit log
-      auditLog('CREATE', req.userId, 'Product', product._id, {
-        noOrder: data.noOrder,
-        nama: data.nama
-      }, req);
-
-      // Return decrypted data for immediate use
-      res.status(201).json({
-        success: true,
-        data: product.getDecryptedData()
-      });
-
-    } catch (err) {
-      console.error('Product creation error:', err); // Temporary debug
-      // Temporarily disable security logging to debug
-      // securityLog('PRODUCT_CREATE_FAILED', 'low', {
-      //   error: err.message,
-      //   userId: req.userId
-      // }, req);
-
-      res.status(500).json({
-        success: false,
-        error: 'Failed to create product'
-      });
-    }
-});
+  createProduct
+);
 
 // Get all products with decryption
 router.get('/', addUserInfo, async (req, res) => {

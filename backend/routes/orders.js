@@ -56,7 +56,7 @@ router.get('/:id', auth, async (req, res) => {
 // Create new order
 router.post('/', auth, async (req, res) => {
   try {
-    const { noOrder, customer, fieldStaff, status, notes, totalAmount } = req.body;
+    const { noOrder, customer, fieldStaff, status, notes, harga } = req.body;
 
     // Validate required fields
     if (!noOrder || !customer || !fieldStaff) {
@@ -72,7 +72,7 @@ router.post('/', auth, async (req, res) => {
       fieldStaff: fieldStaff.trim(),
       status: status || 'pending',
       notes: notes?.trim(),
-      totalAmount: totalAmount || 0,
+      harga: harga || 0,
       createdBy: req.user.id
     });
 
@@ -123,7 +123,7 @@ router.post('/', auth, async (req, res) => {
 // Update order
 router.put('/:id', auth, async (req, res) => {
   try {
-    const { noOrder, customer, fieldStaff, status, notes, totalAmount } = req.body;
+    const { noOrder, customer, fieldStaff, status, notes, harga } = req.body;
 
     const updateData = {
       lastModifiedBy: req.user.id
@@ -134,7 +134,7 @@ router.put('/:id', auth, async (req, res) => {
     if (fieldStaff !== undefined) updateData.fieldStaff = fieldStaff.trim();
     if (status !== undefined) updateData.status = status;
     if (notes !== undefined) updateData.notes = notes?.trim();
-    if (totalAmount !== undefined) updateData.totalAmount = totalAmount;
+    if (harga !== undefined) updateData.harga = harga;
 
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id,
