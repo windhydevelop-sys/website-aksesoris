@@ -131,7 +131,7 @@ const BalanceTracker = () => {
     }
 
     if (!formData.category.trim()) {
-      showError('Silakan masukkan kategori transaksi.');
+      showError('Silakan masukkan keterangan transaksi.');
       return;
     }
 
@@ -296,7 +296,7 @@ const BalanceTracker = () => {
               <TableHead sx={{ bgcolor: 'grey.100' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>Jenis</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Kategori</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Keterangan</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Jumlah</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Deskripsi</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Tanggal</TableCell>
@@ -399,7 +399,7 @@ const BalanceTracker = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Kategori"
+                    label="Keterangan"
                     name="category"
                     value={formData.category}
                     onChange={handleFormChange}
@@ -556,6 +556,15 @@ const BalanceTracker = () => {
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                         '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputBase-input': {
+                        color: 'black'
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: 'rgba(0,0,0,0.7)'
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'primary.main'
                       }
                     }}
                   />
