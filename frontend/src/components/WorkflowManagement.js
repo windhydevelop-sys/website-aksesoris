@@ -321,22 +321,27 @@ const WorkflowManagement = () => {
     switch (step) {
       case 0:
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
+          <Box sx={{ py: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 4, fontSize: '1.8rem' }}>
               Langkah 1: Input Customer
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 5, fontSize: '1.2rem', lineHeight: 1.6 }}>
               Buat customer baru atau pilih customer yang sudah ada. Kode customer akan digunakan di order dan product.
             </Typography>
 
-            <Grid container spacing={2}>
+            <Grid container spacing={4}>
               <Grid item xs={12} md={6}>
                 <Button
                   variant="contained"
                   startIcon={<PersonAdd />}
                   onClick={() => setCustomerDialog(true)}
                   fullWidth
-                  sx={{ mb: 2 }}
+                  sx={{
+                    mb: 3,
+                    py: 2,
+                    fontSize: '1.1rem',
+                    fontWeight: 600
+                  }}
                 >
                   Buat Customer Baru
                 </Button>
@@ -355,6 +360,15 @@ const WorkflowManagement = () => {
                       variant="outlined"
                       fullWidth
                       helperText="Hanya menampilkan kode customer"
+                      sx={{
+                        '& .MuiInputBase-input': {
+                          fontSize: '1.1rem',
+                          py: 1.5
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontSize: '1.1rem'
+                        }
+                      }}
                     />
                   )}
                 />
@@ -371,22 +385,27 @@ const WorkflowManagement = () => {
 
       case 1:
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
+          <Box sx={{ py: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 4, fontSize: '1.8rem' }}>
               Langkah 2: Input Field Staff (Orlap)
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 5, fontSize: '1.2rem', lineHeight: 1.6 }}>
               Buat field staff baru atau pilih field staff yang sudah ada. Kode orlap akan digunakan di order dan untuk penugasan handphone.
             </Typography>
 
-            <Grid container spacing={2}>
+            <Grid container spacing={4}>
               <Grid item xs={12} md={6}>
                 <Button
                   variant="contained"
                   startIcon={<Group />}
                   onClick={() => setFieldStaffDialog(true)}
                   fullWidth
-                  sx={{ mb: 2 }}
+                  sx={{
+                    mb: 3,
+                    py: 2,
+                    fontSize: '1.1rem',
+                    fontWeight: 600
+                  }}
                 >
                   Buat Field Staff Baru
                 </Button>
@@ -405,6 +424,15 @@ const WorkflowManagement = () => {
                       variant="outlined"
                       fullWidth
                       helperText="Hanya menampilkan kode orlap"
+                      sx={{
+                        '& .MuiInputBase-input': {
+                          fontSize: '1.1rem',
+                          py: 1.5
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontSize: '1.1rem'
+                        }
+                      }}
                     />
                   )}
                 />
@@ -421,16 +449,18 @@ const WorkflowManagement = () => {
 
       case 2:
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
+          <Box sx={{ py: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 4, fontSize: '1.8rem' }}>
               Langkah 3: Input No Order
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 5, fontSize: '1.2rem', lineHeight: 1.6 }}>
               Buat order baru yang menghubungkan customer dan field staff yang sudah dipilih.
             </Typography>
 
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Customer: {workflowData.customer?.kodeCustomer} | Field Staff: {workflowData.fieldStaff?.kodeOrlap}
+            <Alert severity="info" sx={{ mb: 4, py: 3, px: 3 }}>
+              <Typography sx={{ fontSize: '1.1rem', fontWeight: 500 }}>
+                Customer: {workflowData.customer?.kodeCustomer} | Field Staff: {workflowData.fieldStaff?.kodeOrlap}
+              </Typography>
             </Alert>
 
             <Button
@@ -438,6 +468,12 @@ const WorkflowManagement = () => {
               startIcon={<AddShoppingCart />}
               onClick={() => setOrderDialog(true)}
               fullWidth
+              sx={{
+                py: 3,
+                fontSize: '1.2rem',
+                fontWeight: 600,
+                borderRadius: 3
+              }}
             >
               Buat Order Baru
             </Button>
@@ -452,44 +488,46 @@ const WorkflowManagement = () => {
 
       case 3:
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
+          <Box sx={{ py: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 4, fontSize: '1.8rem' }}>
               Langkah 4: Pilih Handphone untuk Field Staff
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 5, fontSize: '1.2rem', lineHeight: 1.6 }}>
               Pilih handphone yang sudah ada untuk field staff ini, atau buat handphone baru. 1 handphone dapat digunakan untuk beberapa produk.
             </Typography>
 
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Field Staff: {workflowData.fieldStaff?.kodeOrlap} - {workflowData.fieldStaff?.namaOrlap}
+            <Alert severity="info" sx={{ mb: 4, py: 3, px: 3 }}>
+              <Typography sx={{ fontSize: '1.1rem', fontWeight: 500 }}>
+                Field Staff: {workflowData.fieldStaff?.kodeOrlap} - {workflowData.fieldStaff?.namaOrlap}
+              </Typography>
             </Alert>
 
             {/* Show existing handphones for this field staff */}
             {handphones.filter(hp => hp.assignedTo?._id === workflowData.fieldStaff?._id).length > 0 && (
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
                   Handphone yang sudah ada untuk field staff ini:
                 </Typography>
-                <TableContainer component={Paper} sx={{ mb: 2 }}>
-                  <Table size="small">
-                    <TableHead>
+                <TableContainer component={Paper} sx={{ mb: 3 }}>
+                  <Table>
+                    <TableHead sx={{ bgcolor: 'grey.100' }}>
                       <TableRow>
-                        <TableCell>Merek</TableCell>
-                        <TableCell>Tipe</TableCell>
-                        <TableCell>IMEI</TableCell>
-                        <TableCell>Status</TableCell>
-                        <TableCell>Aksi</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem', py: 2 }}>Merek</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem', py: 2 }}>Tipe</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem', py: 2 }}>IMEI</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem', py: 2 }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold', fontSize: '1rem', py: 2 }}>Aksi</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {handphones
                         .filter(hp => hp.assignedTo?._id === workflowData.fieldStaff?._id)
                         .map((handphone) => (
-                          <TableRow key={handphone._id} hover>
-                            <TableCell>{handphone.merek}</TableCell>
-                            <TableCell>{handphone.tipe}</TableCell>
-                            <TableCell>{handphone.imei || '-'}</TableCell>
-                            <TableCell>
+                          <TableRow key={handphone._id} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                            <TableCell sx={{ fontSize: '1rem', py: 2 }}>{handphone.merek}</TableCell>
+                            <TableCell sx={{ fontSize: '1rem', py: 2 }}>{handphone.tipe}</TableCell>
+                            <TableCell sx={{ fontSize: '1rem', py: 2 }}>{handphone.imei || '-'}</TableCell>
+                            <TableCell sx={{ py: 2 }}>
                               <Chip
                                 label={handphone.status}
                                 color={
@@ -497,18 +535,22 @@ const WorkflowManagement = () => {
                                   handphone.status === 'assigned' ? 'info' :
                                   handphone.status === 'in_use' ? 'warning' : 'error'
                                 }
-                                size="small"
+                                size="medium"
                               />
                             </TableCell>
-                            <TableCell>
+                            <TableCell sx={{ py: 2 }}>
                               <Button
                                 variant="outlined"
-                                size="small"
                                 onClick={() => {
                                   setWorkflowData(prev => ({ ...prev, handphone }));
                                   handleComplete();
                                 }}
                                 disabled={workflowData.handphone?._id === handphone._id}
+                                sx={{
+                                  fontSize: '1rem',
+                                  px: 3,
+                                  py: 1
+                                }}
                               >
                                 {workflowData.handphone?._id === handphone._id ? 'Dipilih' : 'Pilih'}
                               </Button>
@@ -521,19 +563,27 @@ const WorkflowManagement = () => {
               </Box>
             )}
 
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
               <Button
                 variant="contained"
                 startIcon={<PhoneAndroid />}
                 onClick={() => setHandphoneDialog(true)}
-                sx={{ flex: 1, minWidth: '200px' }}
+                sx={{
+                  flex: 1,
+                  minWidth: '250px',
+                  py: 2,
+                  fontSize: '1.1rem',
+                  fontWeight: 600
+                }}
               >
                 Buat Handphone Baru
               </Button>
 
               {handphones.filter(hp => hp.assignedTo?._id === workflowData.fieldStaff?._id).length === 0 && (
-                <Alert severity="warning" sx={{ flex: 1 }}>
-                  Belum ada handphone untuk field staff ini. Silakan buat handphone baru.
+                <Alert severity="warning" sx={{ flex: 1, py: 2 }}>
+                  <Typography sx={{ fontSize: '1rem' }}>
+                    Belum ada handphone untuk field staff ini. Silakan buat handphone baru.
+                  </Typography>
                 </Alert>
               )}
             </Box>
@@ -549,16 +599,18 @@ const WorkflowManagement = () => {
 
       case 4:
         return (
-          <Box>
-            <Typography variant="h6" gutterBottom>
+          <Box sx={{ py: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 4, fontSize: '1.8rem' }}>
               Langkah 5: Input Product
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 5, fontSize: '1.2rem', lineHeight: 1.6 }}>
               Buat product dengan data lengkap. Sistem akan otomatis menugaskan handphone yang tersedia dari field staff.
             </Typography>
 
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Order: {workflowData.order?.noOrder} | Customer: {workflowData.customer?.kodeCustomer} | Field Staff: {workflowData.fieldStaff?.kodeOrlap}
+            <Alert severity="info" sx={{ mb: 4, py: 3, px: 3 }}>
+              <Typography sx={{ fontSize: '1.1rem', fontWeight: 500 }}>
+                Order: {workflowData.order?.noOrder} | Customer: {workflowData.customer?.kodeCustomer} | Field Staff: {workflowData.fieldStaff?.kodeOrlap}
+              </Typography>
             </Alert>
 
             <Button
@@ -566,6 +618,12 @@ const WorkflowManagement = () => {
               startIcon={<ShoppingCart />}
               onClick={() => setProductDialog(true)}
               fullWidth
+              sx={{
+                py: 3,
+                fontSize: '1.2rem',
+                fontWeight: 600,
+                borderRadius: 3
+              }}
             >
               Buat Product
             </Button>
@@ -585,19 +643,26 @@ const WorkflowManagement = () => {
 
   return (
     <SidebarLayout onLogout={handleLogout}>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" gutterBottom sx={{ mb: 4 }}>
+      <Container maxWidth="lg" sx={{ mt: 6, mb: 6, px: 4 }}>
+        <Typography variant="h2" gutterBottom sx={{ mb: 6, fontWeight: 'bold', fontSize: { xs: '2.5rem', sm: '3rem' }, textAlign: 'center' }}>
           Workflow Management - Panduan Lengkap
         </Typography>
 
-        <Card sx={{ mb: 4 }}>
-          <CardContent>
+        <Card sx={{ mb: 6, borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+          <CardContent sx={{ py: 6, px: 4 }}>
             <Stepper activeStep={activeStep} alternativeLabel>
               {steps.map((label, index) => (
                 <Step key={label} completed={completed[index]}>
                   <StepLabel
                     onClick={() => handleStepClick(index)}
-                    sx={{ cursor: 'pointer' }}
+                    sx={{
+                      cursor: 'pointer',
+                      '& .MuiStepLabel-label': {
+                        fontSize: '1.2rem',
+                        fontWeight: 600,
+                        mt: 2
+                      }
+                    }}
                   >
                     {label}
                   </StepLabel>
@@ -607,16 +672,23 @@ const WorkflowManagement = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent>
+        <Card sx={{ borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+          <CardContent sx={{ py: 6, px: 4 }}>
             {renderStepContent(activeStep)}
 
-            <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'row', pt: 4, pb: 2 }}>
               <Button
                 color="inherit"
                 disabled={activeStep === 0}
                 onClick={handleBack}
-                sx={{ mr: 1 }}
+                sx={{
+                  mr: 3,
+                  px: 4,
+                  py: 2,
+                  fontSize: '1.2rem',
+                  fontWeight: 600,
+                  borderRadius: 3
+                }}
                 startIcon={<ArrowBack />}
               >
                 Kembali
@@ -627,6 +699,13 @@ const WorkflowManagement = () => {
                   variant="contained"
                   onClick={() => navigate('/handphone')}
                   startIcon={<CheckCircle />}
+                  sx={{
+                    px: 5,
+                    py: 2,
+                    fontSize: '1.2rem',
+                    fontWeight: 600,
+                    borderRadius: 3
+                  }}
                 >
                   Lihat Hasil di Detail Handphone
                 </Button>
@@ -636,6 +715,13 @@ const WorkflowManagement = () => {
                   onClick={handleNext}
                   endIcon={<ArrowForward />}
                   disabled={!completed[activeStep]}
+                  sx={{
+                    px: 5,
+                    py: 2,
+                    fontSize: '1.2rem',
+                    fontWeight: 600,
+                    borderRadius: 3
+                  }}
                 >
                   Selanjutnya
                 </Button>
@@ -645,10 +731,10 @@ const WorkflowManagement = () => {
         </Card>
 
         {/* Customer Dialog */}
-        <Dialog open={customerDialog} onClose={() => setCustomerDialog(false)} maxWidth="sm" fullWidth>
+        <Dialog open={customerDialog} onClose={() => setCustomerDialog(false)} maxWidth="md" fullWidth>
           <form onSubmit={handleCustomerSubmit}>
-            <DialogTitle>Buat Customer Baru</DialogTitle>
-            <DialogContent>
+            <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', py: 2 }}>Buat Customer Baru</DialogTitle>
+            <DialogContent sx={{ py: 3 }}>
               <TextField
                 fullWidth
                 label="Kode Customer"
@@ -657,6 +743,27 @@ const WorkflowManagement = () => {
                 onChange={(e) => setCustomerForm(prev => ({ ...prev, kodeCustomer: e.target.value }))}
                 margin="normal"
                 required
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
               <TextField
                 fullWidth
@@ -666,6 +773,27 @@ const WorkflowManagement = () => {
                 onChange={(e) => setCustomerForm(prev => ({ ...prev, namaCustomer: e.target.value }))}
                 margin="normal"
                 required
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
               <TextField
                 fullWidth
@@ -675,22 +803,43 @@ const WorkflowManagement = () => {
                 onChange={(e) => setCustomerForm(prev => ({ ...prev, noHandphone: e.target.value }))}
                 margin="normal"
                 required
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
             </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setCustomerDialog(false)}>Batal</Button>
-              <Button type="submit" variant="contained" disabled={loading}>
-                {loading ? <CircularProgress size={20} /> : 'Buat Customer'}
+            <DialogActions sx={{ py: 3, px: 3 }}>
+              <Button onClick={() => setCustomerDialog(false)} sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}>Batal</Button>
+              <Button type="submit" variant="contained" disabled={loading} sx={{ fontSize: '1.1rem', px: 4, py: 1.5 }}>
+                {loading ? <CircularProgress size={24} /> : 'Buat Customer'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
         {/* Field Staff Dialog */}
-        <Dialog open={fieldStaffDialog} onClose={() => setFieldStaffDialog(false)} maxWidth="sm" fullWidth>
+        <Dialog open={fieldStaffDialog} onClose={() => setFieldStaffDialog(false)} maxWidth="md" fullWidth>
           <form onSubmit={handleFieldStaffSubmit}>
-            <DialogTitle>Buat Field Staff Baru</DialogTitle>
-            <DialogContent>
+            <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', py: 2 }}>Buat Field Staff Baru</DialogTitle>
+            <DialogContent sx={{ py: 3 }}>
               <TextField
                 fullWidth
                 label="Kode Orlap"
@@ -699,6 +848,27 @@ const WorkflowManagement = () => {
                 onChange={(e) => setFieldStaffForm(prev => ({ ...prev, kodeOrlap: e.target.value }))}
                 margin="normal"
                 required
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
               <TextField
                 fullWidth
@@ -708,6 +878,27 @@ const WorkflowManagement = () => {
                 onChange={(e) => setFieldStaffForm(prev => ({ ...prev, namaOrlap: e.target.value }))}
                 margin="normal"
                 required
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
               <TextField
                 fullWidth
@@ -717,22 +908,43 @@ const WorkflowManagement = () => {
                 onChange={(e) => setFieldStaffForm(prev => ({ ...prev, noHandphone: e.target.value }))}
                 margin="normal"
                 required
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
             </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setFieldStaffDialog(false)}>Batal</Button>
-              <Button type="submit" variant="contained" disabled={loading}>
-                {loading ? <CircularProgress size={20} /> : 'Buat Field Staff'}
+            <DialogActions sx={{ py: 3, px: 3 }}>
+              <Button onClick={() => setFieldStaffDialog(false)} sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}>Batal</Button>
+              <Button type="submit" variant="contained" disabled={loading} sx={{ fontSize: '1.1rem', px: 4, py: 1.5 }}>
+                {loading ? <CircularProgress size={24} /> : 'Buat Field Staff'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
         {/* Order Dialog */}
-        <Dialog open={orderDialog} onClose={() => setOrderDialog(false)} maxWidth="sm" fullWidth>
+        <Dialog open={orderDialog} onClose={() => setOrderDialog(false)} maxWidth="md" fullWidth>
           <form onSubmit={handleOrderSubmit}>
-            <DialogTitle>Buat Order Baru</DialogTitle>
-            <DialogContent>
+            <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', py: 2 }}>Buat Order Baru</DialogTitle>
+            <DialogContent sx={{ py: 3 }}>
               <TextField
                 fullWidth
                 label="No. Order"
@@ -741,6 +953,27 @@ const WorkflowManagement = () => {
                 onChange={(e) => setOrderForm(prev => ({ ...prev, noOrder: e.target.value }))}
                 margin="normal"
                 required
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
               <TextField
                 fullWidth
@@ -750,6 +983,27 @@ const WorkflowManagement = () => {
                 value={orderForm.harga}
                 onChange={(e) => setOrderForm(prev => ({ ...prev, harga: e.target.value }))}
                 margin="normal"
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
               <FormControl fullWidth margin="normal">
                 <InputLabel>Status</InputLabel>
@@ -774,20 +1028,20 @@ const WorkflowManagement = () => {
                 rows={3}
               />
             </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setOrderDialog(false)}>Batal</Button>
-              <Button type="submit" variant="contained" disabled={loading}>
-                {loading ? <CircularProgress size={20} /> : 'Buat Order'}
+            <DialogActions sx={{ py: 3, px: 3 }}>
+              <Button onClick={() => setOrderDialog(false)} sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}>Batal</Button>
+              <Button type="submit" variant="contained" disabled={loading} sx={{ fontSize: '1.1rem', px: 4, py: 1.5 }}>
+                {loading ? <CircularProgress size={24} /> : 'Buat Order'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
         {/* Handphone Dialog */}
-        <Dialog open={handphoneDialog} onClose={() => setHandphoneDialog(false)} maxWidth="sm" fullWidth>
+        <Dialog open={handphoneDialog} onClose={() => setHandphoneDialog(false)} maxWidth="md" fullWidth>
           <form onSubmit={handleHandphoneSubmit}>
-            <DialogTitle>Buat Handphone Baru</DialogTitle>
-            <DialogContent>
+            <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', py: 2 }}>Buat Handphone Baru</DialogTitle>
+            <DialogContent sx={{ py: 3 }}>
               <TextField
                 fullWidth
                 label="Merek"
@@ -796,6 +1050,27 @@ const WorkflowManagement = () => {
                 onChange={(e) => setHandphoneForm(prev => ({ ...prev, merek: e.target.value }))}
                 margin="normal"
                 required
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
               <TextField
                 fullWidth
@@ -805,6 +1080,27 @@ const WorkflowManagement = () => {
                 onChange={(e) => setHandphoneForm(prev => ({ ...prev, tipe: e.target.value }))}
                 margin="normal"
                 required
+                sx={{
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: 'primary.main'
+                  }
+                }}
               />
               <TextField
                 fullWidth
@@ -842,19 +1138,19 @@ const WorkflowManagement = () => {
                 margin="normal"
               />
             </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setHandphoneDialog(false)}>Batal</Button>
-              <Button type="submit" variant="contained" disabled={loading}>
-                {loading ? <CircularProgress size={20} /> : 'Buat Handphone'}
+            <DialogActions sx={{ py: 3, px: 3 }}>
+              <Button onClick={() => setHandphoneDialog(false)} sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}>Batal</Button>
+              <Button type="submit" variant="contained" disabled={loading} sx={{ fontSize: '1.1rem', px: 4, py: 1.5 }}>
+                {loading ? <CircularProgress size={24} /> : 'Buat Handphone'}
               </Button>
             </DialogActions>
           </form>
         </Dialog>
 
         {/* Product Dialog - Simplified for demo */}
-        <Dialog open={productDialog} onClose={() => setProductDialog(false)} maxWidth="md" fullWidth>
+        <Dialog open={productDialog} onClose={() => setProductDialog(false)} maxWidth="lg" fullWidth>
             <form onSubmit={handleProductSubmit}>
-              <DialogTitle>Buat Product Baru</DialogTitle>
+              <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', py: 2 }}>Buat Product Baru</DialogTitle>
               <DialogContent>
                 <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
@@ -1116,10 +1412,10 @@ const WorkflowManagement = () => {
                 </Grid>
               </Grid>
             </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setProductDialog(false)}>Batal</Button>
-              <Button type="submit" variant="contained" disabled={loading}>
-                {loading ? <CircularProgress size={20} /> : 'Buat Product'}
+            <DialogActions sx={{ py: 3, px: 3 }}>
+              <Button onClick={() => setProductDialog(false)} sx={{ fontSize: '1.1rem', px: 3, py: 1.5 }}>Batal</Button>
+              <Button type="submit" variant="contained" disabled={loading} sx={{ fontSize: '1.1rem', px: 4, py: 1.5 }}>
+                {loading ? <CircularProgress size={24} /> : 'Buat Product'}
               </Button>
             </DialogActions>
           </form>

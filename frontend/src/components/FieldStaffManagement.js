@@ -175,19 +175,23 @@ const FieldStaffManagement = () => {
 
   return (
     <SidebarLayout onLogout={handleLogout}>
-      <Container maxWidth="lg" sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="lg" sx={{ mt: 6, mb: 6, px: 4 }}>
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'space-between' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 3,
+          mb: 6
         }}>
           <Typography
-            variant="h4"
+            variant="h2"
             component="h1"
-            sx={{ textAlign: { xs: 'center', sm: 'left' } }}
+            sx={{
+              textAlign: { xs: 'center', sm: 'left' },
+              fontWeight: 'bold',
+              fontSize: { xs: '2.5rem', sm: '3rem' }
+            }}
           >
             Field Staff Management
           </Typography>
@@ -198,16 +202,20 @@ const FieldStaffManagement = () => {
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'flex-end' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 4,
+          mb: 5
         }}>
           <Button
             variant="contained"
             startIcon={<PersonAdd />}
             onClick={() => handleOpenDialog()}
             sx={{
-              borderRadius: 2,
-              width: { xs: '100%', sm: 'auto' }
+              borderRadius: 3,
+              width: { xs: '100%', sm: 'auto' },
+              fontSize: '1.2rem',
+              px: 4,
+              py: 2,
+              fontWeight: 600
             }}
           >
             Add Field Staff
@@ -215,7 +223,7 @@ const FieldStaffManagement = () => {
         </Box>
 
         <Card sx={{
-          borderRadius: 3,
+          borderRadius: 4,
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}>
@@ -223,49 +231,50 @@ const FieldStaffManagement = () => {
             <Table>
               <TableHead sx={{ bgcolor: 'grey.100' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Kode Orlap</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Nama Orlap</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>No. Handphone</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Assigned Handphones</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Created</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Kode Orlap</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Nama Orlap</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>No. Handphone</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Assigned Handphones</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Created</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {fieldStaff.map((staff) => (
-                  <TableRow key={staff._id} hover>
-                    <TableCell>{staff.kodeOrlap}</TableCell>
-                    <TableCell>{staff.namaOrlap}</TableCell>
-                    <TableCell>{staff.noHandphone}</TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  <TableRow key={staff._id} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{staff.kodeOrlap}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{staff.namaOrlap}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{staff.noHandphone}</TableCell>
+                    <TableCell sx={{ py: 3 }}>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {staff.handphones && staff.handphones.length > 0 ? (
                           staff.handphones.map((handphone) => (
                             <Chip
                               key={handphone._id}
                               label={`${handphone.merek} ${handphone.tipe}`}
-                              size="small"
+                              size="medium"
                               onDelete={() => handleUnassignHandphone(staff._id, handphone._id)}
                               color="primary"
                               variant="outlined"
+                              sx={{ fontSize: '0.9rem', py: 0.5 }}
                             />
                           ))
                         ) : (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '1rem' }}>
                             No handphones assigned
                           </Typography>
                         )}
                       </Box>
                     </TableCell>
-                    <TableCell>{new Date(staff.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleOpenAssignDialog(staff)} color="secondary" size="small" title="Assign Handphone">
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{new Date(staff.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell sx={{ py: 3 }}>
+                      <IconButton onClick={() => handleOpenAssignDialog(staff)} color="secondary" size="large" title="Assign Handphone" sx={{ mr: 1 }}>
                         <PhoneAndroid />
                       </IconButton>
-                      <IconButton onClick={() => handleOpenDialog(staff)} color="primary" size="small">
+                      <IconButton onClick={() => handleOpenDialog(staff)} color="primary" size="large" sx={{ mr: 1 }}>
                         <Edit />
                       </IconButton>
-                      <IconButton onClick={() => handleDelete(staff._id)} color="error" size="small">
+                      <IconButton onClick={() => handleDelete(staff._id)} color="error" size="large">
                         <Delete />
                       </IconButton>
                     </TableCell>
@@ -275,8 +284,8 @@ const FieldStaffManagement = () => {
             </Table>
           </TableContainer>
           {fieldStaff.length === 0 && !loading && (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
+            <Box sx={{ p: 6, textAlign: 'center' }}>
+              <Typography variant="h5" color="text.secondary" sx={{ fontSize: '1.3rem' }}>
                 No field staff found. Click "Add Field Staff" to create your first field staff.
               </Typography>
             </Box>
@@ -290,15 +299,15 @@ const FieldStaffManagement = () => {
         <Dialog
           open={openDialog}
           onClose={handleCloseDialog}
-          maxWidth="sm"
+          maxWidth="md"
           fullWidth
-          sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}
+          sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
         >
-          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
+          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', fontSize: '1.5rem', py: 3 }}>
             {editingStaff ? 'Edit Field Staff' : 'Add New Field Staff'}
           </DialogTitle>
           <form onSubmit={handleSubmit}>
-            <DialogContent>
+            <DialogContent sx={{ py: 4, px: 4 }}>
               <TextField
                 fullWidth
                 label="Kode Orlap"
@@ -308,17 +317,21 @@ const FieldStaffManagement = () => {
                 margin="normal"
                 required
                 sx={{
+                  mb: 3,
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
                     backgroundColor: 'rgba(255,255,255,0.9)',
                     '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                     '&.Mui-focused': { backgroundColor: 'white' }
                   },
                   '& .MuiInputBase-input': {
-                    color: 'black'
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
                   },
                   '& .MuiInputLabel-root': {
-                    color: 'rgba(0,0,0,0.7)'
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
                     color: 'primary.main'
@@ -334,17 +347,21 @@ const FieldStaffManagement = () => {
                 margin="normal"
                 required
                 sx={{
+                  mb: 3,
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
                     backgroundColor: 'rgba(255,255,255,0.9)',
                     '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                     '&.Mui-focused': { backgroundColor: 'white' }
                   },
                   '& .MuiInputBase-input': {
-                    color: 'black'
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
                   },
                   '& .MuiInputLabel-root': {
-                    color: 'rgba(0,0,0,0.7)'
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
                     color: 'primary.main'
@@ -360,17 +377,21 @@ const FieldStaffManagement = () => {
                 margin="normal"
                 required
                 sx={{
+                  mb: 3,
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
                     backgroundColor: 'rgba(255,255,255,0.9)',
                     '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                     '&.Mui-focused': { backgroundColor: 'white' }
                   },
                   '& .MuiInputBase-input': {
-                    color: 'black'
+                    color: 'black',
+                    fontSize: '1.1rem',
+                    py: 1.5
                   },
                   '& .MuiInputLabel-root': {
-                    color: 'rgba(0,0,0,0.7)'
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
                     color: 'primary.main'
@@ -378,9 +399,9 @@ const FieldStaffManagement = () => {
                 }}
               />
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button type="submit" variant="contained" sx={{ borderRadius: 2 }}>
+            <DialogActions sx={{ py: 4, px: 4 }}>
+              <Button onClick={handleCloseDialog} sx={{ fontSize: '1.2rem', px: 4, py: 2, fontWeight: 600 }}>Cancel</Button>
+              <Button type="submit" variant="contained" sx={{ borderRadius: 3, fontSize: '1.2rem', px: 5, py: 2, fontWeight: 600 }}>
                 {editingStaff ? 'Update' : 'Create'}
               </Button>
             </DialogActions>
@@ -391,46 +412,59 @@ const FieldStaffManagement = () => {
         <Dialog
           open={openAssignDialog}
           onClose={handleCloseAssignDialog}
-          maxWidth="sm"
+          maxWidth="md"
           fullWidth
-          sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}
+          sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
         >
-          <DialogTitle sx={{ bgcolor: 'secondary.main', color: 'white', fontWeight: 'bold' }}>
-            <PhoneAndroid sx={{ mr: 1, verticalAlign: 'middle' }} />
+          <DialogTitle sx={{ bgcolor: 'secondary.main', color: 'white', fontWeight: 'bold', fontSize: '1.5rem', py: 3 }}>
+            <PhoneAndroid sx={{ mr: 2, verticalAlign: 'middle', fontSize: '2rem' }} />
             Assign Handphone to {selectedStaffForAssign?.namaOrlap}
           </DialogTitle>
-          <DialogContent sx={{ mt: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <DialogContent sx={{ py: 4, px: 4 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3, fontSize: '1.1rem' }}>
               Select a handphone to assign to this field staff.
             </Typography>
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>Available Handphones</InputLabel>
+            <FormControl fullWidth sx={{ mt: 3 }}>
+              <InputLabel sx={{ fontSize: '1.1rem' }}>Available Handphones</InputLabel>
               <Select
                 value={selectedHandphoneId}
                 onChange={(e) => setSelectedHandphoneId(e.target.value)}
                 label="Available Handphones"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 3,
+                    backgroundColor: 'rgba(255,255,255,0.9)',
+                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                    '&.Mui-focused': { backgroundColor: 'white' }
+                  },
+                  '& .MuiSelect-select': {
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  }
+                }}
               >
                 {availableHandphones.map((handphone) => (
-                  <MenuItem key={handphone._id} value={handphone._id}>
+                  <MenuItem key={handphone._id} value={handphone._id} sx={{ fontSize: '1.1rem' }}>
                     {handphone.merek} {handphone.tipe} {handphone.imei ? `(IMEI: ${handphone.imei})` : ''}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
             {availableHandphones.length === 0 && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography variant="body1" color="text.secondary" sx={{ mt: 3, textAlign: 'center', fontSize: '1.1rem' }}>
                 No available handphones to assign
               </Typography>
             )}
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseAssignDialog}>Cancel</Button>
+          <DialogActions sx={{ py: 4, px: 4 }}>
+            <Button onClick={handleCloseAssignDialog} sx={{ fontSize: '1.2rem', px: 4, py: 2, fontWeight: 600 }}>Cancel</Button>
             <Button
               onClick={handleAssignHandphone}
               variant="contained"
               color="secondary"
               disabled={!selectedHandphoneId}
               startIcon={<AssignmentTurnedIn />}
+              sx={{ fontSize: '1.2rem', px: 5, py: 2, fontWeight: 600, borderRadius: 3 }}
             >
               Assign Handphone
             </Button>

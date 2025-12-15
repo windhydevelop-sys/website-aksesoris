@@ -196,7 +196,8 @@ const createProduct = async (req, res) => {
 // Get all products with decryption and handphone population
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    // Use populate directly in the find query
+    const products = await Product.find().populate('handphoneId', 'merek tipe imei spesifikasi kepemilikan');
 
     // Log handphoneId type before populate
     products.forEach(product => {
@@ -205,10 +206,6 @@ const getProducts = async (req, res) => {
       }
     });
 
-    const populatedProducts = await Product.populate(products, {
-      path: 'handphoneId',
-      select: 'merek tipe imei spesifikasi kepemilikan'
-    });
 
     // Log handphoneId type after populate
     populatedProducts.forEach(product => {
@@ -218,7 +215,7 @@ const getProducts = async (req, res) => {
     });
 
     // Decrypt each product
-    const decryptedProducts = populatedProducts.map(product => product.getDecryptedData());
+    const decryptedProducts = products.map(product => product.getDecryptedData());
 
     // Audit log for data access
     auditLog('READ', req.userId, 'Product', 'all', {
@@ -287,6 +284,21 @@ const getProductById = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const data = { ...req.body };
+
+    // Debug: Log incoming request body
+    console.log('Product update - Raw request body:', JSON.stringify(req.body, null, 2));
+
+    // Fix array values from frontend autocomplete
+    if (Array.isArray(data.noOrder)) {
+      console.log('Converting noOrder array:', data.noOrder, '->', data.noOrder[0] || '');
+      data.noOrder = data.noOrder[0] || '';
+    }
+    if (Array.isArray(data.codeAgen)) {
+      console.log('Converting codeAgen array:', data.codeAgen, '->', data.codeAgen[0] || '');
+      data.codeAgen = data.codeAgen[0] || '';
+    }
+
+    console.log('Product update - Processed data:', JSON.stringify(data, null, 2));
 
     // Handle file uploads
     if (req.files && req.files.uploadFotoId) {
@@ -384,6 +396,9 @@ const updateProduct = async (req, res) => {
     // Add audit field
     data.lastModifiedBy = req.userId;
 
+    // Debug: Log the data being sent to MongoDB
+    console.log('Product update - Final data to be saved:', JSON.stringify(data, null, 2));
+
     // Remove invalid fields (no longer in Product model)
     delete data.status;
     delete data.harga;
@@ -391,7 +406,7 @@ const updateProduct = async (req, res) => {
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       data,
-      { new: true, runValidators: true }
+      { new: true, runValidators: false }
     );
 
     if (!product) {
@@ -506,6 +521,162 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// Export all products with decrypted data and base64 images for PDF generation
+const getProductsExport = async (req, res) => {
+  try {
+    console.log('Starting product export...');
+
+    // Get decrypted products
+    let products = [];
+    try {
+      products = await Product.findDecrypted({});
+      console.log(`Found ${products.length} decrypted products`);
+    } catch (decryptError) {
+      console.error('Error in decryption, falling back to raw products:', decryptError.message);
+      products = await Product.find({});
+      console.log(`Found ${products.length} raw products (decryption failed)`);
+    }
+
+    // Populate handphone data for each product
+    let populatedProducts = [];
+    try {
+      populatedProducts = await Product.populate(products, {
+        path: 'handphoneId',
+        select: 'merek tipe imei spesifikasi kepemilikan assignedTo',
+        populate: {
+          path: 'assignedTo',
+          select: 'kodeOrlap namaOrlap'
+        }
+      });
+      console.log('Handphone data populated successfully');
+    } catch (populateError) {
+      console.error('Error in populate, using products without populate:', populateError.message);
+      populatedProducts = products;
+    }
+
+    // Convert images to base64 for PDF inclusion
+    const fs = require('fs');
+    const path = require('path');
+    const uploadsDir = path.join(__dirname, '../uploads');
+    console.log('Uploads directory:', uploadsDir);
+
+    const productsWithImages = await Promise.all(populatedProducts.map(async (product, index) => {
+      const productWithImages = { ...product };
+      console.log(`Processing product ${index + 1}/${populatedProducts.length}: ${product.noOrder || product._id}`);
+
+      // Convert KTP photo to base64
+      if (product.uploadFotoId) {
+        try {
+          const ktpPath = path.join(uploadsDir, product.uploadFotoId);
+          console.log(`Converting KTP image: ${ktpPath}`);
+
+          if (fs.existsSync(ktpPath)) {
+            const stats = fs.statSync(ktpPath);
+            console.log(`KTP file size: ${stats.size} bytes`);
+
+            if (stats.size > 10 * 1024 * 1024) { // 10MB limit
+              console.warn(`KTP file too large: ${stats.size} bytes`);
+            } else {
+              const imageBuffer = fs.readFileSync(ktpPath);
+              const base64Image = imageBuffer.toString('base64');
+              const mimeType = path.extname(product.uploadFotoId).toLowerCase() === '.png' ? 'image/png' : 'image/jpeg';
+              productWithImages.uploadFotoIdBase64 = `data:${mimeType};base64,${base64Image}`;
+              console.log(`KTP image converted successfully, base64 length: ${base64Image.length}`);
+            }
+          } else {
+            console.warn(`KTP file not found: ${ktpPath}`);
+          }
+        } catch (error) {
+          console.error('Error converting KTP image to base64:', error.message);
+        }
+      }
+
+      // Convert Selfie photo to base64
+      if (product.uploadFotoSelfie) {
+        try {
+          const selfiePath = path.join(uploadsDir, product.uploadFotoSelfie);
+          console.log(`Converting Selfie image: ${selfiePath}`);
+
+          if (fs.existsSync(selfiePath)) {
+            const stats = fs.statSync(selfiePath);
+            console.log(`Selfie file size: ${stats.size} bytes`);
+
+            if (stats.size > 10 * 1024 * 1024) { // 10MB limit
+              console.warn(`Selfie file too large: ${stats.size} bytes`);
+            } else {
+              const imageBuffer = fs.readFileSync(selfiePath);
+
+              // Check if it's actually a valid image by checking magic bytes
+              const magicBytes = imageBuffer.slice(0, 4);
+              console.log(`Selfie magic bytes: ${magicBytes.toString('hex')}`);
+
+              // Detect MIME type from magic bytes
+              let mimeType = 'image/jpeg'; // default
+              if (magicBytes[0] === 0xFF && magicBytes[1] === 0xD8) {
+                mimeType = 'image/jpeg';
+              } else if (magicBytes[0] === 0x89 && magicBytes[1] === 0x50 &&
+                         magicBytes[2] === 0x4E && magicBytes[3] === 0x47) {
+                mimeType = 'image/png';
+              } else if (magicBytes[0] === 0x47 && magicBytes[1] === 0x49 &&
+                         magicBytes[2] === 0x46 && magicBytes[3] === 0x38) {
+                mimeType = 'image/gif';
+              } else if (magicBytes[0] === 0x42 && magicBytes[1] === 0x4D) {
+                mimeType = 'image/bmp';
+              } else if (magicBytes[0] === 0x52 && magicBytes[1] === 0x49 &&
+                         magicBytes[2] === 0x46 && magicBytes[3] === 0x46) {
+                // Check for WebP
+                if (magicBytes[8] === 0x57 && magicBytes[9] === 0x45 &&
+                    magicBytes[10] === 0x42 && magicBytes[11] === 0x50) {
+                  mimeType = 'image/webp';
+                }
+              }
+
+              console.log(`Detected MIME type: ${mimeType}`);
+
+              const base64Image = imageBuffer.toString('base64');
+              productWithImages.uploadFotoSelfieBase64 = `data:${mimeType};base64,${base64Image}`;
+              console.log(`Selfie image converted successfully, base64 length: ${base64Image.length}, MIME: ${mimeType}`);
+            }
+          } else {
+            console.warn(`Selfie file not found: ${selfiePath}`);
+          }
+        } catch (error) {
+          console.error('Error converting Selfie image to base64:', error.message);
+        }
+      }
+
+      return productWithImages;
+    }));
+
+    console.log(`Successfully processed ${productsWithImages.length} products with images`);
+
+    // Audit log for export
+    auditLog('EXPORT', req.userId, 'Product', 'pdf_export', {
+      count: productsWithImages.length,
+      exportType: 'complete_data_with_images'
+    }, req);
+
+    res.json({
+      success: true,
+      data: productsWithImages,
+      count: productsWithImages.length
+    });
+
+  } catch (err) {
+    console.error('PRODUCT EXPORT ERROR:', err);
+    securityLog('PRODUCT_EXPORT_FAILED', 'medium', {
+      error: err.message,
+      stack: err.stack,
+      userId: req.userId
+    }, req);
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to export products: ' + err.message
+    });
+  }
+};
+
 module.exports = {
   getCustomers,
   getComplaints,
@@ -513,5 +684,6 @@ module.exports = {
   getProducts,
   getProductById,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  getProductsExport
 };

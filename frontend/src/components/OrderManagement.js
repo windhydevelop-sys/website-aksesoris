@@ -27,6 +27,20 @@ const OrderManagement = () => {
     totalAmount: ''
   });
 
+  // Format number with dots (Indonesian format)
+  const formatNumberWithDots = (value) => {
+    if (!value) return '';
+    // Remove all non-digits
+    const cleaned = value.toString().replace(/\D/g, '');
+    // Add dots every 3 digits from right
+    return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  // Clean formatted number (remove dots)
+  const cleanFormattedNumber = (value) => {
+    return value.toString().replace(/\./g, '');
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
@@ -80,7 +94,7 @@ const OrderManagement = () => {
         fieldStaff: order.fieldStaff,
         status: order.status,
         notes: order.notes || '',
-        totalAmount: order.harga || ''
+        totalAmount: order.harga ? formatNumberWithDots(order.harga) : ''
       });
     } else {
       setEditingOrder(null);
@@ -111,10 +125,20 @@ const OrderManagement = () => {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+
+    if (name === 'totalAmount') {
+      // Format the number with dots for display
+      const formattedValue = formatNumberWithDots(value);
+      setFormData({
+        ...formData,
+        [name]: formattedValue
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   const handleAutocompleteChange = (field, value) => {
@@ -129,7 +153,7 @@ const OrderManagement = () => {
     try {
       const submitData = {
         ...formData,
-        harga: formData.totalAmount ? parseFloat(formData.totalAmount) : 0
+        harga: formData.totalAmount ? parseFloat(cleanFormattedNumber(formData.totalAmount)) : 0
       };
 
       if (editingOrder) {
@@ -182,19 +206,23 @@ const OrderManagement = () => {
 
   return (
     <SidebarLayout onLogout={handleLogout}>
-      <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="xl" sx={{ mt: 6, mb: 6, px: 4 }}>
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'space-between' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 3,
+          mb: 6
         }}>
           <Typography
-            variant="h4"
+            variant="h2"
             component="h1"
-            sx={{ textAlign: { xs: 'center', sm: 'left' } }}
+            sx={{
+              textAlign: { xs: 'center', sm: 'left' },
+              fontWeight: 'bold',
+              fontSize: { xs: '2.5rem', sm: '3rem' }
+            }}
           >
             Order Management
           </Typography>
@@ -205,16 +233,20 @@ const OrderManagement = () => {
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'flex-end' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 4,
+          mb: 6
         }}>
           <Button
             variant="contained"
             startIcon={<AddShoppingCart />}
             onClick={() => handleOpenDialog()}
             sx={{
-              borderRadius: 2,
-              width: { xs: '100%', sm: 'auto' }
+              borderRadius: 3,
+              width: { xs: '100%', sm: 'auto' },
+              fontSize: '1.3rem',
+              px: 5,
+              py: 2.5,
+              fontWeight: 600
             }}
           >
             Add Order
@@ -222,45 +254,46 @@ const OrderManagement = () => {
         </Box>
 
         <Card sx={{
-          borderRadius: 3,
+          borderRadius: 4,
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}>
           <TableContainer>
-            <Table>
+            <Table sx={{ minWidth: 900 }}>
               <TableHead sx={{ bgcolor: 'grey.100' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>No. Order</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Customer</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Orlap</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Total Amount</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Created</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.3rem', py: 4 }}>No. Order</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.3rem', py: 4 }}>Customer</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.3rem', py: 4 }}>Orlap</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.3rem', py: 4 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.3rem', py: 4 }}>Total Amount</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.3rem', py: 4 }}>Created</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.3rem', py: 4 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {orders.map((order) => (
-                  <TableRow key={order._id} hover>
-                    <TableCell>{order.noOrder}</TableCell>
-                    <TableCell>{order.customer}</TableCell>
-                    <TableCell>{order.fieldStaff}</TableCell>
-                    <TableCell>
+                  <TableRow key={order._id} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                    <TableCell sx={{ fontSize: '1.2rem', py: 4 }}>{order.noOrder}</TableCell>
+                    <TableCell sx={{ fontSize: '1.2rem', py: 4 }}>{order.customer}</TableCell>
+                    <TableCell sx={{ fontSize: '1.2rem', py: 4 }}>{order.fieldStaff}</TableCell>
+                    <TableCell sx={{ py: 4 }}>
                       <Chip
                         label={getStatusLabel(order.status)}
                         color={getStatusColor(order.status)}
-                        size="small"
+                        size="large"
                         variant="outlined"
+                        sx={{ fontSize: '1rem', py: 1, px: 2 }}
                       />
                     </TableCell>
-                    <TableCell>Rp {order.harga?.toLocaleString('id-ID') || '0'}</TableCell>
-                    <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleOpenDialog(order)} color="primary" size="small">
-                        <Edit />
+                    <TableCell sx={{ fontSize: '1.2rem', py: 4, fontWeight: 600 }}>Rp {order.harga?.toLocaleString('id-ID') || '0'}</TableCell>
+                    <TableCell sx={{ fontSize: '1.2rem', py: 4 }}>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell sx={{ py: 4 }}>
+                      <IconButton onClick={() => handleOpenDialog(order)} color="primary" size="large" sx={{ mr: 2 }}>
+                        <Edit sx={{ fontSize: '1.8rem' }} />
                       </IconButton>
-                      <IconButton onClick={() => handleDelete(order._id)} color="error" size="small">
-                        <Delete />
+                      <IconButton onClick={() => handleDelete(order._id)} color="error" size="large">
+                        <Delete sx={{ fontSize: '1.8rem' }} />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -269,8 +302,8 @@ const OrderManagement = () => {
             </Table>
           </TableContainer>
           {orders.length === 0 && !loading && (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
+            <Box sx={{ p: 6, textAlign: 'center' }}>
+              <Typography variant="h5" color="text.secondary" sx={{ fontSize: '1.3rem' }}>
                 No orders found. Click "Add Order" to create your first order.
               </Typography>
             </Box>
@@ -284,15 +317,15 @@ const OrderManagement = () => {
         <Dialog
           open={openDialog}
           onClose={handleCloseDialog}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
-          sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}
+          sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
         >
-          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
+          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', fontSize: '1.8rem', py: 4 }}>
             {editingOrder ? 'Edit Order' : 'Add New Order'}
           </DialogTitle>
           <form onSubmit={handleSubmit}>
-            <DialogContent>
+            <DialogContent sx={{ py: 5, px: 5 }}>
               <TextField
                 fullWidth
                 label="No. Order"
@@ -302,17 +335,21 @@ const OrderManagement = () => {
                 margin="normal"
                 required
                 sx={{
+                  mb: 4,
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
                     backgroundColor: 'rgba(255,255,255,0.9)',
                     '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                     '&.Mui-focused': { backgroundColor: 'white' }
                   },
                   '& .MuiInputBase-input': {
-                    color: 'black'
+                    color: 'black',
+                    fontSize: '1.2rem',
+                    py: 2
                   },
                   '& .MuiInputLabel-root': {
-                    color: 'rgba(0,0,0,0.7)'
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.2rem'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
                     color: 'primary.main'
@@ -334,17 +371,21 @@ const OrderManagement = () => {
                     margin="normal"
                     required
                     sx={{
+                      mb: 3,
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
+                        borderRadius: 3,
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                         '&.Mui-focused': { backgroundColor: 'white' }
                       },
                       '& .MuiInputBase-input': {
-                        color: 'black'
+                        color: 'black',
+                        fontSize: '1.1rem',
+                        py: 1.5
                       },
                       '& .MuiInputLabel-root': {
-                        color: 'rgba(0,0,0,0.7)'
+                        color: 'rgba(0,0,0,0.7)',
+                        fontSize: '1.1rem'
                       },
                       '& .MuiInputLabel-root.Mui-focused': {
                         color: 'primary.main'
@@ -368,17 +409,21 @@ const OrderManagement = () => {
                     margin="normal"
                     required
                     sx={{
+                      mb: 3,
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
+                        borderRadius: 3,
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                         '&.Mui-focused': { backgroundColor: 'white' }
                       },
                       '& .MuiInputBase-input': {
-                        color: 'black'
+                        color: 'black',
+                        fontSize: '1.1rem',
+                        py: 1.5
                       },
                       '& .MuiInputLabel-root': {
-                        color: 'rgba(0,0,0,0.7)'
+                        color: 'rgba(0,0,0,0.7)',
+                        fontSize: '1.1rem'
                       },
                       '& .MuiInputLabel-root.Mui-focused': {
                         color: 'primary.main'
@@ -388,8 +433,8 @@ const OrderManagement = () => {
                 )}
               />
 
-              <FormControl fullWidth margin="normal">
-                <InputLabel id="status-label">Status</InputLabel>
+              <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
+                <InputLabel id="status-label" sx={{ fontSize: '1.1rem' }}>Status</InputLabel>
                 <Select
                   labelId="status-label"
                   name="status"
@@ -397,16 +442,20 @@ const OrderManagement = () => {
                   label="Status"
                   onChange={handleFormChange}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 3,
                     backgroundColor: 'rgba(255,255,255,0.9)',
                     '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
-                    '&.Mui-focused': { backgroundColor: 'white' }
+                    '&.Mui-focused': { backgroundColor: 'white' },
+                    '& .MuiSelect-select': {
+                      fontSize: '1.1rem',
+                      py: 1.5
+                    }
                   }}
                 >
-                  <MenuItem value="pending">Pending</MenuItem>
-                  <MenuItem value="in_progress">In Progress</MenuItem>
-                  <MenuItem value="completed">Completed</MenuItem>
-                  <MenuItem value="cancelled">Cancelled</MenuItem>
+                  <MenuItem value="pending" sx={{ fontSize: '1.1rem' }}>Pending</MenuItem>
+                  <MenuItem value="in_progress" sx={{ fontSize: '1.1rem' }}>In Progress</MenuItem>
+                  <MenuItem value="completed" sx={{ fontSize: '1.1rem' }}>Completed</MenuItem>
+                  <MenuItem value="cancelled" sx={{ fontSize: '1.1rem' }}>Cancelled</MenuItem>
                 </Select>
               </FormControl>
 
@@ -414,25 +463,31 @@ const OrderManagement = () => {
                 fullWidth
                 label="Total Amount"
                 name="totalAmount"
-                type="number"
+                type="text"
                 value={formData.totalAmount}
                 onChange={handleFormChange}
                 margin="normal"
+                placeholder="0"
                 InputProps={{
                   startAdornment: 'Rp ',
                 }}
                 sx={{
+                  mb: 4,
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
                     backgroundColor: 'rgba(255,255,255,0.9)',
                     '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                     '&.Mui-focused': { backgroundColor: 'white' }
                   },
                   '& .MuiInputBase-input': {
-                    color: 'black'
+                    color: 'black',
+                    fontSize: '1.2rem',
+                    py: 2,
+                    fontWeight: 600
                   },
                   '& .MuiInputLabel-root': {
-                    color: 'rgba(0,0,0,0.7)'
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.2rem'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
                     color: 'primary.main'
@@ -448,19 +503,22 @@ const OrderManagement = () => {
                 onChange={handleFormChange}
                 margin="normal"
                 multiline
-                rows={3}
+                rows={4}
                 sx={{
+                  mb: 3,
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
                     backgroundColor: 'rgba(255,255,255,0.9)',
                     '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                     '&.Mui-focused': { backgroundColor: 'white' }
                   },
                   '& .MuiInputBase-input': {
-                    color: 'black'
+                    color: 'black',
+                    fontSize: '1.1rem'
                   },
                   '& .MuiInputLabel-root': {
-                    color: 'rgba(0,0,0,0.7)'
+                    color: 'rgba(0,0,0,0.7)',
+                    fontSize: '1.1rem'
                   },
                   '& .MuiInputLabel-root.Mui-focused': {
                     color: 'primary.main'
@@ -468,9 +526,9 @@ const OrderManagement = () => {
                 }}
               />
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button type="submit" variant="contained" sx={{ borderRadius: 2 }}>
+            <DialogActions sx={{ py: 5, px: 5 }}>
+              <Button onClick={handleCloseDialog} sx={{ fontSize: '1.3rem', px: 5, py: 2.5, fontWeight: 600 }}>Cancel</Button>
+              <Button type="submit" variant="contained" sx={{ borderRadius: 3, fontSize: '1.3rem', px: 6, py: 2.5, fontWeight: 600 }}>
                 {editingOrder ? 'Update' : 'Create'}
               </Button>
             </DialogActions>

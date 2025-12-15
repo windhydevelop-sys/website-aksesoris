@@ -16,33 +16,69 @@ const FieldStaffDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Get current user info (assuming field staff info is stored)
+  // Get current user info
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = currentUser.role === 'admin';
   const fieldStaffCode = currentUser.fieldStaff || currentUser.kodeOrlap;
 
   const fetchHandphoneSummary = useCallback(async () => {
-    if (!fieldStaffCode) {
-      setError('Field staff information not found');
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
-      // First get field staff details to get the ID
-      const fieldStaffRes = await axios.get('/api/field-staff');
-      const fieldStaffList = fieldStaffRes.data.data || [];
-      const currentFieldStaff = fieldStaffList.find(fs => fs.kodeOrlap === fieldStaffCode);
 
-      if (!currentFieldStaff) {
-        setError('Field staff not found in database');
-        setLoading(false);
-        return;
+      if (isAdmin) {
+        // Admin can see all handphones or select a specific field staff
+        // For now, show summary of all handphones
+        const summaryRes = await axios.get('/api/handphones');
+        const allHandphones = summaryRes.data.data || [];
+
+        // Calculate summary for all handphones
+        const summary = {
+          totalHandphones: allHandphones.length,
+          available: allHandphones.filter(h => h.status === 'available').length,
+          inUse: allHandphones.filter(h => h.status === 'assigned' || h.status === 'in_use').length,
+          maintenance: allHandphones.filter(h => h.status === 'maintenance').length,
+          handphones: allHandphones.map(handphone => ({
+            id: handphone._id,
+            merek: handphone.merek,
+            tipe: handphone.tipe,
+            imei: handphone.imei,
+            status: handphone.status === 'assigned' ? 'in_use' : handphone.status,
+            currentProduct: handphone.currentProduct ? {
+              noOrder: handphone.currentProduct.noOrder,
+              customer: handphone.currentProduct.customer,
+              status: handphone.currentProduct.status
+            } : null,
+            assignedProducts: handphone.assignedProducts || [],
+            assignedTo: handphone.assignedTo,
+            totalAssignments: handphone.assignedProducts?.length || 0
+          }))
+        };
+
+        setHandphoneSummary(summary);
+      } else {
+        // Field staff logic
+        if (!fieldStaffCode) {
+          setError('Field staff information not found');
+          setLoading(false);
+          return;
+        }
+
+        // First get field staff details to get the ID
+        const fieldStaffRes = await axios.get('/api/field-staff');
+        const fieldStaffList = fieldStaffRes.data.data || [];
+        const currentFieldStaff = fieldStaffList.find(fs => fs.kodeOrlap === fieldStaffCode);
+
+        if (!currentFieldStaff) {
+          setError('Field staff not found in database');
+          setLoading(false);
+          return;
+        }
+
+        // Get handphone assignment summary
+        const summaryRes = await axios.get(`/api/handphones/field-staff/${currentFieldStaff._id}`);
+        setHandphoneSummary(summaryRes.data.data);
       }
 
-      // Get handphone assignment summary
-      const summaryRes = await axios.get(`/api/handphones/field-staff/${currentFieldStaff._id}`);
-      setHandphoneSummary(summaryRes.data.data);
       setError(null);
     } catch (err) {
       console.error('Error fetching handphone summary:', err);
@@ -51,11 +87,11 @@ const FieldStaffDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [fieldStaffCode, showError]);
+  }, [isAdmin, fieldStaffCode, showError]);
 
   useEffect(() => {
     fetchHandphoneSummary();
-  }, [fetchHandphoneSummary]);
+  }, [isAdmin, fieldStaffCode, fetchHandphoneSummary]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -104,7 +140,10 @@ const FieldStaffDashboard = () => {
     <SidebarLayout onLogout={handleLogout}>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
-          Dashboard Field Staff - {fieldStaffCode}
+          Dashboard Field Staff {fieldStaffCode && `- ${fieldStaffCode}`}
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          Menampilkan data handphone dan produk yang dikelola
         </Typography>
 
         {/* Summary Cards */}
@@ -193,6 +232,7 @@ const FieldStaffDashboard = () => {
                     <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Current Product</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Assignment Count</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>Field Staff</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -228,6 +268,20 @@ const FieldStaffDashboard = () => {
                         )}
                       </TableCell>
                       <TableCell>{handphone.totalAssignments}</TableCell>
+                      <TableCell>
+                        {handphone.assignedTo ? (
+                          <Box>
+                            <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                              {handphone.assignedTo.kodeOrlap}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {handphone.assignedTo.namaOrlap}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">-</Typography>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -249,16 +303,90 @@ const FieldStaffDashboard = () => {
             <Typography variant="h6" gutterBottom>
               📦 Produk Yang Ditangani
             </Typography>
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Produk yang menggunakan handphone yang dikelola oleh field staff ini akan ditampilkan di sini.
-              Fitur ini akan menampilkan history lengkap assignment handphone ke produk.
-            </Alert>
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Inventory sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
-              <Typography variant="body1" color="text.secondary">
-                Fitur detail produk per handphone akan diimplementasikan selanjutnya.
-              </Typography>
-            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Produk yang pernah di-assign ke handphone yang dikelola oleh field staff ini.
+            </Typography>
+
+            {handphoneSummary?.handphones?.some(h => h.assignedProducts && h.assignedProducts.length > 0) ? (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead sx={{ bgcolor: 'grey.50' }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Handphone</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Produk</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Customer</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Tanggal Assign</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', fontSize: '0.875rem' }}>Field Staff</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {handphoneSummary.handphones
+                      .filter(handphone => handphone.assignedProducts && handphone.assignedProducts.length > 0)
+                      .map(handphone =>
+                        handphone.assignedProducts.map((product, index) => (
+                          <TableRow key={`${handphone.id}-${product._id || index}`} hover>
+                            {index === 0 && (
+                              <TableCell rowSpan={handphone.assignedProducts.length} sx={{ fontSize: '0.875rem', fontWeight: 'medium' }}>
+                                {handphone.merek} {handphone.tipe}
+                                {handphone.imei && (
+                                  <Typography variant="caption" display="block" color="text.secondary">
+                                    IMEI: {handphone.imei}
+                                  </Typography>
+                                )}
+                              </TableCell>
+                            )}
+                            <TableCell sx={{ fontSize: '0.875rem' }}>
+                              {product.noOrder || '-'}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem' }}>
+                              {product.customer || product.nama || '-'}
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem' }}>
+                              <Chip
+                                label={product.complaint ? 'Dalam Proses' : 'Selesai'}
+                                color={product.complaint ? 'warning' : 'success'}
+                                size="small"
+                                variant="outlined"
+                              />
+                            </TableCell>
+                            <TableCell sx={{ fontSize: '0.875rem' }}>
+                              {product.handphoneAssignmentDate ?
+                                new Date(product.handphoneAssignmentDate).toLocaleDateString('id-ID') :
+                                product.createdAt ?
+                                new Date(product.createdAt).toLocaleDateString('id-ID') :
+                                '-'}
+                            </TableCell>
+                            {index === 0 && (
+                              <TableCell rowSpan={handphone.assignedProducts.length} sx={{ fontSize: '0.875rem' }}>
+                                {handphone.assignedTo ? (
+                                  <Box>
+                                    <Typography variant="caption" sx={{ fontWeight: 'bold' }}>
+                                      {handphone.assignedTo.kodeOrlap}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.secondary" display="block">
+                                      {handphone.assignedTo.namaOrlap}
+                                    </Typography>
+                                  </Box>
+                                ) : (
+                                  <Typography variant="caption" color="text.secondary">-</Typography>
+                                )}
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))
+                      )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Inventory sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
+                <Typography variant="body1" color="text.secondary">
+                  Belum ada produk yang di-assign ke handphone yang dikelola.
+                </Typography>
+              </Box>
+            )}
           </CardContent>
         </Card>
       </Container>

@@ -271,113 +271,125 @@ const UserManagement = () => {
 
   return (
     <SidebarLayout>
-      <Container maxWidth="lg">
-        <Box sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
-          <Box sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: { xs: 'center', sm: 'space-between' },
-            alignItems: { xs: 'stretch', sm: 'center' },
-            gap: 2,
-            mb: 3
-          }}>
-            <Typography
-              variant="h4"
-              component="h1"
-              sx={{ textAlign: { xs: 'center', sm: 'left' } }}
-            >
-              User Management
-            </Typography>
-            <Button
-              variant="contained"
-              startIcon={<PersonAdd />}
-              onClick={() => handleOpen()}
-              sx={{
-                borderRadius: 2,
-                width: { xs: '100%', sm: 'auto' }
-              }}
-            >
-              Add User
-            </Button>
-          </Box>
+      <Container maxWidth="xl" sx={{ mt: 6, mb: 6, px: 4 }}>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: { xs: 'center', sm: 'space-between' },
+          alignItems: { xs: 'stretch', sm: 'center' },
+          gap: 3,
+          mb: 6
+        }}>
+          <Typography
+            variant="h2"
+            component="h1"
+            sx={{
+              textAlign: { xs: 'center', sm: 'left' },
+              fontWeight: 'bold',
+              fontSize: { xs: '2.5rem', sm: '3rem' }
+            }}
+          >
+            User Management
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<PersonAdd />}
+            onClick={() => handleOpen()}
+            sx={{
+              borderRadius: 3,
+              width: { xs: '100%', sm: 'auto' },
+              fontSize: '1.2rem',
+              px: 4,
+              py: 2,
+              fontWeight: 600
+            }}
+          >
+            Add User
+          </Button>
+        </Box>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 5, fontSize: '1.1rem', py: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-          <Card sx={{ borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+        <Box>
+        <Card sx={{ borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
             <TableContainer sx={{ overflowX: 'auto' }}>
-              <Table sx={{ minWidth: 600 }}>
+              <Table sx={{ minWidth: 800 }}>
                 <TableHead sx={{ bgcolor: 'grey.100' }}>
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 'bold', minWidth: 100 }}>Username</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', minWidth: 150 }}>Email</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }}>Name</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', minWidth: 80 }}>Role</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', minWidth: 80 }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', minWidth: 100, display: { xs: 'none', md: 'table-cell' } }}>Last Login</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', minWidth: 100, display: { xs: 'none', sm: 'table-cell' } }}>Created</TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', minWidth: 120 }}>Actions</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3, minWidth: 120 }}>Username</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3, minWidth: 180 }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3, minWidth: 140 }}>Name</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3, minWidth: 100 }}>Role</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3, minWidth: 100 }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3, minWidth: 120, display: { xs: 'none', md: 'table-cell' } }}>Last Login</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3, minWidth: 120, display: { xs: 'none', sm: 'table-cell' } }}>Created</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3, minWidth: 140 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {users.map((user) => (
-                    <TableRow key={user._id} hover>
-                      <TableCell>{user.username}</TableCell>
-                      <TableCell sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <TableRow key={user._id} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                      <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{user.username}</TableCell>
+                      <TableCell sx={{ maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '1.1rem', py: 3 }}>
                         {user.email}
                       </TableCell>
-                      <TableCell>{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '-'}</TableCell>
-                      <TableCell>
+                      <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : '-'}</TableCell>
+                      <TableCell sx={{ py: 3 }}>
                         <Chip
                           label={user.role === 'user' ? 'Karyawan' : user.role === 'moderator' ? 'Member' : 'Admin'}
                           color={getRoleColor(user.role)}
-                          size="small"
+                          size="medium"
                           variant="outlined"
+                          sx={{ fontSize: '0.9rem', py: 0.5 }}
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ py: 3 }}>
                         <Chip
                           label={user.isActive ? 'Active' : 'Inactive'}
                           color={user.isActive ? 'success' : 'error'}
-                          size="small"
+                          size="medium"
+                          sx={{ fontSize: '0.9rem', py: 0.5 }}
                         />
                       </TableCell>
-                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' }, py: 3 }}>
                         {user.lastLogin ? (
                           <Chip
                             label={new Date(user.lastLogin).toLocaleDateString('id-ID')}
                             color="info"
-                            size="small"
+                            size="medium"
                             variant="outlined"
+                            sx={{ fontSize: '0.9rem', py: 0.5 }}
                           />
                         ) : (
                           <Chip
                             label="Never"
                             color="default"
-                            size="small"
+                            size="medium"
                             variant="outlined"
+                            sx={{ fontSize: '0.9rem', py: 0.5 }}
                           />
                         )}
                       </TableCell>
-                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' }, fontSize: '1.1rem', py: 3 }}>
                         {new Date(user.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          <IconButton onClick={() => handleOpen(user)} color="primary" size="small">
+                      <TableCell sx={{ py: 3 }}>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                          <IconButton onClick={() => handleOpen(user)} color="primary" size="large">
                             <Edit />
                           </IconButton>
                           <IconButton
                             onClick={() => handleToggleStatus(user._id, user.isActive)}
                             color={user.isActive ? 'warning' : 'success'}
-                            size="small"
+                            size="large"
                           >
                             {user.isActive ? <Block /> : <CheckCircle />}
                           </IconButton>
-                          <IconButton onClick={() => handleDelete(user._id)} color="error" size="small">
+                          <IconButton onClick={() => handleDelete(user._id)} color="error" size="large">
                             <Delete />
                           </IconButton>
                         </Box>
@@ -389,12 +401,13 @@ const UserManagement = () => {
             </TableContainer>
 
             {totalPages > 1 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
                 <Pagination
                   count={totalPages}
                   page={page}
                   onChange={handlePageChange}
                   color="primary"
+                  size="large"
                 />
               </Box>
             )}
@@ -404,21 +417,23 @@ const UserManagement = () => {
           <Dialog
             open={open}
             onClose={handleClose}
-            maxWidth="md"
+            maxWidth="lg"
             fullWidth
             fullScreen={isMobile}
+            sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
           >
             <DialogTitle sx={{
               bgcolor: 'primary.main',
               color: 'white',
               fontWeight: 'bold',
-              fontSize: { xs: '1.1rem', sm: '1.25rem' }
+              fontSize: '1.5rem',
+              py: 3
             }}>
               {editing ? 'Edit User' : 'Add New User'}
             </DialogTitle>
             <form onSubmit={handleSubmit}>
-              <DialogContent>
-                <Tabs value={tabIndex} onChange={(e, v) => setTabIndex(v)} sx={{ mb: 2 }}>
+              <DialogContent sx={{ py: 4, px: 4 }}>
+                <Tabs value={tabIndex} onChange={(e, v) => setTabIndex(v)} sx={{ mb: 4, '& .MuiTab-root': { fontSize: '1.1rem', fontWeight: 600, minHeight: 56 } }}>
                   <Tab label="Basic Info" />
                   <Tab label="Profile" />
                   <Tab label="Menu Permissions" />
@@ -603,9 +618,9 @@ const UserManagement = () => {
                   </Box>
                 )}
               </DialogContent>
-              <DialogActions>
-                <Button onClick={handleClose}>Cancel</Button>
-                <Button type="submit" variant="contained">
+              <DialogActions sx={{ py: 4, px: 4 }}>
+                <Button onClick={handleClose} sx={{ fontSize: '1.2rem', px: 4, py: 2, fontWeight: 600 }}>Cancel</Button>
+                <Button type="submit" variant="contained" sx={{ borderRadius: 3, fontSize: '1.2rem', px: 5, py: 2, fontWeight: 600 }}>
                   {editing ? 'Update' : 'Create'}
                 </Button>
               </DialogActions>

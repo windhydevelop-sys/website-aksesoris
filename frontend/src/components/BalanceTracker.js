@@ -5,6 +5,7 @@ import {
   TextField, FormControl, InputLabel, Select, MenuItem, Card, CardContent, Grid, Chip
 } from '@mui/material';
 import { Edit, Delete, Add, TrendingUp, TrendingDown, AccountBalanceWallet, Refresh } from '@mui/icons-material';
+import { NumericFormat } from 'react-number-format';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
@@ -125,7 +126,7 @@ const BalanceTracker = () => {
     e.preventDefault();
 
     // Basic validation
-    if (!formData.amount || formData.amount <= 0) {
+    if (!formData.amount || Number(formData.amount) <= 0) {
       showError('Silakan masukkan jumlah yang valid.');
       return;
     }
@@ -177,19 +178,23 @@ const BalanceTracker = () => {
 
   return (
     <SidebarLayout onLogout={handleLogout}>
-      <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="xl" sx={{ mt: 6, mb: 6, px: 4 }}>
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'space-between' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 3,
+          mb: 6
         }}>
           <Typography
-            variant="h4"
+            variant="h2"
             component="h1"
-            sx={{ textAlign: { xs: 'center', sm: 'left' } }}
+            sx={{
+              textAlign: { xs: 'center', sm: 'left' },
+              fontWeight: 'bold',
+              fontSize: { xs: '2.5rem', sm: '3rem' }
+            }}
           >
             📊 Pencatatan Saldo Kumulatif
           </Typography>
@@ -200,86 +205,99 @@ const BalanceTracker = () => {
               fetchTransactions();
               fetchSummary();
             }}
-            sx={{ borderRadius: 2 }}
+            sx={{
+              borderRadius: 3,
+              fontSize: '1.2rem',
+              px: 4,
+              py: 2,
+              fontWeight: 600
+            }}
           >
             Refresh
           </Button>
         </Box>
 
         {/* Summary Cards */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={4}>
-            <Card sx={{
-              background: summary.currentBalance >= 0
-                ? 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)'
-                : 'linear-gradient(135deg, #f44336 0%, #e57373 100%)',
-              color: 'white',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-            }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <AccountBalanceWallet sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">
-                  Rp {Math.abs(summary.currentBalance || 0).toLocaleString('id-ID')}
-                </Typography>
-                <Typography variant="body2">
-                  Saldo {summary.currentBalance >= 0 ? 'Positif' : 'Negatif'}
-                </Typography>
-                <Typography variant="caption">Saldo Kumulatif Saat Ini</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <Card sx={{
-              background: 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)',
-              color: 'white',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-            }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <TrendingUp sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">
-                  Rp {summary.totalDebit?.toLocaleString('id-ID') || '0'}
-                </Typography>
-                <Typography variant="body2">Total Debit</Typography>
-                <Typography variant="caption">Pemasukan Kumulatif</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <Card sx={{
-              background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
-              color: 'white',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-            }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <TrendingDown sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">
-                  Rp {summary.totalCredit?.toLocaleString('id-ID') || '0'}
-                </Typography>
-                <Typography variant="body2">Total Kredit</Typography>
-                <Typography variant="caption">Pengeluaran Kumulatif</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <Grid container spacing={4} sx={{ mb: 5 }}>
+           <Grid item xs={12} md={12}>
+             <Card sx={{
+               background: summary.currentBalance >= 0
+                 ? 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)'
+                 : 'linear-gradient(135deg, #f44336 0%, #e57373 100%)',
+               color: 'white',
+               borderRadius: 4,
+               boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+               minHeight: 300
+             }}>
+               <CardContent sx={{ textAlign: 'center', py: 6, px: 4 }}>
+                 <AccountBalanceWallet sx={{ fontSize: 72, mb: 4 }} />
+                 <Typography variant="h1" component="div" sx={{ mb: 3, fontWeight: 'bold', fontSize: '4rem' }}>
+                   Rp {Math.abs(summary.currentBalance || 0).toLocaleString('id-ID')}
+                 </Typography>
+                 <Typography variant="h4" sx={{ fontWeight: 600, mb: 2 }}>
+                   Saldo {summary.currentBalance >= 0 ? 'Positif' : 'Negatif'}
+                 </Typography>
+                 <Typography variant="h5">Saldo Kumulatif Saat Ini</Typography>
+               </CardContent>
+             </Card>
+           </Grid>
+           <Grid item xs={12} md={12}>
+             <Card sx={{
+               background: 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)',
+               color: 'white',
+               borderRadius: 4,
+               boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+               minHeight: 300
+             }}>
+               <CardContent sx={{ textAlign: 'center', py: 6, px: 4 }}>
+                 <TrendingUp sx={{ fontSize: 72, mb: 4 }} />
+                 <Typography variant="h1" component="div" sx={{ mb: 3, fontWeight: 'bold', fontSize: '4rem' }}>
+                   Rp {summary.totalDebit?.toLocaleString('id-ID') || '0'}
+                 </Typography>
+                 <Typography variant="h4" sx={{ fontWeight: 600, mb: 2 }}>Total Debit</Typography>
+                 <Typography variant="h5">Pemasukan Kumulatif</Typography>
+               </CardContent>
+             </Card>
+           </Grid>
+           <Grid item xs={12} md={12}>
+             <Card sx={{
+               background: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 100%)',
+               color: 'white',
+               borderRadius: 4,
+               boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+               minHeight: 300
+             }}>
+               <CardContent sx={{ textAlign: 'center', py: 6, px: 4 }}>
+                 <TrendingDown sx={{ fontSize: 72, mb: 4 }} />
+                 <Typography variant="h1" component="div" sx={{ mb: 3, fontWeight: 'bold', fontSize: '4rem' }}>
+                   Rp {summary.totalCredit?.toLocaleString('id-ID') || '0'}
+                 </Typography>
+                 <Typography variant="h4" sx={{ fontWeight: 600, mb: 2 }}>Total Kredit</Typography>
+                 <Typography variant="h5">Pengeluaran Kumulatif</Typography>
+               </CardContent>
+             </Card>
+           </Grid>
+         </Grid>
 
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'flex-end' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 4,
+          mb: 5
         }}>
           <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => handleOpenDialog()}
             sx={{
-              borderRadius: 2,
-              width: { xs: '100%', sm: 'auto' }
+              borderRadius: 3,
+              width: { xs: '100%', sm: 'auto' },
+              fontSize: '1.2rem',
+              px: 4,
+              py: 2,
+              fontWeight: 600
             }}
           >
             Tambah Transaksi
@@ -287,7 +305,7 @@ const BalanceTracker = () => {
         </Box>
 
         <Card sx={{
-          borderRadius: 3,
+          borderRadius: 4,
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}>
@@ -295,48 +313,53 @@ const BalanceTracker = () => {
             <Table>
               <TableHead sx={{ bgcolor: 'grey.100' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Jenis</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Keterangan</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Jumlah</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Deskripsi</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Tanggal</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Saldo Kumulatif</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Aksi</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Jenis</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Keterangan</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Jumlah</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Deskripsi</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Tanggal</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Saldo Kumulatif</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Aksi</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {transactions.map((transaction) => (
-                  <TableRow key={transaction._id} hover>
-                    <TableCell>
+                  <TableRow key={transaction._id} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                    <TableCell sx={{ py: 3 }}>
                       <Chip
                         icon={getTypeIcon(transaction.type)}
                         label={transaction.type === 'income' ? 'Pemasukan' : 'Pengeluaran'}
                         color={getTypeColor(transaction.type)}
-                        size="small"
+                        size="medium"
                         variant="outlined"
+                        sx={{ fontSize: '0.9rem', py: 0.5 }}
                       />
                     </TableCell>
-                    <TableCell>{transaction.category}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{transaction.category}</TableCell>
                     <TableCell sx={{
                       color: transaction.type === 'income' ? 'success.main' : 'error.main',
-                      fontWeight: 'bold'
+                      fontWeight: 'bold',
+                      fontSize: '1.1rem',
+                      py: 3
                     }}>
                       {transaction.type === 'income' ? '+' : '-'}Rp {transaction.amount?.toLocaleString('id-ID') || '0'}
                     </TableCell>
-                    <TableCell>{transaction.description}</TableCell>
-                    <TableCell>{new Date(transaction.date).toLocaleDateString('id-ID')}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{transaction.description}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{new Date(transaction.date).toLocaleDateString('id-ID')}</TableCell>
                     <TableCell sx={{
                       fontWeight: 'bold',
-                      color: transaction.runningBalance >= 0 ? 'success.main' : 'error.main'
+                      color: transaction.runningBalance >= 0 ? 'success.main' : 'error.main',
+                      fontSize: '1.1rem',
+                      py: 3
                     }}>
                       Rp {Math.abs(transaction.runningBalance || 0).toLocaleString('id-ID')}
                       {transaction.runningBalance < 0 && ' (Negatif)'}
                     </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleOpenDialog(transaction)} color="primary" size="small">
+                    <TableCell sx={{ py: 3 }}>
+                      <IconButton onClick={() => handleOpenDialog(transaction)} color="primary" size="large" sx={{ mr: 1 }}>
                         <Edit />
                       </IconButton>
-                      <IconButton onClick={() => handleDelete(transaction._id)} color="error" size="small">
+                      <IconButton onClick={() => handleDelete(transaction._id)} color="error" size="large">
                         <Delete />
                       </IconButton>
                     </TableCell>
@@ -346,8 +369,8 @@ const BalanceTracker = () => {
             </Table>
           </TableContainer>
           {transactions.length === 0 && !loading && (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
+            <Box sx={{ p: 6, textAlign: 'center' }}>
+              <Typography variant="h5" color="text.secondary" sx={{ fontSize: '1.3rem' }}>
                 Belum ada transaksi. Klik "Tambah Transaksi" untuk memulai pencatatan saldo.
               </Typography>
             </Box>
@@ -361,19 +384,19 @@ const BalanceTracker = () => {
         <Dialog
           open={openDialog}
           onClose={handleCloseDialog}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
-          sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}
+          sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
         >
-          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
+          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', fontSize: '1.5rem', py: 3 }}>
             {editingTransaction ? 'Edit Transaksi' : 'Tambah Transaksi Baru'}
           </DialogTitle>
           <form onSubmit={handleSubmit}>
-            <DialogContent>
+            <DialogContent sx={{ py: 4, px: 4 }}>
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel id="type-label">Jenis Transaksi</InputLabel>
+                  <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
+                    <InputLabel id="type-label" sx={{ fontSize: '1.1rem' }}>Jenis Transaksi</InputLabel>
                     <Select
                       labelId="type-label"
                       name="type"
@@ -381,17 +404,21 @@ const BalanceTracker = () => {
                       label="Jenis Transaksi"
                       onChange={handleFormChange}
                       sx={{
-                        borderRadius: 2,
+                        borderRadius: 3,
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
-                        '&.Mui-focused': { backgroundColor: 'white' }
+                        '&.Mui-focused': { backgroundColor: 'white' },
+                        '& .MuiSelect-select': {
+                          fontSize: '1.1rem',
+                          py: 1.5
+                        }
                       }}
                     >
-                      <MenuItem value="income">
-                        💰 Pemasukan (Otomatis: Debit = Jumlah, Kredit = 0)
+                      <MenuItem value="income" sx={{ fontSize: '1.1rem' }}>
+                        💰 Pemasukan
                       </MenuItem>
-                      <MenuItem value="expense">
-                        💸 Pengeluaran (Otomatis: Debit = 0, Kredit = Jumlah)
+                      <MenuItem value="expense" sx={{ fontSize: '1.1rem' }}>
+                        💸 Pengeluaran
                       </MenuItem>
                     </Select>
                   </FormControl>
@@ -407,17 +434,21 @@ const BalanceTracker = () => {
                     required
                     placeholder="contoh: Penjualan, Hutang, Gaji, Utilitas"
                     sx={{
+                      mb: 3,
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
+                        borderRadius: 3,
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                         '&.Mui-focused': { backgroundColor: 'white' }
                       },
                       '& .MuiInputBase-input': {
-                        color: 'black'
+                        color: 'black',
+                        fontSize: '1.1rem',
+                        py: 1.5
                       },
                       '& .MuiInputLabel-root': {
-                        color: 'rgba(0,0,0,0.7)'
+                        color: 'rgba(0,0,0,0.7)',
+                        fontSize: '1.1rem'
                       },
                       '& .MuiInputLabel-root.Mui-focused': {
                         color: 'primary.main'
@@ -426,30 +457,40 @@ const BalanceTracker = () => {
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <TextField
+                  <NumericFormat
+                    customInput={TextField}
                     fullWidth
                     label="Jumlah"
                     name="amount"
-                    type="number"
                     value={formData.amount}
-                    onChange={handleFormChange}
+                    onValueChange={(values) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        amount: values.value
+                      }));
+                    }}
+                    thousandSeparator="."
+                    decimalSeparator=","
+                    prefix="Rp "
+                    allowNegative={false}
                     margin="normal"
                     required
-                    InputProps={{
-                      startAdornment: 'Rp ',
-                    }}
                     sx={{
+                      mb: 3,
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
+                        borderRadius: 3,
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                         '&.Mui-focused': { backgroundColor: 'white' }
                       },
                       '& .MuiInputBase-input': {
-                        color: 'black'
+                        color: 'black',
+                        fontSize: '1.1rem',
+                        py: 1.5
                       },
                       '& .MuiInputLabel-root': {
-                        color: 'rgba(0,0,0,0.7)'
+                        color: 'rgba(0,0,0,0.7)',
+                        fontSize: '1.1rem'
                       },
                       '& .MuiInputLabel-root.Mui-focused': {
                         color: 'primary.main'
@@ -469,17 +510,21 @@ const BalanceTracker = () => {
                     required
                     InputLabelProps={{ shrink: true }}
                     sx={{
+                      mb: 3,
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
+                        borderRadius: 3,
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                         '&.Mui-focused': { backgroundColor: 'white' }
                       },
                       '& .MuiInputBase-input': {
-                        color: 'black'
+                        color: 'black',
+                        fontSize: '1.1rem',
+                        py: 1.5
                       },
                       '& .MuiInputLabel-root': {
-                        color: 'rgba(0,0,0,0.7)'
+                        color: 'rgba(0,0,0,0.7)',
+                        fontSize: '1.1rem'
                       },
                       '& .MuiInputLabel-root.Mui-focused': {
                         color: 'primary.main'
@@ -488,8 +533,8 @@ const BalanceTracker = () => {
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel id="payment-method-label">Metode Pembayaran</InputLabel>
+                  <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
+                    <InputLabel id="payment-method-label" sx={{ fontSize: '1.1rem' }}>Metode Pembayaran</InputLabel>
                     <Select
                       labelId="payment-method-label"
                       name="paymentMethod"
@@ -497,17 +542,21 @@ const BalanceTracker = () => {
                       label="Metode Pembayaran"
                       onChange={handleFormChange}
                       sx={{
-                        borderRadius: 2,
+                        borderRadius: 3,
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
-                        '&.Mui-focused': { backgroundColor: 'white' }
+                        '&.Mui-focused': { backgroundColor: 'white' },
+                        '& .MuiSelect-select': {
+                          fontSize: '1.1rem',
+                          py: 1.5
+                        }
                       }}
                     >
-                      <MenuItem value="cash">Cash</MenuItem>
-                      <MenuItem value="transfer">Transfer</MenuItem>
-                      <MenuItem value="credit_card">Credit Card</MenuItem>
-                      <MenuItem value="debit_card">Debit Card</MenuItem>
-                      <MenuItem value="other">Other</MenuItem>
+                      <MenuItem value="cash" sx={{ fontSize: '1.1rem' }}>Cash</MenuItem>
+                      <MenuItem value="transfer" sx={{ fontSize: '1.1rem' }}>Transfer</MenuItem>
+                      <MenuItem value="credit_card" sx={{ fontSize: '1.1rem' }}>Credit Card</MenuItem>
+                      <MenuItem value="debit_card" sx={{ fontSize: '1.1rem' }}>Debit Card</MenuItem>
+                      <MenuItem value="other" sx={{ fontSize: '1.1rem' }}>Other</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -521,17 +570,21 @@ const BalanceTracker = () => {
                     margin="normal"
                     placeholder="Nomor invoice, kwitansi, dll."
                     sx={{
+                      mb: 3,
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
+                        borderRadius: 3,
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                         '&.Mui-focused': { backgroundColor: 'white' }
                       },
                       '& .MuiInputBase-input': {
-                        color: 'black'
+                        color: 'black',
+                        fontSize: '1.1rem',
+                        py: 1.5
                       },
                       '& .MuiInputLabel-root': {
-                        color: 'rgba(0,0,0,0.7)'
+                        color: 'rgba(0,0,0,0.7)',
+                        fontSize: '1.1rem'
                       },
                       '& .MuiInputLabel-root.Mui-focused': {
                         color: 'primary.main'
@@ -548,20 +601,23 @@ const BalanceTracker = () => {
                     onChange={handleFormChange}
                     margin="normal"
                     multiline
-                    rows={3}
+                    rows={4}
                     placeholder="Detail tambahan tentang transaksi ini"
                     sx={{
+                      mb: 3,
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
+                        borderRadius: 3,
                         backgroundColor: 'rgba(255,255,255,0.9)',
                         '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
                         '&.Mui-focused': { backgroundColor: 'white' }
                       },
                       '& .MuiInputBase-input': {
-                        color: 'black'
+                        color: 'black',
+                        fontSize: '1.1rem'
                       },
                       '& .MuiInputLabel-root': {
-                        color: 'rgba(0,0,0,0.7)'
+                        color: 'rgba(0,0,0,0.7)',
+                        fontSize: '1.1rem'
                       },
                       '& .MuiInputLabel-root.Mui-focused': {
                         color: 'primary.main'
@@ -571,9 +627,9 @@ const BalanceTracker = () => {
                 </Grid>
               </Grid>
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDialog}>Batal</Button>
-              <Button type="submit" variant="contained" sx={{ borderRadius: 2 }}>
+            <DialogActions sx={{ py: 4, px: 4 }}>
+              <Button onClick={handleCloseDialog} sx={{ fontSize: '1.2rem', px: 4, py: 2, fontWeight: 600 }}>Batal</Button>
+              <Button type="submit" variant="contained" sx={{ borderRadius: 3, fontSize: '1.2rem', px: 5, py: 2, fontWeight: 600 }}>
                 {editingTransaction ? 'Perbarui' : 'Buat'}
               </Button>
             </DialogActions>

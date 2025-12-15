@@ -8,25 +8,31 @@ const requireAdmin = require('../middleware/auth').requireAdmin;
 router.get('/', auth, requireAdmin, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20;
-    const skip = (page - 1) * limit;
+    const limit = req.query.limit ? parseInt(req.query.limit) : null;
 
-    const customers = await Customer.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    let customers;
+    let total = await Customer.countDocuments();
 
-    const total = await Customer.countDocuments();
+    if (limit) {
+      const skip = (page - 1) * limit;
+      customers = await Customer.find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+    } else {
+      customers = await Customer.find()
+        .sort({ createdAt: -1 });
+    }
 
     res.json({
       success: true,
       data: customers,
-      pagination: {
+      pagination: limit ? {
         page,
         limit,
         total,
         pages: Math.ceil(total / limit)
-      }
+      } : null
     });
   } catch (error) {
     console.error('Error fetching customers:', error);

@@ -85,7 +85,8 @@ productSchema.pre('findOneAndUpdate', function(next) {
 
 // Instance method to get decrypted data
 productSchema.methods.getDecryptedData = function() {
-  const decrypted = this.toObject();
+  // Use toObject with virtuals and populated fields
+  const decrypted = this.toObject({ virtuals: true, getters: true });
 
   try {
     decrypted.pinAtm = decrypt(this.pinAtm);

@@ -108,53 +108,59 @@ const BackupManagement = () => {
 
   return (
     <SidebarLayout onLogout={handleLogout}>
-      <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="xl" sx={{ mt: 6, mb: 6, px: 4 }}>
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'space-between' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 3,
+          mb: 6
         }}>
           <Typography
-            variant="h4"
+            variant="h2"
             component="h1"
-            sx={{ textAlign: { xs: 'center', sm: 'left' } }}
+            sx={{
+              textAlign: { xs: 'center', sm: 'left' },
+              fontWeight: 'bold',
+              fontSize: { xs: '2.5rem', sm: '3rem' }
+            }}
           >
             Database Backup Management
           </Typography>
         </Box>
 
         {/* Status Cards */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Grid container spacing={4} sx={{ mb: 5 }}>
+          <Grid item xs={12} md={12}>
             <Card sx={{
               background: 'linear-gradient(135deg, #2196f3 0%, #64b5f6 100%)',
               color: 'white',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+              borderRadius: 4,
+              boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+              minHeight: 300
             }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Backup sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">{backupStatus?.totalBackups || 0}</Typography>
-                <Typography variant="body2">Total Backups</Typography>
+              <CardContent sx={{ textAlign: 'center', py: 6, px: 4 }}>
+                <Backup sx={{ fontSize: 72, mb: 4 }} />
+                <Typography variant="h1" component="div" sx={{ mb: 3, fontWeight: 'bold', fontSize: '4rem' }}>{backupStatus?.totalBackups || 0}</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600 }}>Total Backups</Typography>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} md={12}>
             <Card sx={{
               background: 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)',
               color: 'white',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+              borderRadius: 4,
+              boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+              minHeight: 300
             }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Download sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">
+              <CardContent sx={{ textAlign: 'center', py: 6, px: 4 }}>
+                <Download sx={{ fontSize: 72, mb: 4 }} />
+                <Typography variant="h1" component="div" sx={{ mb: 3, fontWeight: 'bold', fontSize: '4rem' }}>
                   {backupStatus?.lastBackup ? formatFileSize(backupStatus.lastBackup.size) : '0 MB'}
                 </Typography>
-                <Typography variant="body2">Last Backup Size</Typography>
+                <Typography variant="h4" sx={{ fontWeight: 600 }}>Last Backup Size</Typography>
               </CardContent>
             </Card>
           </Grid>
@@ -165,16 +171,20 @@ const BackupManagement = () => {
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'flex-end' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 4,
+          mb: 5
         }}>
           <Button
             variant="contained"
             startIcon={<Backup />}
             onClick={() => setOpenCreateDialog(true)}
             sx={{
-              borderRadius: 2,
-              width: { xs: '100%', sm: 'auto' }
+              borderRadius: 3,
+              width: { xs: '100%', sm: 'auto' },
+              fontSize: '1.2rem',
+              px: 4,
+              py: 2,
+              fontWeight: 600
             }}
           >
             Create Backup
@@ -185,8 +195,12 @@ const BackupManagement = () => {
             onClick={() => setOpenRestoreDialog(true)}
             disabled={!backups.length}
             sx={{
-              borderRadius: 2,
-              width: { xs: '100%', sm: 'auto' }
+              borderRadius: 3,
+              width: { xs: '100%', sm: 'auto' },
+              fontSize: '1.2rem',
+              px: 4,
+              py: 2,
+              fontWeight: 600
             }}
           >
             Restore Backup
@@ -194,7 +208,7 @@ const BackupManagement = () => {
         </Box>
 
         <Card sx={{
-          borderRadius: 3,
+          borderRadius: 4,
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}>
@@ -202,45 +216,47 @@ const BackupManagement = () => {
             <Table>
               <TableHead sx={{ bgcolor: 'grey.100' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Filename</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Size</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Created</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Modified</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Filename</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Type</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Size</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Created</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Modified</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {backups.map((backup) => (
-                  <TableRow key={backup.filename} hover>
-                    <TableCell sx={{ fontFamily: 'monospace' }}>{backup.filename}</TableCell>
-                    <TableCell>
+                  <TableRow key={backup.filename} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '1.1rem', py: 3 }}>{backup.filename}</TableCell>
+                    <TableCell sx={{ py: 3 }}>
                       <Chip
                         label={backup.filename.includes('full') ? 'Full' : 'Collections'}
                         color={backup.filename.includes('full') ? 'primary' : 'secondary'}
-                        size="small"
+                        size="medium"
                         variant="outlined"
+                        sx={{ fontSize: '0.9rem', py: 0.5 }}
                       />
                     </TableCell>
-                    <TableCell>{formatFileSize(backup.size)}</TableCell>
-                    <TableCell>{formatDate(backup.createdAt)}</TableCell>
-                    <TableCell>{formatDate(backup.modifiedAt)}</TableCell>
-                    <TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{formatFileSize(backup.size)}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{formatDate(backup.createdAt)}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{formatDate(backup.modifiedAt)}</TableCell>
+                    <TableCell sx={{ py: 3 }}>
                       <IconButton
                         onClick={() => {
                           setSelectedBackup(backup);
                           setOpenRestoreDialog(true);
                         }}
                         color="primary"
-                        size="small"
+                        size="large"
                         title="Restore from this backup"
+                        sx={{ mr: 1 }}
                       >
                         <Restore />
                       </IconButton>
                       <IconButton
                         onClick={() => handleDeleteBackup(backup.filename)}
                         color="error"
-                        size="small"
+                        size="large"
                         title="Delete backup file"
                       >
                         <Delete />
@@ -252,8 +268,8 @@ const BackupManagement = () => {
             </Table>
           </TableContainer>
           {backups.length === 0 && !loading && (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
+            <Box sx={{ p: 6, textAlign: 'center' }}>
+              <Typography variant="h5" color="text.secondary" sx={{ fontSize: '1.3rem' }}>
                 No backup files found. Click "Create Backup" to create your first backup.
               </Typography>
             </Box>
@@ -267,33 +283,44 @@ const BackupManagement = () => {
         <Dialog
           open={openCreateDialog}
           onClose={() => setOpenCreateDialog(false)}
-          maxWidth="sm"
+          maxWidth="md"
           fullWidth
+          sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
         >
-          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
+          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', fontSize: '1.5rem', py: 3 }}>
             Create Database Backup
           </DialogTitle>
-          <DialogContent sx={{ mt: 2 }}>
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="backup-type-label">Backup Type</InputLabel>
+          <DialogContent sx={{ py: 4, px: 4 }}>
+            <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
+              <InputLabel id="backup-type-label" sx={{ fontSize: '1.1rem' }}>Backup Type</InputLabel>
               <Select
                 labelId="backup-type-label"
                 value={backupType}
                 label="Backup Type"
                 onChange={(e) => setBackupType(e.target.value)}
+                sx={{
+                  borderRadius: 3,
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                  '&.Mui-focused': { backgroundColor: 'white' },
+                  '& .MuiSelect-select': {
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  }
+                }}
               >
-                <MenuItem value="collections">Collections Only (Recommended)</MenuItem>
-                <MenuItem value="full">Full Database</MenuItem>
+                <MenuItem value="collections" sx={{ fontSize: '1.1rem' }}>Collections Only (Recommended)</MenuItem>
+                <MenuItem value="full" sx={{ fontSize: '1.1rem' }}>Full Database</MenuItem>
               </Select>
             </FormControl>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 2, fontSize: '1.1rem', lineHeight: 1.6 }}>
               • Collections: Backup main collections (products, customers, orders, etc.)<br/>
               • Full: Backup entire database including system collections
             </Typography>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateBackup} variant="contained">
+          <DialogActions sx={{ py: 4, px: 4 }}>
+            <Button onClick={() => setOpenCreateDialog(false)} sx={{ fontSize: '1.2rem', px: 4, py: 2, fontWeight: 600 }}>Cancel</Button>
+            <Button onClick={handleCreateBackup} variant="contained" sx={{ borderRadius: 3, fontSize: '1.2rem', px: 5, py: 2, fontWeight: 600 }}>
               Create Backup
             </Button>
           </DialogActions>
@@ -303,18 +330,19 @@ const BackupManagement = () => {
         <Dialog
           open={openRestoreDialog}
           onClose={() => setOpenRestoreDialog(false)}
-          maxWidth="sm"
+          maxWidth="md"
           fullWidth
+          sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
         >
-          <DialogTitle sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 'bold' }}>
+          <DialogTitle sx={{ bgcolor: 'warning.main', color: 'white', fontWeight: 'bold', fontSize: '1.5rem', py: 3 }}>
             Restore Database Backup
           </DialogTitle>
-          <DialogContent sx={{ mt: 2 }}>
-            <Typography variant="body1" gutterBottom>
+          <DialogContent sx={{ py: 4, px: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ fontSize: '1.3rem', mb: 3 }}>
               Select backup file to restore:
             </Typography>
-            <FormControl fullWidth margin="normal">
-              <InputLabel id="restore-backup-label">Backup File</InputLabel>
+            <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
+              <InputLabel id="restore-backup-label" sx={{ fontSize: '1.1rem' }}>Backup File</InputLabel>
               <Select
                 labelId="restore-backup-label"
                 value={selectedBackup?.filename || ''}
@@ -323,25 +351,36 @@ const BackupManagement = () => {
                   const backup = backups.find(b => b.filename === e.target.value);
                   setSelectedBackup(backup);
                 }}
+                sx={{
+                  borderRadius: 3,
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                  '&.Mui-focused': { backgroundColor: 'white' },
+                  '& .MuiSelect-select': {
+                    fontSize: '1.1rem',
+                    py: 1.5
+                  }
+                }}
               >
                 {backups.map((backup) => (
-                  <MenuItem key={backup.filename} value={backup.filename}>
+                  <MenuItem key={backup.filename} value={backup.filename} sx={{ fontSize: '1.1rem' }}>
                     {backup.filename} ({formatFileSize(backup.size)}) - {formatDate(backup.createdAt)}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <Alert severity="warning" sx={{ mt: 2 }}>
+            <Alert severity="warning" sx={{ mt: 3, fontSize: '1rem' }}>
               <strong>Warning:</strong> Restoring will replace current data. Make sure you have a recent backup before proceeding.
             </Alert>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenRestoreDialog(false)}>Cancel</Button>
+          <DialogActions sx={{ py: 4, px: 4 }}>
+            <Button onClick={() => setOpenRestoreDialog(false)} sx={{ fontSize: '1.2rem', px: 4, py: 2, fontWeight: 600 }}>Cancel</Button>
             <Button
               onClick={handleRestoreBackup}
               variant="contained"
               color="warning"
               disabled={!selectedBackup}
+              sx={{ borderRadius: 3, fontSize: '1.2rem', px: 5, py: 2, fontWeight: 600 }}
             >
               Restore Backup
             </Button>

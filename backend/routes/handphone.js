@@ -7,7 +7,8 @@ const {
   createHandphone,
   updateHandphone,
   deleteHandphone,
-  getProductsDetailsByHandphoneId
+  getProductsDetailsByHandphoneId,
+  getHandphoneSummaryByFieldStaff
 } = require('../controllers/handphones');
 
 // Middleware to add user info to request
@@ -23,6 +24,9 @@ router.use((req, res, next) => {
 
 // Get all handphones
 router.get('/', auth, addUserInfo, getHandphones);
+
+// Get handphone summary by field staff ID
+router.get('/field-staff/:id', auth, addUserInfo, getHandphoneSummaryByFieldStaff);
 
 // Get handphone by ID
 router.get('/:id', auth, addUserInfo, getHandphoneById);
@@ -103,5 +107,8 @@ router.delete('/:id/unassign-product/:productId', auth, addUserInfo, async (req,
 
 // Get products details by nadarphone ID
 router.get('/:id/products-details', auth, addUserInfo, getProductsDetailsByHandphoneId);
+
+// Get handphone summary by field staff ID
+router.get('/field-staff/:id', auth, addUserInfo, getHandphoneSummaryByFieldStaff);
 
 module.exports = router;

@@ -6,7 +6,7 @@ const getHandphones = async (req, res) => {
   try {
     const handphones = await Handphone.find()
       .populate('assignedTo', 'kodeOrlap namaOrlap')
-      .populate('assignedProducts', 'noOrder nama customer status createdAt')
+      .populate('assignedProducts', 'noOrder nama customer complaint handphoneAssignmentDate createdAt')
       .populate('currentProduct', 'noOrder nama customer')
       .sort({ createdAt: -1 });
 
@@ -307,6 +307,62 @@ const getProductsDetailsByHandphoneId = async (req, res) => {
   }
 };
 
+// Get handphone summary by field staff ID
+const getHandphoneSummaryByFieldStaff = async (req, res) => {
+  try {
+    const { id: fieldStaffId } = req.params;
+
+    // Find all handphones assigned to this field staff
+    const handphones = await Handphone.find({ assignedTo: fieldStaffId })
+      .populate('assignedTo', 'kodeOrlap namaOrlap')
+      .populate('assignedProducts', 'noOrder nama customer status createdAt')
+      .populate('currentProduct', 'noOrder nama customer status')
+      .sort({ createdAt: -1 });
+
+    // Calculate summary statistics
+    const summary = {
+      totalHandphones: handphones.length,
+      available: handphones.filter(h => h.status === 'available').length,
+      inUse: handphones.filter(h => h.status === 'assigned' || h.status === 'in_use').length,
+      maintenance: handphones.filter(h => h.status === 'maintenance').length,
+      handphones: handphones.map(handphone => ({
+        id: handphone._id,
+        merek: handphone.merek,
+        tipe: handphone.tipe,
+        imei: handphone.imei,
+        status: handphone.status === 'assigned' ? 'in_use' : handphone.status,
+        currentProduct: handphone.currentProduct ? {
+          noOrder: handphone.currentProduct.noOrder,
+          customer: handphone.currentProduct.customer,
+          status: handphone.currentProduct.status
+        } : null,
+        totalAssignments: handphone.assignedProducts?.length || 0
+      }))
+    };
+
+    auditLog('READ', req.userId, 'Handphone', 'fieldStaffSummary', {
+      fieldStaffId: fieldStaffId,
+      handphoneCount: handphones.length
+    }, req);
+
+    res.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    securityLog('HANDPHONE_FIELDSTAFF_SUMMARY_FAILED', 'medium', {
+      error: error.message,
+      fieldStaffId: req.params.id,
+      userId: req.userId
+    }, req);
+
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch handphone summary for field staff'
+    });
+  }
+};
+
 const assignProductToHandphone = async (req, res) => {
   try {
     const { handphoneId } = req.params;
@@ -388,5 +444,6 @@ module.exports = {
   updateHandphone,
   deleteHandphone,
   getProductsDetailsByHandphoneId,
+  getHandphoneSummaryByFieldStaff,
   assignProductToHandphone
 };

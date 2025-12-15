@@ -5,10 +5,10 @@ const path = require('path');
 const fs = require('fs');
 const Product = require('../models/Product');
 const auth = require('../middleware/auth');
-const { validateProduct } = require('../utils/validation');
+const { validateProduct, validateProductUpdate } = require('../utils/validation');
 const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
-const { createProduct } = require('../controllers/products');
+const { createProduct, getProductsExport } = require('../controllers/products');
 
 const router = express.Router();
 
@@ -18,10 +18,11 @@ const addUserInfo = (req, res, next) => {
   next();
 };
 
-router.use((req, res, next) => {
-  console.log(`Products router: Incoming request to ${req.method} ${req.originalUrl}`);
-  next();
-});
+// Temporarily disable router middleware for testing
+// router.use((req, res, next) => {
+//   console.log(`Products router: Incoming request to ${req.method} ${req.originalUrl}`);
+//   next();
+// });
 
 // Get unique customer names for autocomplete
 router.get('/customers', auth, addUserInfo, async (req, res) => {
@@ -269,6 +270,15 @@ router.get('/', addUserInfo, async (req, res) => {
   }
 });
 
+// Export all products with decrypted data for PDF generation
+router.get('/export', auth, addUserInfo, getProductsExport);
+
+// Test route
+router.get('/test', (req, res) => {
+  console.log('Test route hit successfully');
+  res.json({ success: true, message: 'Products router test working' });
+});
+
 // Get product by id with decryption
 router.get('/:id', addUserInfo, async (req, res) => {
   try {
@@ -310,7 +320,7 @@ router.get('/:id', addUserInfo, async (req, res) => {
 router.put('/:id',
   addUserInfo,
   handleFileUpload,
-  validateProduct,
+  validateProductUpdate,
   async (req, res) => {
     try {
       console.log('Files received:', req.files); // Debug log
@@ -335,7 +345,7 @@ router.put('/:id',
       const product = await Product.findByIdAndUpdate(
         req.params.id,
         data,
-        { new: true, runValidators: true }
+        { new: true, runValidators: false }
       );
 
       if (!product) {

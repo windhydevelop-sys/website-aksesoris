@@ -115,28 +115,32 @@ const MenuPermissionsManagement = () => {
 
   return (
     <SidebarLayout onLogout={handleLogout}>
-      <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="xl" sx={{ mt: 6, mb: 6, px: 4 }}>
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'space-between' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 3,
+          mb: 6
         }}>
           <Typography
-            variant="h4"
+            variant="h2"
             component="h1"
-            sx={{ textAlign: { xs: 'center', sm: 'left' } }}
+            sx={{
+              textAlign: { xs: 'center', sm: 'left' },
+              fontWeight: 'bold',
+              fontSize: { xs: '2.5rem', sm: '3rem' }
+            }}
           >
             Menu Permissions Management
           </Typography>
         </Box>
 
         {/* Role Tabs */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
+        <Card sx={{ mb: 5, borderRadius: 4, background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+          <CardContent sx={{ py: 5, px: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', fontSize: '1.8rem', mb: 4 }}>
               Select Role to Manage
             </Typography>
             <Tabs
@@ -149,7 +153,16 @@ const MenuPermissionsManagement = () => {
                 setPendingChanges({});
                 setHasChanges(false);
               }}
-              sx={{ borderBottom: 1, borderColor: 'divider' }}
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                '& .MuiTab-root': {
+                  fontSize: '1.2rem',
+                  fontWeight: 600,
+                  minHeight: 64,
+                  px: 4
+                }
+              }}
             >
               {roles.map((role) => (
                 <Tab
@@ -168,16 +181,20 @@ const MenuPermissionsManagement = () => {
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'flex-end' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 4,
+          mb: 5
         }}>
           <Button
             variant="outlined"
             startIcon={<Refresh />}
             onClick={handleInitializeDefaults}
             sx={{
-              borderRadius: 2,
-              width: { xs: '100%', sm: 'auto' }
+              borderRadius: 3,
+              width: { xs: '100%', sm: 'auto' },
+              fontSize: '1.2rem',
+              px: 4,
+              py: 2,
+              fontWeight: 600
             }}
           >
             Reset to Defaults
@@ -188,8 +205,12 @@ const MenuPermissionsManagement = () => {
             onClick={handleSaveChanges}
             disabled={!hasChanges}
             sx={{
-              borderRadius: 2,
-              width: { xs: '100%', sm: 'auto' }
+              borderRadius: 3,
+              width: { xs: '100%', sm: 'auto' },
+              fontSize: '1.2rem',
+              px: 4,
+              py: 2,
+              fontWeight: 600
             }}
           >
             Save Changes
@@ -197,13 +218,13 @@ const MenuPermissionsManagement = () => {
         </Box>
 
         {hasChanges && (
-          <Alert severity="warning" sx={{ mb: 3 }}>
+          <Alert severity="warning" sx={{ mb: 5, fontSize: '1.1rem', py: 2 }}>
             You have unsaved changes. Click "Save Changes" to apply them.
           </Alert>
         )}
 
         <Card sx={{
-          borderRadius: 3,
+          borderRadius: 4,
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}>
@@ -211,48 +232,51 @@ const MenuPermissionsManagement = () => {
             <Table>
               <TableHead sx={{ bgcolor: 'grey.100' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Menu Name</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Path</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Icon</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Sort Order</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Enabled</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Menu Name</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Path</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Icon</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Sort Order</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Enabled</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {getRolePermissions().map((permission) => (
-                  <TableRow key={permission.menuKey} hover>
-                    <TableCell sx={{ fontWeight: 'medium' }}>
+                  <TableRow key={permission.menuKey} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                    <TableCell sx={{ fontWeight: 'medium', fontSize: '1.1rem', py: 3 }}>
                       {permission.menuName}
                     </TableCell>
-                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                    <TableCell sx={{ fontFamily: 'monospace', fontSize: '1rem', py: 3 }}>
                       {permission.path}
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ py: 3 }}>
                       <Chip
                         label={permission.icon || 'No Icon'}
-                        size="small"
+                        size="medium"
                         variant="outlined"
+                        sx={{ fontSize: '0.9rem', py: 0.5 }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>
                       {permission.sortOrder}
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ py: 3 }}>
                       <Chip
                         label={permission.isEnabled ? 'Enabled' : 'Disabled'}
                         color={permission.isEnabled ? 'success' : 'error'}
-                        size="small"
+                        size="medium"
                         variant="outlined"
+                        sx={{ fontSize: '0.9rem', py: 0.5 }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ py: 3 }}>
                       <FormControlLabel
                         control={
                           <Switch
                             checked={getCurrentPermissionValue(permission.menuKey)}
                             onChange={(e) => handlePermissionToggle(permission.menuKey, e.target.checked)}
                             color="primary"
+                            size="medium"
                           />
                         }
                         label=""
@@ -264,8 +288,8 @@ const MenuPermissionsManagement = () => {
             </Table>
           </TableContainer>
           {getRolePermissions().length === 0 && !loading && (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
+            <Box sx={{ p: 6, textAlign: 'center' }}>
+              <Typography variant="h5" color="text.secondary" sx={{ fontSize: '1.3rem' }}>
                 No menu permissions found for {getRoleDisplayName(selectedRole)}.
                 Click "Reset to Defaults" to initialize default permissions.
               </Typography>
@@ -277,12 +301,12 @@ const MenuPermissionsManagement = () => {
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
         {/* Info Card */}
-        <Card sx={{ mt: 3, bgcolor: 'info.light' }}>
-          <CardContent>
-            <Typography variant="h6" color="info.contrastText" gutterBottom>
+        <Card sx={{ mt: 5, bgcolor: 'info.light', borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+          <CardContent sx={{ py: 5, px: 4 }}>
+            <Typography variant="h4" color="info.contrastText" gutterBottom sx={{ fontWeight: 'bold', fontSize: '1.8rem', mb: 3 }}>
               ℹ️ How Menu Permissions Work
             </Typography>
-            <Typography variant="body2" color="info.contrastText">
+            <Typography variant="body1" color="info.contrastText" sx={{ fontSize: '1.1rem', lineHeight: 1.8 }}>
               • Toggle switches control which menus are visible for each role<br/>
               • Changes are saved per role and applied immediately<br/>
               • "Reset to Defaults" restores the recommended menu configuration<br/>

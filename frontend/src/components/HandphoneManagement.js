@@ -19,6 +19,7 @@ import {
   DialogActions,
   TextField,
   Card,
+  CardContent,
   FormControl,
   InputLabel,
   Select,
@@ -292,14 +293,26 @@ const HandphoneManagement = () => {
 
   return (
     <SidebarLayout onLogout={handleLogout}>
-      <Container maxWidth="xl" sx={{ mt: { xs: 2, sm: 4 }, mb: { xs: 2, sm: 4 } }}>
+      <Container maxWidth="xl" sx={{ mt: 6, mb: 6, px: 4 }}>
+        <Typography
+          variant="h2"
+          component="h1"
+          sx={{
+            fontWeight: 'bold',
+            fontSize: { xs: '2.5rem', sm: '3rem' },
+            mb: 6
+          }}
+        >
+          Handphone Management
+        </Typography>
 
         {/* Filters */}
-        <Card sx={{ mb: 3, p: 2 }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            <FilterList sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Filters
-          </Typography>
+        <Card sx={{ mb: 5, borderRadius: 4, background: 'rgba(255, 255, 255, 0.1)', backdropFilter: 'blur(10px)', border: '1px solid rgba(255, 255, 255, 0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+          <CardContent sx={{ py: 5, px: 4 }}>
+            <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', fontSize: '1.8rem' }}>
+              <FilterList sx={{ mr: 2, verticalAlign: 'middle', fontSize: '2rem' }} />
+              Filters
+            </Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6} md={2}>
               <TextField
@@ -394,12 +407,13 @@ const HandphoneManagement = () => {
               <Button
                 variant="outlined"
                 onClick={() => setFilters({ status: '', assignedTo: '', product: '', customer: '', search: '' })}
-                sx={{ height: '40px' }}
+                sx={{ height: '56px', borderRadius: 3, fontSize: '1.1rem', fontWeight: 600 }}
               >
                 Clear Filters
               </Button>
             </Grid>
           </Grid>
+          </CardContent>
         </Card>
 
         <Box sx={{
@@ -407,16 +421,20 @@ const HandphoneManagement = () => {
           flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: { xs: 'center', sm: 'flex-end' },
           alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-          mb: 3
+          gap: 4,
+          mb: 5
         }}>
           <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => handleOpenDialog()}
             sx={{
-              borderRadius: 2,
-              width: { xs: '100%', sm: 'auto' }
+              borderRadius: 3,
+              width: { xs: '100%', sm: 'auto' },
+              fontSize: '1.2rem',
+              px: 4,
+              py: 2,
+              fontWeight: 600
             }}
           >
             Add Handphone
@@ -424,7 +442,7 @@ const HandphoneManagement = () => {
         </Box>
 
         <Card sx={{
-          borderRadius: 3,
+          borderRadius: 4,
           boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
           overflow: 'hidden'
         }}>
@@ -432,37 +450,39 @@ const HandphoneManagement = () => {
             <Table>
               <TableHead sx={{ bgcolor: 'grey.100' }}>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Merek</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Tipe</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Harga</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Assigned To</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Assigned Products</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Merek</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Tipe</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Harga</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Status</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Assigned To</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Assigned Products</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {filteredHandphones.map((handphone) => (
-                  <TableRow key={handphone._id} hover>
-                    <TableCell>{handphone.merek}</TableCell>
-                    <TableCell>{handphone.tipe}</TableCell>
-                    <TableCell>Rp {handphone.harga ? handphone.harga.toLocaleString('id-ID') : '-'}</TableCell>
-                    <TableCell>{getStatusChip(handphone.status)}</TableCell>
-                    <TableCell>
+                  <TableRow key={handphone._id} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{handphone.merek}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{handphone.tipe}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>Rp {handphone.harga ? handphone.harga.toLocaleString('id-ID') : '-'}</TableCell>
+                    <TableCell sx={{ py: 3 }}>{getStatusChip(handphone.status)}</TableCell>
+                    <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>
                       {handphone.assignedTo ? `${handphone.assignedTo.kodeOrlap} - ${handphone.assignedTo.namaOrlap}` : '-'}
                     </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    <TableCell sx={{ py: 3 }}>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {handphone.assignedProducts && handphone.assignedProducts.length > 0 ? (
                           handphone.assignedProducts.map((product) => (
                             <Chip
                               key={product._id}
                               label={`${product.noOrder} - ${product.nama} (${product.customer})`}
-                              size="small"
+                              size="medium"
                               color="primary"
                               onClick={() => handleProductChipClick(handphone)}
-                              sx={{ 
+                              sx={{
                                 cursor: 'pointer',
+                                fontSize: '0.9rem',
+                                py: 0.5,
                                 '&:hover': {
                                   bgcolor: 'primary.light',
                                   color: 'white'
@@ -474,25 +494,26 @@ const HandphoneManagement = () => {
                         ) : handphone.currentProduct ? (
                           <Chip
                             label={`${handphone.currentProduct.noOrder} - ${handphone.currentProduct.nama} (${handphone.currentProduct.customer})`}
-                            size="small"
+                            size="medium"
                             color="primary"
                             variant="outlined"
+                            sx={{ fontSize: '0.9rem', py: 0.5 }}
                           />
                         ) : (
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1rem' }}>
                             No products assigned
                           </Typography>
                         )}
                       </Box>
                     </TableCell>
-                    <TableCell>
-                      <IconButton onClick={() => handleOpenDialog(handphone)} color="primary" size="small">
+                    <TableCell sx={{ py: 3 }}>
+                      <IconButton onClick={() => handleOpenDialog(handphone)} color="primary" size="large" sx={{ mr: 1 }}>
                         <Edit />
                       </IconButton>
                       <IconButton
                         onClick={() => handleDelete(handphone._id, handphone.status)}
                         color="error"
-                        size="small"
+                        size="large"
                         disabled={handphone.status !== 'available'}
                       >
                         <Delete />
@@ -504,8 +525,8 @@ const HandphoneManagement = () => {
             </Table>
           </TableContainer>
           {filteredHandphones.length === 0 && !loading && (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary">
+            <Box sx={{ p: 6, textAlign: 'center' }}>
+              <Typography variant="h5" color="text.secondary" sx={{ fontSize: '1.3rem' }}>
                 No handphones found. Click "Add Handphone" to create your first handphone.
               </Typography>
             </Box>
@@ -519,16 +540,16 @@ const HandphoneManagement = () => {
         <Dialog
           open={openDialog}
           onClose={handleCloseDialog}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
-          sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}
+          sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}
         >
-          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>
+          <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', fontSize: '1.5rem', py: 3 }}>
             {editingHandphone ? 'Edit Handphone' : 'Add New Handphone'}
           </DialogTitle>
           <form onSubmit={handleSubmit}>
-            <DialogContent>
-              <Grid container spacing={2}>
+            <DialogContent sx={{ py: 4, px: 4 }}>
+              <Grid container spacing={3}>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -538,6 +559,25 @@ const HandphoneManagement = () => {
                     onChange={handleFormChange}
                     margin="normal"
                     required
+                    sx={{
+                      mb: 3,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputBase-input': {
+                        fontSize: '1.1rem',
+                        py: 1.5
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: '1.1rem'
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'primary.main'
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -549,6 +589,25 @@ const HandphoneManagement = () => {
                     onChange={handleFormChange}
                     margin="normal"
                     required
+                    sx={{
+                      mb: 3,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputBase-input': {
+                        fontSize: '1.1rem',
+                        py: 1.5
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: '1.1rem'
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'primary.main'
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -560,6 +619,25 @@ const HandphoneManagement = () => {
                     onChange={handleFormChange}
                     margin="normal"
                     helperText="Optional"
+                    sx={{
+                      mb: 3,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputBase-input': {
+                        fontSize: '1.1rem',
+                        py: 1.5
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: '1.1rem'
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'primary.main'
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -575,19 +653,48 @@ const HandphoneManagement = () => {
                       startAdornment: <InputAdornment position="start">Rp</InputAdornment>,
                     }}
                     helperText="Harga handphone dalam Rupiah"
+                    sx={{
+                      mb: 3,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputBase-input': {
+                        fontSize: '1.1rem',
+                        py: 1.5
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: '1.1rem'
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'primary.main'
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Status</InputLabel>
+                  <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
+                    <InputLabel sx={{ fontSize: '1.1rem' }}>Status</InputLabel>
                     <Select
                       name="status"
                       value={formData.status}
                       onChange={handleFormChange}
                       label="Status"
+                      sx={{
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' },
+                        '& .MuiSelect-select': {
+                          fontSize: '1.1rem',
+                          py: 1.5
+                        }
+                      }}
                     >
                       {STATUS_OPTIONS.map(option => (
-                        <MenuItem key={option.value} value={option.value}>
+                        <MenuItem key={option.value} value={option.value} sx={{ fontSize: '1.1rem' }}>
                           {option.label}
                         </MenuItem>
                       ))}
@@ -604,7 +711,25 @@ const HandphoneManagement = () => {
                     margin="normal"
                     required
                     multiline
-                    rows={2}
+                    rows={3}
+                    sx={{
+                      mb: 3,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputBase-input': {
+                        fontSize: '1.1rem'
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: '1.1rem'
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'primary.main'
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -616,26 +741,55 @@ const HandphoneManagement = () => {
                     onChange={handleFormChange}
                     margin="normal"
                     required
+                    sx={{
+                      mb: 3,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputBase-input': {
+                        fontSize: '1.1rem',
+                        py: 1.5
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: '1.1rem'
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'primary.main'
+                      }
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12}>
-                  <FormControl fullWidth margin="normal">
-                    <InputLabel>Assigned To *</InputLabel>
+                  <FormControl fullWidth margin="normal" sx={{ mb: 3 }}>
+                    <InputLabel sx={{ fontSize: '1.1rem' }}>Assigned To *</InputLabel>
                     <Select
                       name="assignedTo"
                       value={formData.assignedTo}
                       onChange={handleFormChange}
                       label="Assigned To *"
                       required
+                      sx={{
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' },
+                        '& .MuiSelect-select': {
+                          fontSize: '1.1rem',
+                          py: 1.5
+                        }
+                      }}
                     >
                       {fieldStaff.map(staff => (
-                        <MenuItem key={staff._id} value={staff._id}>
+                        <MenuItem key={staff._id} value={staff._id} sx={{ fontSize: '1.1rem' }}>
                           {staff.kodeOrlap} - {staff.namaOrlap}
                         </MenuItem>
                       ))}
                     </Select>
                     {!editingHandphone && formData.assignedTo && (
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                      <Typography variant="body1" color="text.secondary" sx={{ mt: 1, fontSize: '1rem' }}>
                         💡 Pilihan sebelumnya diingat untuk kemudahan
                       </Typography>
                     )}
@@ -643,9 +797,9 @@ const HandphoneManagement = () => {
                 </Grid>
               </Grid>
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleCloseDialog}>Cancel</Button>
-              <Button type="submit" variant="contained" sx={{ borderRadius: 2 }}>
+            <DialogActions sx={{ py: 4, px: 4 }}>
+              <Button onClick={handleCloseDialog} sx={{ fontSize: '1.2rem', px: 4, py: 2, fontWeight: 600 }}>Cancel</Button>
+              <Button type="submit" variant="contained" sx={{ borderRadius: 3, fontSize: '1.2rem', px: 5, py: 2, fontWeight: 600 }}>
                 {editingHandphone ? 'Update' : 'Create'}
               </Button>
             </DialogActions>

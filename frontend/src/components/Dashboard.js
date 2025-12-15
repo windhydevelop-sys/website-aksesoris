@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
 import * as XLSX from 'xlsx';
-import { Page, Text, View, Document, StyleSheet, pdf } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, pdf, Image } from '@react-pdf/renderer';
 import {
   Button, Container, Typography, Box, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Dialog, DialogActions, DialogContent,
@@ -168,6 +168,203 @@ const InvoicePdfDocument = ({ product }) => (
   </Document>
 );
 
+// PDF Document for complete product export
+const ProductExportPdfDocument = ({ products }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <Text style={styles.header}>LAPORAN DATA PRODUK LENGKAP</Text>
+      <Text style={styles.subHeader}>Dibuat pada: {new Date().toLocaleDateString('id-ID')} {new Date().toLocaleTimeString('id-ID')}</Text>
+      <Text style={styles.subHeader}>Total Produk: {products.length}</Text>
+
+      {products.map((product, index) => (
+        <View key={product._id} style={{ marginBottom: 20, borderBottom: '1px solid #ccc', paddingBottom: 10 }}>
+          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 8, color: '#333' }}>
+            Produk #{index + 1} - {product.noOrder}
+          </Text>
+
+          {/* Data Order */}
+          <View style={styles.section}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Order</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>No. Order:</Text>
+              <Text style={styles.value}>{product.noOrder || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Customer:</Text>
+              <Text style={styles.value}>{product.customer || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Field Staff:</Text>
+              <Text style={styles.value}>{product.codeAgen || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Order Number:</Text>
+              <Text style={styles.value}>{product.noOrder || '-'}</Text>
+            </View>
+          </View>
+
+          {/* Data Bank */}
+          <View style={styles.section}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Bank</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Bank:</Text>
+              <Text style={styles.value}>{product.bank || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Grade:</Text>
+              <Text style={styles.value}>{product.grade || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>KCP:</Text>
+              <Text style={styles.value}>{product.kcp || '-'}</Text>
+            </View>
+          </View>
+
+          {/* Data Personal */}
+          <View style={styles.section}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Personal</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>NIK:</Text>
+              <Text style={styles.value}>{product.nik || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Nama:</Text>
+              <Text style={styles.value}>{product.nama || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Nama Ibu Kandung:</Text>
+              <Text style={styles.value}>{product.namaIbuKandung || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>TTL:</Text>
+              <Text style={styles.value}>{product.tempatTanggalLahir || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>No. Rekening:</Text>
+              <Text style={styles.value}>{product.noRek || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>No. ATM:</Text>
+              <Text style={styles.value}>{product.noAtm || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Valid Thru:</Text>
+              <Text style={styles.value}>{product.validThru || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>No. HP:</Text>
+              <Text style={styles.value}>{product.noHp || '-'}</Text>
+            </View>
+          </View>
+
+          {/* Data Keamanan */}
+          <View style={styles.section}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Keamanan</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>PIN ATM:</Text>
+              <Text style={styles.value}>{product.pinAtm || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>PIN Mbanking:</Text>
+              <Text style={styles.value}>{product.pinWondr || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Password Mbanking:</Text>
+              <Text style={styles.value}>{product.passWondr || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Email:</Text>
+              <Text style={styles.value}>{product.email || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Password Email:</Text>
+              <Text style={styles.value}>{product.passEmail || '-'}</Text>
+            </View>
+          </View>
+
+          {/* Data Handphone */}
+          <View style={styles.section}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Handphone</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Handphone:</Text>
+              <Text style={styles.value}>
+                {product.handphoneId ?
+                  `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim() || '-' : '-'}
+              </Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>IMEI:</Text>
+              <Text style={styles.value}>{product.handphoneId?.imei || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Tanggal Assign:</Text>
+              <Text style={styles.value}>
+                {product.handphoneAssignmentDate ?
+                  new Date(product.handphoneAssignmentDate).toLocaleDateString('id-ID') : '-'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Data Tambahan */}
+          <View style={styles.section}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Tambahan</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Expired:</Text>
+              <Text style={styles.value}>
+                {product.expired ? new Date(product.expired).toLocaleDateString('id-ID') : '-'}
+              </Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Complaint:</Text>
+              <Text style={styles.value}>{product.complaint || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Status:</Text>
+              <Text style={styles.value}>{product.status || 'pending'}</Text>
+            </View>
+          </View>
+
+          {/* Foto Produk */}
+          <View style={styles.section}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 8, color: '#666' }}>Foto Produk</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+              {/* Foto KTP */}
+              <View style={{ flex: 1, marginRight: 5 }}>
+                <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto KTP</Text>
+                {product.uploadFotoIdBase64 && product.uploadFotoIdBase64.startsWith('data:image/') ? (
+                  <Image
+                    src={product.uploadFotoIdBase64}
+                    style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
+                  />
+                ) : (
+                  <View style={{ width: '100%', height: 120, border: '1px solid #ddd', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+                    <Text style={{ fontSize: 8, color: '#999' }}>Tidak ada foto</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Foto Selfie */}
+              <View style={{ flex: 1, marginLeft: 5 }}>
+                <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto Selfie</Text>
+                {product.uploadFotoSelfieBase64 && product.uploadFotoSelfieBase64.startsWith('data:image/') ? (
+                  <Image
+                    src={product.uploadFotoSelfieBase64}
+                    style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
+                  />
+                ) : (
+                  <View style={{ width: '100%', height: 120, border: '1px solid #ddd', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+                    <Text style={{ fontSize: 8, color: '#999' }}>Tidak ada foto</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+        </View>
+      ))}
+    </Page>
+  </Document>
+);
+
 const formatCardNumber = (value) => {
   // Remove all non-digits
   const cleaned = value.replace(/\D/g, '');
@@ -256,6 +453,7 @@ const Dashboard = ({ setToken }) => {
       return; // Prevent the setForm below from overriding
     }
 
+    console.log(`handleChange: ${name} =`, value, 'type:', typeof value, 'isArray:', Array.isArray(value));
     setForm({ ...form, [name]: formattedValue });
 
     // Validate IMEI
@@ -393,11 +591,16 @@ const Dashboard = ({ setToken }) => {
   const handleOpen = (product = null) => {
     if (product) {
       setEditing(product._id);
+
+      // Ensure noOrder and codeAgen are strings, not arrays
+      const safeNoOrder = Array.isArray(product.noOrder) ? (product.noOrder.length > 0 ? product.noOrder[0] : '') : (product.noOrder || '');
+      const safeCodeAgen = Array.isArray(product.codeAgen) ? (product.codeAgen.length > 0 ? product.codeAgen[0] : '') : (product.codeAgen || '');
+
       setForm({
         ...product,
-        orderNumber: product.orderNumber || '',
+        orderNumber: safeNoOrder,
         customer: product.customer || '',
-        fieldStaff: product.fieldStaff || '',
+        fieldStaff: safeCodeAgen,
         expired: product.expired ? product.expired.split('T')[0] : '',
         uploadFotoId: product.uploadFotoId || '',
         uploadFotoSelfie: product.uploadFotoSelfie || '',
@@ -452,10 +655,25 @@ const Dashboard = ({ setToken }) => {
 
     const formData = new FormData();
 
+    // Debug: Log form values before processing
+    console.log('Form values before processing:', {
+      orderNumber: form.orderNumber,
+      fieldStaff: form.fieldStaff,
+      orderNumberType: typeof form.orderNumber,
+      fieldStaffType: typeof form.fieldStaff
+    });
+
     // Append all form fields except file objects
     for (const key in form) {
       if (key !== 'uploadFotoId' && key !== 'uploadFotoSelfie' && form[key] !== null && form[key] !== undefined) {
         let value = form[key];
+
+        // Fix autocomplete arrays - take first element if array
+        if (Array.isArray(value)) {
+          console.log(`Converting array for key ${key}:`, value, '->', value.length > 0 ? value[0] : '');
+          value = value.length > 0 ? value[0] : '';
+        }
+
         // Clean formatted card numbers for backend
         if ((key === 'nik' || key === 'noAtm') && typeof value === 'string') {
           value = cleanCardNumber(value);
@@ -476,6 +694,12 @@ const Dashboard = ({ setToken }) => {
           formData.append(backendKey, value);
         }
       }
+    }
+
+    // Debug: Log FormData contents
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
     }
 
     // Append file objects if they are new File objects
@@ -529,8 +753,11 @@ const Dashboard = ({ setToken }) => {
       if (error.response?.data?.errors) {
         // Show validation errors
         const errorMessages = error.response.data.errors.map(err => err).join('\n');
+        console.error('Validation errors:', error.response.data.errors);
         showError('Error validasi: ' + errorMessages);
       } else {
+        console.error('Full error response:', error.response);
+        console.error('Error details:', error.response?.data);
         showError('Error menyimpan produk: ' + (error.response?.data?.error || error.message));
       }
     }
@@ -569,6 +796,50 @@ const Dashboard = ({ setToken }) => {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportProductsPdf = async () => {
+    try {
+      showSuccess('Memproses export PDF...');
+
+      // Get all products with decrypted data and base64 images
+      const response = await axios.get('/api/products/export', {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 30000 // 30 second timeout for large data
+      });
+
+      if (response.data.success && response.data.data.length > 0) {
+        console.log('Generating PDF with', response.data.data.length, 'products');
+        console.log('Sample product data:', response.data.data[0]); // Debug log
+        console.log('Selfie base64 starts with:', response.data.data[0].uploadFotoSelfieBase64?.substring(0, 50)); // Debug log
+
+        // Generate PDF with products data
+        const blob = await pdf(<ProductExportPdfDocument products={response.data.data} />).toBlob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `laporan_produk_lengkap_${new Date().toISOString().split('T')[0]}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showSuccess(`PDF berhasil diekspor! (${response.data.data.length} produk)`);
+      } else {
+        showError('Tidak ada data produk untuk diekspor');
+      }
+    } catch (error) {
+      console.error('Error exporting products PDF:', error);
+
+      if (error.code === 'ECONNABORTED') {
+        showError('Timeout: Export PDF membutuhkan waktu lebih lama. Coba lagi.');
+      } else if (error.response?.status === 401) {
+        showError('Sesi login telah berakhir. Silakan login kembali.');
+      } else if (error.response?.status === 403) {
+        showError('Anda tidak memiliki akses untuk mengekspor data.');
+      } else {
+        showError('Gagal mengekspor PDF: ' + (error.response?.data?.error || error.message));
+      }
+    }
+  };
+
 
   return (
     <SidebarLayout onLogout={handleLogout}>
@@ -582,74 +853,85 @@ const Dashboard = ({ setToken }) => {
             {notifications.length} produk akan expired dalam 7 hari!
           </Alert>
         )}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-              transition: 'transform 0.3s',
-              '&:hover': { transform: 'translateY(-5px)' }
-            }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Inventory sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">{products.length}</Typography>
-                <Typography variant="body2">Total Produk</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              color: 'white',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-              transition: 'transform 0.3s',
-              '&:hover': { transform: 'translateY(-5px)' }
-            }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <People sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">{customers.length}</Typography>
-                <Typography variant="body2">Jumlah Customer</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-              color: 'white',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-              transition: 'transform 0.3s',
-              '&:hover': { transform: 'translateY(-5px)' }
-            }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Smartphone sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">{totalHandphones}</Typography>
-                <Typography variant="body2">Jumlah Handphone</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{
-              background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-              color: 'white',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-              transition: 'transform 0.3s',
-              '&:hover': { transform: 'translateY(-5px)' }
-            }}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <TrendingUp sx={{ fontSize: 40, mb: 1 }} />
-                <Typography variant="h4" component="div">{notifications.length}</Typography>
-                <Typography variant="body2">Expired Soon</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        </Box>
+      </Container>
 
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+      {/* Full Width Cards Section */}
+      <Box sx={{ px: 3, mb: 4 }}>
+        <Grid container spacing={3}>
+           <Grid item xs={12} sm={6} md={6}>
+             <Card sx={{
+               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+               color: 'white',
+               borderRadius: 3,
+               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+               transition: 'transform 0.3s',
+               '&:hover': { transform: 'translateY(-5px)' },
+               minHeight: 220
+             }}>
+               <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+                 <Inventory sx={{ fontSize: 64, mb: 3 }} />
+                 <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{products.length}</Typography>
+                 <Typography variant="h5" sx={{ fontWeight: 600 }}>Total Produk</Typography>
+               </CardContent>
+             </Card>
+           </Grid>
+           <Grid item xs={12} sm={6} md={6}>
+             <Card sx={{
+               background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+               color: 'white',
+               borderRadius: 3,
+               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+               transition: 'transform 0.3s',
+               '&:hover': { transform: 'translateY(-5px)' },
+               minHeight: 220
+             }}>
+               <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+                 <People sx={{ fontSize: 64, mb: 3 }} />
+                 <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{customers.length}</Typography>
+                 <Typography variant="h5" sx={{ fontWeight: 600 }}>Jumlah Customer</Typography>
+               </CardContent>
+             </Card>
+           </Grid>
+           <Grid item xs={12} sm={6} md={6}>
+             <Card sx={{
+               background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+               color: 'white',
+               borderRadius: 3,
+               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+               transition: 'transform 0.3s',
+               '&:hover': { transform: 'translateY(-5px)' },
+               minHeight: 220
+             }}>
+               <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+                 <Smartphone sx={{ fontSize: 64, mb: 3 }} />
+                 <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{totalHandphones}</Typography>
+                 <Typography variant="h5" sx={{ fontWeight: 600 }}>Jumlah Handphone</Typography>
+               </CardContent>
+             </Card>
+           </Grid>
+           <Grid item xs={12} sm={6} md={6}>
+             <Card sx={{
+               background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+               color: 'white',
+               borderRadius: 3,
+               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+               transition: 'transform 0.3s',
+               '&:hover': { transform: 'translateY(-5px)' },
+               minHeight: 220
+             }}>
+               <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+                 <TrendingUp sx={{ fontSize: 64, mb: 3 }} />
+                 <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{notifications.length}</Typography>
+                 <Typography variant="h5" sx={{ fontWeight: 600 }}>Expired Soon</Typography>
+               </CardContent>
+             </Card>
+           </Grid>
+         </Grid>
+     </Box>
+
+     <Container maxWidth="lg">
+       <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} md={6}>
             <Card sx={{ borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
               <CardContent>
@@ -802,7 +1084,16 @@ const Dashboard = ({ setToken }) => {
                 startIcon={<CloudDownload />}
                 sx={{ borderRadius: 2 }}
               >
-                Export Data
+                Export Excel
+              </Button>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleExportProductsPdf}
+                startIcon={<PictureAsPdf />}
+                sx={{ borderRadius: 2 }}
+              >
+                Export PDF Lengkap
               </Button>
               {selectedProductForInvoice && selectedProductForInvoice.status === 'completed' && (
                 <Button
@@ -847,7 +1138,14 @@ const Dashboard = ({ setToken }) => {
                   >
                     <TableCell>{product.noOrder}</TableCell>
                     <TableCell>{product.nama}</TableCell>
-                    <TableCell>{product.handphoneId ? `${product.handphoneId.merek} ${product.handphoneId.tipe || ''}` : '-'}</TableCell>
+                    <TableCell>
+                      {product.handphoneId && typeof product.handphoneId === 'object'
+                        ? `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim()
+                        : product.handphoneId
+                        ? 'Handphone Assigned'
+                        : '-'
+                      }
+                    </TableCell>
                     <TableCell>{new Date(product.expired).toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>
                       <Chip
@@ -883,8 +1181,16 @@ const Dashboard = ({ setToken }) => {
                   value={form.orderNumber}
                   options={orders.map(o => o.noOrder)}
                   freeSolo
-                  onChange={(event, newValue) => { setForm({ ...form, orderNumber: newValue || '' }); }}
-                  onInputChange={(event, newInputValue) => { setForm({ ...form, orderNumber: newInputValue || '' }); }}
+                  onChange={(event, newValue) => {
+                    const safeValue = Array.isArray(newValue) ? (newValue.length > 0 ? newValue[0] : '') : (newValue || '');
+                    console.log('Autocomplete orderNumber onChange:', newValue, '->', safeValue);
+                    setForm({ ...form, orderNumber: safeValue });
+                  }}
+                  onInputChange={(event, newInputValue) => {
+                    const safeValue = Array.isArray(newInputValue) ? (newInputValue.length > 0 ? newInputValue[0] : '') : (newInputValue || '');
+                    console.log('Autocomplete orderNumber onInputChange:', newInputValue, '->', safeValue);
+                    setForm({ ...form, orderNumber: safeValue });
+                  }}
                   renderInput={(params) => <TextField {...params} label="Order Number" name="orderNumber" placeholder="Pilih nomor order dari daftar atau ketik baru" margin="normal" required />}
                 />
                 <Autocomplete
@@ -902,9 +1208,15 @@ const Dashboard = ({ setToken }) => {
                   options={fieldStaff.map(fs => `${fs.kodeOrlap} - ${fs.namaOrlap}`)}
                   freeSolo
                   onChange={(event, newValue) => {
-                    setForm({ ...form, fieldStaff: newValue || '', handphoneId: '' });
+                    const safeValue = Array.isArray(newValue) ? (newValue.length > 0 ? newValue[0] : '') : (newValue || '');
+                    console.log('Autocomplete fieldStaff onChange:', newValue, '->', safeValue);
+                    setForm({ ...form, fieldStaff: safeValue, handphoneId: '' });
                   }}
-                  onInputChange={(event, newInputValue) => { setForm({ ...form, fieldStaff: newInputValue || '' }); }}
+                  onInputChange={(event, newInputValue) => {
+                    const safeValue = Array.isArray(newInputValue) ? (newInputValue.length > 0 ? newInputValue[0] : '') : (newInputValue || '');
+                    console.log('Autocomplete fieldStaff onInputChange:', newInputValue, '->', safeValue);
+                    setForm({ ...form, fieldStaff: safeValue });
+                  }}
                   renderInput={(params) => <TextField {...params} label="Orang Lapangan" name="fieldStaff" placeholder="Pilih orang lapangan dari daftar atau ketik baru" margin="normal" />}
                 />
                 {/* Manual handphone selection */}
@@ -1052,8 +1364,7 @@ const Dashboard = ({ setToken }) => {
       </Dialog>
 
         {/* PDF Import Dialog */}
-        
-        </Box>
+
       </Container>
     </SidebarLayout>
   );
