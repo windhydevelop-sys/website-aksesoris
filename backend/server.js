@@ -67,6 +67,8 @@ const corsOptions = {
       // Railway frontend URLs
       'https://website-aksesoris-frontend-production.up.railway.app',
       'https://website-aksesoris-frontend-staging.up.railway.app',
+      // NEW: Render backend URL
+      'https://website-aksesoris.onrender.app',
       // Railway deployment URLs with random subdomains
       /\.railway\.app$/,
       // Allow all vercel deployments

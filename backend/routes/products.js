@@ -8,7 +8,7 @@ const auth = require('../middleware/auth');
 const { validateProduct, validateProductUpdate } = require('../utils/validation');
 const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
-const { createProduct, getProductsExport } = require('../controllers/products');
+const { createProduct, getProducts, getProductById, getProductsExport } = require('../controllers/products');
 
 const router = express.Router();
 
@@ -242,33 +242,7 @@ router.post('/',
 );
 
 // Get all products with decryption
-router.get('/', addUserInfo, async (req, res) => {
-  try {
-    const products = await Product.findDecrypted();
-
-    // Audit log for data access
-    auditLog('READ', req.userId, 'Product', 'all', {
-      count: products.length
-    }, req);
-
-    res.json({
-      success: true,
-      count: products.length,
-      data: products
-    });
-
-  } catch (err) {
-    securityLog('PRODUCT_READ_FAILED', 'low', {
-      error: err.message,
-      userId: req.userId
-    }, req);
-
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch products'
-    });
-  }
-});
+router.get('/', addUserInfo, getProducts);
 
 // Export all products with decrypted data for PDF generation
 router.get('/export', auth, addUserInfo, getProductsExport);
@@ -279,42 +253,68 @@ router.get('/test', (req, res) => {
   res.json({ success: true, message: 'Products router test working' });
 });
 
-// Get product by id with decryption
-router.get('/:id', addUserInfo, async (req, res) => {
+// Search products by NIK
+router.get('/search', auth, addUserInfo, async (req, res) => {
+  console.log('[/api/products/search] Route hit.');
   try {
-    const product = await Product.findOneDecrypted({ _id: req.params.id });
-
-    if (!product) {
-      return res.status(404).json({
-        success: false,
-        error: 'Product not found'
+    const { nik } = req.query;
+    
+    if (!nik || nik.length < 3) {
+      return res.json({ 
+        success: true, 
+        data: [],
+        message: 'Minimal 3 digit NIK diperlukan untuk pencarian'
       });
     }
 
-    // Audit log
-    auditLog('READ', req.userId, 'Product', req.params.id, {
-      noOrder: product.noOrder,
-      nama: product.nama
+    // Search for products with matching NIK (partial match)
+    const query = { 
+      nik: { $regex: nik, $options: 'i' } // Case-insensitive partial match
+    };
+
+    // Use regular find first, then decrypt
+    const products = await Product.find(query)
+      .sort({ createdAt: -1 }) // Most recent first
+      .limit(10); // Limit to 10 results
+
+    // Decrypt each product manually
+    const decryptedProducts = products.map(product => {
+      try {
+        return product.getDecryptedData();
+      } catch (error) {
+        console.error('Error decrypting product:', error);
+        return null;
+      }
+    }).filter(product => product !== null);
+
+    auditLog('SEARCH', req.userId, 'Product', 'NIK_search', {
+      searchTerm: nik,
+      resultsCount: decryptedProducts.length
     }, req);
 
-    res.json({
-      success: true,
-      data: product
+    res.json({ 
+      success: true, 
+      data: decryptedProducts,
+      count: decryptedProducts.length
     });
 
   } catch (err) {
-    securityLog('PRODUCT_READ_FAILED', 'low', {
+    console.error('[/api/products/search] Error searching products:', err);
+    securityLog('PRODUCT_SEARCH_FAILED', 'medium', {
       error: err.message,
-      productId: req.params.id,
-      userId: req.userId
+      userId: req.userId,
+      searchTerm: req.query.nik
     }, req);
-
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch product'
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to search products',
+      data: []
     });
   }
 });
+
+// Get product by id with decryption
+router.get('/:id', addUserInfo, getProductById);
 
 // Update product with validation and security
 router.put('/:id',

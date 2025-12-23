@@ -83,7 +83,7 @@ const getComplaints = async (req, res) => {
   }
 };
 
-// Create product with handphone validation
+// Create product with phone validation
 const createProduct = async (req, res) => {
   console.log('[/api/products] createProduct function called.');
   console.log('Request body:', req.body);
@@ -92,8 +92,8 @@ const createProduct = async (req, res) => {
   try {
     console.log('DEBUG: Starting product validation');
     // Validate product data using Joi schema directly
-    const { validateProduct } = require('../utils/validation');
-    const { error, value } = validateProduct.productSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
+    const { productSchema } = require('../utils/validation');
+    const { error, value } = productSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
     console.log('DEBUG: Validation result:', error ? 'FAILED' : 'PASSED');
     if (error) {
       const errors = error.details.map(detail => detail.message);
@@ -115,72 +115,73 @@ const createProduct = async (req, res) => {
     data.createdBy = req.userId;
     data.lastModifiedBy = req.userId;
 
-    // Assign handphone (auto or manual)
-    console.log('DEBUG: Starting handphone assignment logic');
+    // Assign phone (auto or manual)
+    console.log('DEBUG: Starting phone assignment logic');
     console.log('DEBUG: data.handphoneId:', data.handphoneId);
 
-    let handphone;
+    let phone;
     if (data.handphoneId) {
-      console.log('DEBUG: Manual handphone assignment - looking up handphone');
-      handphone = await Handphone.findById(data.handphoneId);
-      console.log('DEBUG: Handphone found:', handphone ? 'YES' : 'NO');
-      if (!handphone) {
-        console.log('DEBUG: Handphone not found, returning error');
-        return res.status(404).json({ success: false, error: 'Handphone not found' });
+      console.log('DEBUG: Manual phone assignment - looking up phone');
+      phone = await Handphone.findById(data.handphoneId);
+      console.log('DEBUG: Phone found:', phone ? 'YES' : 'NO');
+      if (!phone) {
+        console.log('DEBUG: Phone not found, returning error');
+        return res.status(404).json({ success: false, error: 'Phone not found' });
       }
+      data.phoneId = data.handphoneId; // Map to the correct field name for the model
     } else {
-      console.log('DEBUG: Auto handphone assignment');
-      handphone = await autoAssignHandphone(data.codeAgen);
-      if (!handphone) {
-        return res.status(404).json({ success: false, error: 'No available handphone for assignment' });
+      console.log('DEBUG: Auto phone assignment');
+      phone = await autoAssignHandphone(data.codeAgen);
+      if (!phone) {
+        return res.status(404).json({ success: false, error: 'No available phone for assignment' });
       }
-      data.handphoneId = handphone._id;
+      data.phoneId = phone._id;
     }
-    console.log('DEBUG: Handphone assignment completed, handphoneId:', handphone._id);
+    console.log('DEBUG: Phone assignment completed, phoneId:', phone._id);
 
     // Create product document
     const product = new Product(data);
     await product.save();
     console.error('After Product save - stored customer data:', product.customer); // Log to verify customer storage
 
-    // Update handphone's currentProduct and assignedProducts
-    console.log('DEBUG: Before handphone update:', {
-      handphoneId: handphone._id,
-      currentProduct: handphone.currentProduct,
-      assignedProducts: handphone.assignedProducts,
-      status: handphone.status
+    // Update phone's currentProduct and assignedProducts
+    console.log('DEBUG: Before phone update:', {
+      phoneId: phone._id,
+      currentProduct: phone.currentProduct,
+      assignedProducts: phone.assignedProducts,
+      status: phone.status
     });
 
-    handphone.currentProduct = product._id;
-    handphone.status = 'in_use';
-    if (!handphone.assignedProducts.includes(product._id)) {
-      handphone.assignedProducts.push(product._id);
+    phone.currentProduct = product._id;
+    phone.status = 'in_use';
+    if (!phone.assignedProducts.includes(product._id)) {
+      phone.assignedProducts.push(product._id);
     }
 
-    console.log('DEBUG: After handphone update:', {
-      handphoneId: handphone._id,
-      currentProduct: handphone.currentProduct,
-      assignedProducts: handphone.assignedProducts,
-      status: handphone.status
+    console.log('DEBUG: After phone update:', {
+      phoneId: phone._id,
+      currentProduct: phone.currentProduct,
+      assignedProducts: phone.assignedProducts,
+      status: phone.status
     });
 
-    await handphone.save();
+    await phone.save();
 
-    console.log('DEBUG: Handphone saved successfully');
+    console.log('DEBUG: Phone saved successfully');
 
     // Audit log
     auditLog('CREATE', req.userId, 'Product', product._id, {
       noOrder: product.noOrder,
       nama: product.nama,
-      handphoneId: product.handphoneId
+      phoneId: product.phoneId
     }, req);
 
-    // Return decrypted product with populated handphone
+    // Return decrypted product with populated phone
     const populatedProduct = await Product.findById(product._id).populate('handphoneId', 'merek tipe imei');
     res.status(201).json({
       success: true,
       data: populatedProduct.getDecryptedData(),
-      message: 'Product created and assigned to handphone successfully'
+      message: 'Product created and assigned to phone successfully'
     });
   } catch (err) {
     console.error('[/api/products] Error creating product:', err);
@@ -193,29 +194,42 @@ const createProduct = async (req, res) => {
   }
 };
 
-// Get all products with decryption and handphone population
+// Get all products with decryption and phone population
 const getProducts = async (req, res) => {
   try {
     // Use populate directly in the find query
     const products = await Product.find().populate('handphoneId', 'merek tipe imei spesifikasi kepemilikan');
 
-    // Log handphoneId type before populate
-    products.forEach(product => {
-      if (product.handphoneId) {
-        console.log(`HandphoneId before populate: ${product.handphoneId}, Type: ${typeof product.handphoneId}`);
+    // Decrypt each product while preserving populated fields
+    console.log('DEBUG: Starting products processing, found', products.length, 'products');
+    const decryptedProducts = await Promise.all(products.map(async (product, index) => {
+      console.log('DEBUG: Processing product', index + 1, 'with noOrder:', product.noOrder);
+      const decrypted = product.getDecryptedData();
+      
+      // Ensure phoneId remains populated
+      if (product.handphoneId && typeof product.handphoneId === 'object') {
+        decrypted.handphoneId = product.handphoneId;
       }
-    });
-
-
-    // Log handphoneId type after populate
-    populatedProducts.forEach(product => {
-      if (product.handphoneId) {
-        console.log(`HandphoneId after populate: ${product.handphoneId}, Type: ${typeof product.handphoneId}`);
+      
+      // Add order status
+      if (product.noOrder) {
+        try {
+          console.log('DEBUG: Looking for order with noOrder:', product.noOrder);
+          const order = await Order.findOne({ noOrder: product.noOrder });
+          console.log('DEBUG: Found order:', order ? 'YES' : 'NO', 'Status:', order ? order.status : 'N/A');
+          decrypted.status = order ? order.status : null;
+        } catch (error) {
+          console.error('Error fetching order status for product:', product._id, error);
+          decrypted.status = null;
+        }
+      } else {
+        console.log('DEBUG: Product has no noOrder field');
+        decrypted.status = null;
       }
-    });
-
-    // Decrypt each product
-    const decryptedProducts = products.map(product => product.getDecryptedData());
+      
+      console.log('DEBUG: Final status for product', index + 1, ':', decrypted.status);
+      return decrypted;
+    }));
 
     // Audit log for data access
     auditLog('READ', req.userId, 'Product', 'all', {
@@ -241,12 +255,12 @@ const getProducts = async (req, res) => {
   }
 };
 
-// Get product by id with decryption and handphone population
+// Get product by id with decryption and phone population
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate('handphoneId', 'merek tipe imei spesifikasi kepemilikan');
     console.log('ProductDetail - Product found:', product);
-    console.log('ProductDetail - HandphoneId:', product.handphoneId);
+    console.log('ProductDetail - PhoneId:', product.phoneId);
 
     if (!product) {
       return res.status(404).json({
@@ -255,15 +269,34 @@ const getProductById = async (req, res) => {
       });
     }
 
+    // Get order status by matching noOrder
+    let orderStatus = null;
+    if (product.noOrder) {
+      try {
+        const order = await Order.findOne({ noOrder: product.noOrder });
+        orderStatus = order ? order.status : null;
+        console.log('ProductDetail - Order found:', order ? 'YES' : 'NO', 'Status:', orderStatus);
+      } catch (error) {
+        console.error('Error fetching order status:', error);
+        orderStatus = null;
+      }
+    }
+
     // Audit log
     auditLog('READ', req.userId, 'Product', req.params.id, {
       noOrder: product.noOrder,
-      nama: product.nama
+      nama: product.nama,
+      orderStatus: orderStatus
     }, req);
+
+    const decryptedData = product.getDecryptedData();
+    
+    // Add order status to the response
+    decryptedData.status = orderStatus;
 
     res.json({
       success: true,
-      data: product.getDecryptedData()
+      data: decryptedData
     });
 
   } catch (err) {
@@ -280,7 +313,7 @@ const getProductById = async (req, res) => {
   }
 };
 
-// Update product with handphone validation and status change logic
+// Update product with phone validation and status change logic
 const updateProduct = async (req, res) => {
   try {
     const data = { ...req.body };
@@ -322,14 +355,14 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    // Validate handphone if handphoneId is being changed
-    if (data.handphoneId && data.handphoneId !== currentProduct.handphoneId?.toString()) {
-      // Handle old handphone: mark as returned and remove product from its assignedProducts
-      if (currentProduct.handphoneId) {
-        const oldHandphone = await Handphone.findById(currentProduct.handphoneId);
-        if (oldHandphone) {
-          // Update assignment history for the old handphone
-          const oldAssignment = oldHandphone.assignmentHistory.find(
+    // Validate phone if phoneId is being changed
+    if (data.phoneId && data.phoneId !== currentProduct.phoneId?.toString()) {
+      // Handle old phone: mark as returned and remove product from its assignedProducts
+      if (currentProduct.phoneId) {
+        const oldPhone = await Handphone.findById(currentProduct.phoneId);
+        if (oldPhone) {
+          // Update assignment history for the old phone
+          const oldAssignment = oldPhone.assignmentHistory.find(
             (assignment) => assignment.product && assignment.product.toString() === req.params.id
           );
           if (oldAssignment) {
@@ -338,35 +371,35 @@ const updateProduct = async (req, res) => {
           }
 
           // Remove product from assignedProducts
-          oldHandphone.assignedProducts = oldHandphone.assignedProducts.filter(
+          oldPhone.assignedProducts = oldPhone.assignedProducts.filter(
             (p) => p.toString() !== req.params.id
           );
 
           // If no other products are assigned, set status to available
-          if (oldHandphone.assignedProducts.length === 0) {
-            oldHandphone.status = 'available';
+          if (oldPhone.assignedProducts.length === 0) {
+            oldPhone.status = 'available';
           }
-          await oldHandphone.save();
+          await oldPhone.save();
         }
       }
 
-      const newHandphone = await Handphone.findById(data.handphoneId).populate('assignedTo');
-      if (!newHandphone) {
+      const newPhone = await Handphone.findById(data.phoneId).populate('assignedTo');
+      if (!newPhone) {
         return res.status(400).json({
           success: false,
-          error: 'Handphone not found'
+          error: 'Phone not found'
         });
       }
 
-      // Check if handphone is available or already assigned (for multiple product assignment)
-      if (newHandphone.status !== 'available' && newHandphone.status !== 'assigned') {
+      // Check if phone is available or already assigned (for multiple product assignment)
+      if (newPhone.status !== 'available' && newPhone.status !== 'assigned') {
         return res.status(400).json({
           success: false,
-          error: 'Handphone is not available for assignment'
+          error: 'Phone is not available for assignment'
         });
       }
 
-      // Check if handphone is assigned to the same fieldStaff
+      // Check if phone is assigned to the same fieldStaff
       const fieldStaffDoc = await FieldStaff.findOne({ kodeOrlap: data.fieldStaff });
       if (!fieldStaffDoc) {
         return res.status(400).json({
@@ -374,23 +407,23 @@ const updateProduct = async (req, res) => {
           error: 'Field staff not found'
         });
       }
-      if (newHandphone.assignedTo.toString() !== fieldStaffDoc._id.toString()) {
+      if (newPhone.assignedTo.toString() !== fieldStaffDoc._id.toString()) {
         return res.status(400).json({
           success: false,
-          error: 'Handphone is not assigned to the same field staff'
+          error: 'Phone is not assigned to the same field staff'
         });
       }
 
-      // Handle new handphone: add product to its assignedProducts and assignmentHistory
-      newHandphone.assignedProducts.push(req.params.id);
-      newHandphone.assignmentHistory.push({
+      // Handle new phone: add product to its assignedProducts and assignmentHistory
+      newPhone.assignedProducts.push(req.params.id);
+      newPhone.assignmentHistory.push({
         product: req.params.id,
         assignedAt: new Date(),
         assignedBy: req.userId,
         status: 'active',
       });
-      newHandphone.status = 'assigned';
-      await newHandphone.save();
+      newPhone.status = 'assigned';
+      await newPhone.save();
     }
 
     // Add audit field
@@ -422,7 +455,7 @@ const updateProduct = async (req, res) => {
       nama: data.nama
     }, req);
 
-    // Return with populated handphone
+    // Return with populated phone
     const populatedProduct = await Product.findById(product._id).populate('handphoneId', 'merek tipe imei spesifikasi');
     res.json({
       success: true,
@@ -455,23 +488,23 @@ const deleteProduct = async (req, res) => {
       });
     }
 
-    // If product has assigned handphone, return it first
-    if (product.handphoneId) {
+    // If product has assigned phone, return it first
+    if (product.phoneId) {
       try {
-        const handphone = await Handphone.findById(product.handphoneId);
-        if (handphone && handphone.currentProduct) {
+        const phone = await Handphone.findById(product.phoneId);
+        if (phone && phone.currentProduct) {
           // Update assignment history
-          if (handphone.assignmentHistory.length > 0) {
-            handphone.assignmentHistory[handphone.assignmentHistory.length - 1].returnedAt = new Date();
+          if (phone.assignmentHistory.length > 0) {
+            phone.assignmentHistory[phone.assignmentHistory.length - 1].returnedAt = new Date();
           }
 
           // Clear current product and set status to available
-          handphone.currentProduct = null;
-          handphone.status = 'available';
-          await handphone.save();
+          phone.currentProduct = null;
+          phone.status = 'available';
+          await phone.save();
         }
       } catch (error) {
-        console.error('Error returning handphone during product deletion:', error);
+        console.error('Error returning phone during product deletion:', error);
         // Continue with deletion but log error
       }
     }
@@ -537,18 +570,18 @@ const getProductsExport = async (req, res) => {
       console.log(`Found ${products.length} raw products (decryption failed)`);
     }
 
-    // Populate handphone data for each product
+    // Populate phone data for each product
     let populatedProducts = [];
     try {
       populatedProducts = await Product.populate(products, {
-        path: 'handphoneId',
+        path: 'phoneId',
         select: 'merek tipe imei spesifikasi kepemilikan assignedTo',
         populate: {
           path: 'assignedTo',
           select: 'kodeOrlap namaOrlap'
         }
       });
-      console.log('Handphone data populated successfully');
+      console.log('Phone data populated successfully');
     } catch (populateError) {
       console.error('Error in populate, using products without populate:', populateError.message);
       populatedProducts = products;

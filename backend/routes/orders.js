@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
+const Handphone = require('../models/Handphone');
+const Product = require('../models/Product');
 const auth = require('../middleware/auth');
 const { requireRole } = auth;
 const { auditLog } = require('../utils/audit');
+const puppeteer = require('puppeteer');
+const fs = require('fs');
+const path = require('path');
 
 // Get all orders
 router.get('/', auth, async (req, res) => {
@@ -70,7 +75,7 @@ router.post('/', auth, async (req, res) => {
       noOrder: noOrder.trim(),
       customer: customer.trim(),
       fieldStaff: fieldStaff.trim(),
-      status: status || 'pending',
+      status: (status || 'pending').toLowerCase(),
       notes: notes?.trim(),
       harga: harga || 0,
       createdBy: req.user.id
@@ -132,7 +137,7 @@ router.put('/:id', auth, async (req, res) => {
     if (noOrder !== undefined) updateData.noOrder = noOrder.trim();
     if (customer !== undefined) updateData.customer = customer.trim();
     if (fieldStaff !== undefined) updateData.fieldStaff = fieldStaff.trim();
-    if (status !== undefined) updateData.status = status;
+    if (status !== undefined) updateData.status = status.toLowerCase();
     if (notes !== undefined) updateData.notes = notes?.trim();
     if (harga !== undefined) updateData.harga = harga;
 
@@ -234,6 +239,243 @@ router.get('/status/:status', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch orders'
+    });
+  }
+});
+
+// Generate invoice PDF by order ID
+router.get('/:id/invoice', auth, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    if (order.status.toLowerCase() !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invoice can only be generated for completed orders'
+      });
+    }
+
+    // Fetch related products from Product model
+    const products = await Product.find({
+      noOrder: order.noOrder
+    });
+
+    // Read template
+    const templatePath = path.join(__dirname, '../templates/invoice.html');
+    let html = fs.readFileSync(templatePath, 'utf8');
+
+    // Format functions
+    const formatDate = (date) => {
+      return new Date(date).toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    const formatNumber = (num) => {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    // Replace placeholders
+    html = html.replace(/{{noOrder}}/g, order.noOrder)
+               .replace(/{{createdAt}}/g, formatDate(order.createdAt))
+               .replace(/{{status}}/g, order.status)
+               .replace(/{{customer}}/g, order.customer)
+               .replace(/{{fieldStaff}}/g, order.fieldStaff)
+               .replace(/{{totalHarga}}/g, formatNumber(order.harga))
+               .replace(/{{currentDate}}/g, formatDate(new Date()));
+
+    // Handle products loop with JavaScript insertion
+    let productsHtml = '';
+    if (products.length === 0) {
+      productsHtml = `
+        <tr>
+          <td colspan="6" style="text-align: center; color: #999;">Tidak ada produk terkait</td>
+        </tr>
+      `;
+    } else {
+      products.forEach((product, index) => {
+        productsHtml += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${product.nik || '-'}</td>
+            <td>${product.nama || '-'}</td>
+            <td>${product.bank || '-'}</td>
+            <td>${product.noRek || '-'}</td>
+            <td>Rp ${formatNumber(order.harga)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // Add JavaScript to populate the table
+    const script = `
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const tbody = document.getElementById('productsTableBody');
+          if (tbody) {
+            tbody.innerHTML = \`${productsHtml}\`;
+          }
+        });
+      </script>
+    `;
+
+    html = html.replace('</body>', script + '</body>');
+
+    // Generate PDF
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setContent(html);
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20px',
+        right: '20px',
+        bottom: '20px',
+        left: '20px'
+      }
+    });
+
+    await browser.close();
+
+    // Send PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.noOrder}.pdf`);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('Error generating invoice:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate invoice'
+    });
+  }
+});
+
+// Generate invoice PDF by order noOrder
+router.get('/by-noorder/:noOrder/invoice', auth, async (req, res) => {
+  try {
+    const { noOrder } = req.params;
+    
+    // Find order by noOrder
+    const order = await Order.findOne({ noOrder });
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    if (order.status.toLowerCase() !== 'completed') {
+      return res.status(400).json({
+        success: false,
+        error: 'Invoice can only be generated for completed orders'
+      });
+    }
+
+    // Fetch related products from Product model
+    const products = await Product.find({
+      noOrder: order.noOrder
+    });
+
+    // Read template
+    const templatePath = path.join(__dirname, '../templates/invoice.html');
+    let html = fs.readFileSync(templatePath, 'utf8');
+
+    // Format functions
+    const formatDate = (date) => {
+      return new Date(date).toLocaleDateString('id-ID', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    const formatNumber = (num) => {
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    // Replace placeholders
+    html = html.replace(/{{noOrder}}/g, order.noOrder)
+               .replace(/{{createdAt}}/g, formatDate(order.createdAt))
+               .replace(/{{status}}/g, order.status)
+               .replace(/{{customer}}/g, order.customer)
+               .replace(/{{fieldStaff}}/g, order.fieldStaff)
+               .replace(/{{totalHarga}}/g, formatNumber(order.harga))
+               .replace(/{{currentDate}}/g, formatDate(new Date()));
+
+    // Handle products loop with JavaScript insertion
+    let productsHtml = '';
+    if (products.length === 0) {
+      productsHtml = `
+        <tr>
+          <td colspan="6" style="text-align: center; color: #999;">Tidak ada produk terkait</td>
+        </tr>
+      `;
+    } else {
+      products.forEach((product, index) => {
+        productsHtml += `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${product.nik || '-'}</td>
+            <td>${product.nama || '-'}</td>
+            <td>${product.bank || '-'}</td>
+            <td>${product.noRek || '-'}</td>
+            <td>Rp ${formatNumber(order.harga)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // Add JavaScript to populate the table
+    const script = `
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const tbody = document.getElementById('productsTableBody');
+          if (tbody) {
+            tbody.innerHTML = \`${productsHtml}\`;
+          }
+        });
+      </script>
+    `;
+
+    html = html.replace('</body>', script + '</body>');
+
+    // Generate PDF
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setContent(html);
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20px',
+        right: '20px',
+        bottom: '20px',
+        left: '20px'
+      }
+    });
+
+    await browser.close();
+
+    // Send PDF
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=invoice-${order.noOrder}.pdf`);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('Error generating invoice by noOrder:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate invoice'
     });
   }
 });

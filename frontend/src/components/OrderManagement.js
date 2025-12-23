@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Typography, Box, CircularProgress, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete, FormControl, InputLabel, Select, MenuItem, Card, Chip } from '@mui/material';
-import { Edit, Delete, AddShoppingCart } from '@mui/icons-material';
+import { Edit, Delete, AddShoppingCart, Print } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
@@ -184,6 +184,30 @@ const OrderManagement = () => {
     }
   };
 
+  const handlePrintInvoice = async (orderId, noOrder) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`/api/orders/${orderId}/invoice`, {
+        responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${noOrder}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showSuccess('Invoice downloaded successfully');
+    } catch (err) {
+      console.error('Error downloading invoice:', err);
+      showError(err.response?.data?.error || 'Failed to download invoice');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending': return 'warning';
@@ -292,9 +316,14 @@ const OrderManagement = () => {
                       <IconButton onClick={() => handleOpenDialog(order)} color="primary" size="large" sx={{ mr: 2 }}>
                         <Edit sx={{ fontSize: '1.8rem' }} />
                       </IconButton>
-                      <IconButton onClick={() => handleDelete(order._id)} color="error" size="large">
+                      <IconButton onClick={() => handleDelete(order._id)} color="error" size="large" sx={{ mr: 2 }}>
                         <Delete sx={{ fontSize: '1.8rem' }} />
                       </IconButton>
+                      {order.status.toLowerCase() === 'completed' && (
+                        <IconButton onClick={() => handlePrintInvoice(order._id, order.noOrder)} color="success" size="large">
+                          <Print sx={{ fontSize: '1.8rem' }} />
+                        </IconButton>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

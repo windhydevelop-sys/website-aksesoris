@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
 import * as XLSX from 'xlsx';
 import { Page, Text, View, Document, StyleSheet, pdf, Image } from '@react-pdf/renderer';
+import { getStatusLabel, getStatusColor } from '../utils/statusHelpers';
 import {
   Button, Container, Typography, Box, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Dialog, DialogActions, DialogContent,
@@ -14,9 +15,10 @@ import { Search, Event, TrendingUp, People, Smartphone, Inventory } from '@mui/i
 import { Edit, Delete, Add, CloudUpload, CloudDownload, PictureAsPdf } from '@mui/icons-material';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
-import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
 import SidebarLayout from './SidebarLayout';
+import ProductDetailDrawer from './ProductDetailDrawer';
+import FloatingNIKSearchBar from './FloatingNIKSearchBar';
 
 // Create styles for the PDF document
 const styles = StyleSheet.create({
@@ -433,6 +435,14 @@ const Dashboard = ({ setToken }) => {
   const [orders, setOrders] = useState([]);
   const [availableHandphones, setAvailableHandphones] = useState([]);
   const [totalHandphones, setTotalHandphones] = useState(0);
+  
+  // Filtered phones based on field staff
+  const [filteredPhones, setFilteredPhones] = useState([]);
+  const [isPhoneLoading, setIsPhoneLoading] = useState(false);
+  
+  // Drawer states for product detail
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -461,13 +471,20 @@ const Dashboard = ({ setToken }) => {
       const error = validateIMEI(formattedValue, products, editing);
       setImeiError(error);
     }
+
+    // Special handling for fieldStaff changes to filter phones
+    if (name === 'fieldStaff') {
+      // Extract code from fieldStaff (format: "CODE - NAME")
+      const codeMatch = formattedValue.match(/^([^-]+)/);
+      const codeAgen = codeMatch ? codeMatch[1].trim() : formattedValue;
+      fetchPhonesByFieldStaff(codeAgen);
+    }
   };
 
 
   const [notifications, setNotifications] = useState([]);
 
   const token = localStorage.getItem('token');
-  const navigate = useNavigate();
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -522,6 +539,38 @@ const Dashboard = ({ setToken }) => {
     }
   }, []);
 
+  const fetchPhonesByFieldStaff = async (codeAgen) => {
+    if (!codeAgen) {
+      console.log('No codeAgen provided, clearing filtered phones');
+      setFilteredPhones([]);
+      return;
+    }
+
+    console.log('Starting to fetch phones for field staff:', codeAgen);
+    setIsPhoneLoading(true);
+    try {
+      const response = await axios.get(`/api/handphones/by-fieldstaff/${encodeURIComponent(codeAgen)}`);
+      const phones = response.data.data || [];
+      console.log('API Response for field staff', codeAgen, ':', phones.length, 'phones');
+      console.log('Phones data:', phones);
+      
+      // Force state update with explicit logging
+      setFilteredPhones(phones);
+      console.log('Set filteredPhones state with', phones.length, 'phones');
+      
+      // Debug: Check if state is immediately updated
+      setTimeout(() => {
+        console.log('Debug: filteredPhones length after update:', phones.length);
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error fetching phones by field staff:', error);
+      setFilteredPhones([]);
+    } finally {
+      setIsPhoneLoading(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchProducts();
@@ -530,6 +579,20 @@ const Dashboard = ({ setToken }) => {
     fetchOrders();
     fetchAvailableHandphones();
   }, [fetchProducts, fetchCustomers, fetchFieldStaff, fetchOrders, fetchAvailableHandphones]);
+
+  // Clear filtered phones when field staff is reset
+  useEffect(() => {
+    if (!form.fieldStaff) {
+      setFilteredPhones([]);
+    }
+  }, [form.fieldStaff]);
+
+  // Force re-render of phone autocomplete when filtered phones change
+  const [phoneAutocompleteKey, setPhoneAutocompleteKey] = useState(0);
+  useEffect(() => {
+    setPhoneAutocompleteKey(prev => prev + 1);
+    console.log('Phone autocomplete key updated due to filtered phones change:', filteredPhones.length);
+  }, [filteredPhones.length]);
 
 
 
@@ -586,6 +649,41 @@ const Dashboard = ({ setToken }) => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     setToken(null);
+  };
+
+  // Drawer handlers for product detail
+  const handleOpenDrawer = (product) => {
+    setSelectedProduct(product);
+    setDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const handlePrintInvoiceFromDrawer = async (product) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`/api/orders/${product._id}/invoice`, {
+        responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${product.noOrder}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showSuccess('Invoice downloaded successfully');
+    } catch (err) {
+      console.error('Error downloading invoice:', err);
+      showError(err.response?.data?.error || 'Failed to download invoice');
+    }
   };
 
   const handleOpen = (product = null) => {
@@ -855,6 +953,15 @@ const Dashboard = ({ setToken }) => {
         )}
         </Box>
       </Container>
+
+      {/* Floating NIK Search Bar */}
+      <FloatingNIKSearchBar 
+        onProductSelect={(product) => {
+          // Handle product selection if needed
+          console.log('Product selected from search:', product);
+        }}
+        openProductDrawer={handleOpenDrawer}
+      />
 
       {/* Full Width Cards Section */}
       <Box sx={{ px: 3, mb: 4 }}>
@@ -1134,13 +1241,13 @@ const Dashboard = ({ setToken }) => {
                       bgcolor: index % 2 === 0 ? 'grey.50' : 'white',
                       '&:hover': { bgcolor: 'action.hover' }
                     }}
-                    onClick={() => navigate(`/product-details/${product._id}`)}
+                    onClick={() => handleOpenDrawer(product)}
                   >
                     <TableCell>{product.noOrder}</TableCell>
                     <TableCell>{product.nama}</TableCell>
                     <TableCell>
                       {product.handphoneId && typeof product.handphoneId === 'object'
-                        ? `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim()
+                        ? `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim() || 'Handphone Assigned'
                         : product.handphoneId
                         ? 'Handphone Assigned'
                         : '-'
@@ -1149,8 +1256,8 @@ const Dashboard = ({ setToken }) => {
                     <TableCell>{new Date(product.expired).toLocaleDateString('id-ID')}</TableCell>
                     <TableCell>
                       <Chip
-                        label={product.status === 'pending' ? 'Tertunda' : product.status === 'in_progress' ? 'Dalam Proses' : 'Selesai'}
-                        color={product.status === 'pending' ? 'error' : product.status === 'in_progress' ? 'warning' : 'success'}
+                        label={getStatusLabel(product.status)}
+                        color={getStatusColor(product.status)}
                         size="small"
                         variant="outlined"
                       />
@@ -1221,9 +1328,20 @@ const Dashboard = ({ setToken }) => {
                 />
                 {/* Manual handphone selection */}
                 <Autocomplete
+                  key={phoneAutocompleteKey}
                   fullWidth
-                  value={availableHandphones.find(h => h._id === form.handphoneId) || null}
-                  options={availableHandphones}
+                  value={(() => {
+                    const currentOptions = filteredPhones.length > 0 ? filteredPhones : availableHandphones;
+                    const selectedPhone = currentOptions.find(h => h._id === form.handphoneId);
+                    console.log('Phone Autocomplete - Current value:', {
+                      phoneId: form.handphoneId,
+                      filteredPhonesLength: filteredPhones.length,
+                      availableHandphonesLength: availableHandphones.length,
+                      selectedPhone: selectedPhone ? `${selectedPhone.merek} ${selectedPhone.tipe}` : 'none'
+                    });
+                    return selectedPhone || null;
+                  })()}
+                  options={filteredPhones.length > 0 ? filteredPhones : availableHandphones}
                   getOptionLabel={(option) => option ? `${option.merek} ${option.tipe}${option.imei ? ` - IMEI: ${option.imei}` : ''}` : ''}
                   onChange={(event, newValue) => {
                     setForm({
@@ -1232,15 +1350,21 @@ const Dashboard = ({ setToken }) => {
                       handphone: newValue ? newValue.merek : ''
                     });
                   }}
+                  loading={isPhoneLoading}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Pilih Handphone"
+                      label={`Pilih Handphone ${filteredPhones.length > 0 ? `(Filtered by Field Staff: ${filteredPhones.length} phones)` : '(All Available)'}`}
                       name="handphoneId"
                       placeholder="Pilih handphone yang tersedia untuk di-assign ke produk ini"
                       margin="normal"
                       required
-                      helperText="Handphone yang dipilih akan di-assign ke produk ini"
+                      helperText={(() => {
+                        if (filteredPhones.length > 0) {
+                          return `Showing ${filteredPhones.length} phones assigned to ${form.fieldStaff}`;
+                        }
+                        return `Available phones: ${availableHandphones.length}. Select a field staff to filter phones.`;
+                      })()}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -1366,6 +1490,14 @@ const Dashboard = ({ setToken }) => {
         {/* PDF Import Dialog */}
 
       </Container>
+
+      {/* Product Detail Drawer */}
+      <ProductDetailDrawer
+        open={drawerOpen}
+        onClose={handleCloseDrawer}
+        product={selectedProduct}
+        onPrintInvoice={handlePrintInvoiceFromDrawer}
+      />
     </SidebarLayout>
   );
 };

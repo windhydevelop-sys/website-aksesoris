@@ -5,7 +5,9 @@ import {
   Container, Typography, Box, Grid, Card, CardContent, CardMedia, Button, CircularProgress, Table, TableBody, TableRow, TableCell
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import PrintIcon from '@mui/icons-material/Print';
 import SidebarLayout from './SidebarLayout';
+import { getStatusChip, getStatusBgColor } from '../utils/statusHelpers';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -35,6 +37,29 @@ const ProductDetail = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
+  };
+
+  const handlePrintInvoice = async (product) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`/api/orders/by-noorder/${product.noOrder}/invoice`, {
+        responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${product.noOrder}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Error downloading invoice:', err);
+      // You might want to show a toast notification here
+    }
   };
 
   if (loading) {
@@ -140,6 +165,32 @@ const ProductDetail = () => {
         <Card>
           <CardContent>
             <Typography variant="h4" gutterBottom>Detail Produk</Typography>
+            
+            {/* Status Section */}
+            {product.status && (
+              <Box sx={{ mb: 3 }}>
+                <Card sx={{ bgcolor: getStatusBgColor(product.status), border: 1, borderColor: 'divider' }}>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom sx={{ color: 'text.primary', fontWeight: 'bold' }}>
+                      Status Pesanan
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      {getStatusChip(product.status, 'large', { fontSize: '1.2rem', py: 1.5 })}
+                      {product.status === 'completed' && (
+                        <Button
+                          variant="contained"
+                          startIcon={<PrintIcon />}
+                          onClick={() => handlePrintInvoice(product)}
+                          sx={{ borderRadius: 2, fontWeight: 'bold' }}
+                        >
+                          Cetak Invoice
+                        </Button>
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+            )}
             <Grid container spacing={2}>
               {/* Display images first if available */}
               {['uploadFotoId','uploadFotoSelfie'].map((imgKey)=> (

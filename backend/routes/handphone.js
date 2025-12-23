@@ -22,6 +22,44 @@ router.use((req, res, next) => {
   next();
 });
 
+// Get phones assigned to specific field staff by code
+router.get('/by-fieldstaff/:codeAgen', auth, addUserInfo, async (req, res) => {
+  try {
+    const { codeAgen } = req.params;
+    console.log('[/api/handphones/by-fieldstaff] Request for field staff:', codeAgen);
+    
+    const FieldStaff = require('../models/FieldStaff');
+    const Handphone = require('../models/Handphone');
+    
+    // Find field staff by kodeOrlap
+    const fieldStaff = await FieldStaff.findOne({ kodeOrlap: codeAgen });
+    if (!fieldStaff) {
+      console.log('[/api/handphones/by-fieldstaff] Field staff not found:', codeAgen);
+      return res.status(404).json({ success: false, error: 'Field staff not found' });
+    }
+    
+    console.log('[/api/handphones/by-fieldstaff] Field staff found:', fieldStaff._id);
+
+    // Get phones assigned to this field staff
+    const phones = await Handphone.find({ 
+      assignedTo: fieldStaff._id,
+      status: { $ne: 'available' } // Exclude available phones
+    }).populate('assignedTo', 'kodeOrlap namaOrlap');
+
+    console.log('[/api/handphones/by-fieldstaff] Found phones:', phones.length);
+
+    res.json({
+      success: true,
+      data: phones,
+      count: phones.length
+    });
+
+  } catch (err) {
+    console.error('[/api/handphones/by-fieldstaff] Error fetching phones by field staff:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch phones' });
+  }
+});
+
 // Get all handphones
 router.get('/', auth, addUserInfo, getHandphones);
 
