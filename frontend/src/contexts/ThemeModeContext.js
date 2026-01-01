@@ -9,8 +9,8 @@ const STORAGE_KEY = 'themeMode';
 
 const getInitialThemeMode = () => {
   const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === THEME_MODE.LIGHT_MONO) return THEME_MODE.LIGHT_MONO;
-  return THEME_MODE.ORIGINAL;
+  if (stored === THEME_MODE.ORIGINAL) return THEME_MODE.ORIGINAL;
+  return THEME_MODE.LIGHT_MONO;
 };
 
 export const ThemeModeProvider = ({ children }) => {
