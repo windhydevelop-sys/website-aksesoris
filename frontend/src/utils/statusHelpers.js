@@ -1,5 +1,10 @@
 import { Chip } from '@mui/material';
 
+const isLightMonoMode = () => {
+  if (typeof document === 'undefined') return false;
+  return document.body.classList.contains('theme-light-mono');
+};
+
 /**
  * Get status label in Indonesian
  * @param {string} status - Order status
@@ -21,6 +26,7 @@ export const getStatusLabel = (status) => {
  * @returns {string} Material-UI color
  */
 export const getStatusColor = (status) => {
+  if (isLightMonoMode()) return 'default';
   const colors = {
     pending: 'error',
     in_progress: 'warning', 
@@ -56,6 +62,7 @@ export const getStatusChip = (status, size = 'medium', sx = {}) => (
  * @returns {string} Background color
  */
 export const getStatusBgColor = (status) => {
+  if (isLightMonoMode()) return 'grey.50';
   const bgColors = {
     pending: 'error.light',
     in_progress: 'warning.light',
@@ -71,6 +78,7 @@ export const getStatusBgColor = (status) => {
  * @returns {string} Text color
  */
 export const getStatusTextColor = (status) => {
+  if (isLightMonoMode()) return 'text.primary';
   const textColors = {
     pending: 'error.dark',
     in_progress: 'warning.dark',

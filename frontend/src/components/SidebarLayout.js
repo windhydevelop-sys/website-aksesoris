@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Drawer, Toolbar, Box, List, ListItem, ListItemIcon, ListItemText, ListItemButton, AppBar, Avatar, Typography, Chip, IconButton, useMediaQuery, useTheme } from '@mui/material';
+import { Drawer, Toolbar, Box, List, ListItem, ListItemIcon, ListItemText, ListItemButton, AppBar, Avatar, Typography, Chip, IconButton, Switch, Tooltip, useMediaQuery, useTheme } from '@mui/material';
 import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet, Backup, Settings, Timeline, Calculate } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from '../utils/axios';
+import { useThemeMode } from '../contexts/ThemeModeContext';
+import { THEME_MODE } from '../theme/themes';
 
 const drawerWidth = 240;
 
@@ -12,6 +14,8 @@ const SidebarLayout = ({ children, onLogout }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { themeMode, toggleThemeMode } = useThemeMode();
+  const isLightMono = themeMode === THEME_MODE.LIGHT_MONO;
 
   // Get current user data
   const getCurrentUser = () => {
@@ -68,6 +72,16 @@ const SidebarLayout = ({ children, onLogout }) => {
   };
 
   const isActive = (pathPrefix) => location.pathname.startsWith(pathPrefix);
+  const navItemSx = {
+    color: 'inherit',
+    borderRadius: 2,
+    mx: 1,
+    '&.Mui-selected': {
+      bgcolor: isLightMono ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.2)',
+      '&:hover': { bgcolor: isLightMono ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.3)' },
+    },
+    '&:hover': { bgcolor: isLightMono ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.1)' },
+  };
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -77,8 +91,11 @@ const SidebarLayout = ({ children, onLogout }) => {
         sx={{
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          bgcolor: 'primary.main',
-          zIndex: 1100
+          bgcolor: isLightMono ? '#ffffff' : 'primary.main',
+          color: isLightMono ? '#111111' : 'inherit',
+          borderBottom: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
+          boxShadow: isLightMono ? 'none' : undefined,
+          zIndex: 1100,
         }}
       >
         <Toolbar>
@@ -95,19 +112,22 @@ const SidebarLayout = ({ children, onLogout }) => {
           )}
           <Box sx={{ flexGrow: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar sx={{ bgcolor: 'secondary.main' }}>
+            <Tooltip title={isLightMono ? 'Light Monochrome' : 'Original'} arrow>
+              <Switch checked={isLightMono} onChange={toggleThemeMode} color="default" />
+            </Tooltip>
+            <Avatar sx={{ bgcolor: isLightMono ? '#111111' : 'secondary.main', color: '#ffffff' }}>
               <AccountCircle />
             </Avatar>
             <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
-              <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'white' }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold', color: isLightMono ? 'text.primary' : 'white' }}>
                 {user.username || 'User'}
               </Typography>
               <Chip
                 label={userRole === 'user' ? 'Karyawan' : userRole === 'moderator' ? 'Member' : 'Admin'}
                 size="small"
                 sx={{
-                  bgcolor: 'rgba(255,255,255,0.2)',
-                  color: 'white',
+                  bgcolor: isLightMono ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.2)',
+                  color: isLightMono ? 'text.primary' : 'white',
                   fontWeight: 'bold'
                 }}
               />
@@ -129,9 +149,10 @@ const SidebarLayout = ({ children, onLogout }) => {
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
-            background: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)', // gradient background
-            color: '#fff',
-            boxShadow: '4px 0 20px rgba(0,0,0,0.1)',
+            background: isLightMono ? '#ffffff' : 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)',
+            color: isLightMono ? '#111111' : '#fff',
+            borderRight: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
+            boxShadow: isLightMono ? 'none' : '4px 0 20px rgba(0,0,0,0.1)',
           },
         }}
       >
@@ -143,13 +164,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                  <ListItemButton
                    selected={isActive('/dashboard')}
                    onClick={() => navigate('/dashboard')}
-                   sx={{
-                     color: 'inherit',
-                     borderRadius: 2,
-                     mx: 1,
-                     '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                     '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                   }}
+                   sx={navItemSx}
                  >
                    <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
                    <ListItemText primary="Input Product" sx={{ color: 'inherit' }} />
@@ -161,13 +176,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                  <ListItemButton
                    selected={isActive('/workflow')}
                    onClick={() => navigate('/workflow')}
-                   sx={{
-                     color: 'inherit',
-                     borderRadius: 2,
-                     mx: 1,
-                     '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                     '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                   }}
+                   sx={navItemSx}
                  >
                    <ListItemIcon sx={{ color: 'inherit' }}><Timeline /></ListItemIcon>
                    <ListItemText primary="Workflow Management" sx={{ color: 'inherit' }} />
@@ -179,13 +188,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/product-details')}
                   onClick={() => navigate('/dashboard')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><Info /></ListItemIcon>
                   <ListItemText primary="Detail Produk (via Dashboard)" sx={{ color: 'inherit' }} />
@@ -197,13 +200,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/customers')}
                   onClick={() => navigate('/customers')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><PeopleAlt /></ListItemIcon>
                   <ListItemText primary="Customer" sx={{ color: 'inherit' }} />
@@ -215,13 +212,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/field-staff-management')}
                   onClick={() => navigate('/field-staff-management')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><Group /></ListItemIcon>
                   <ListItemText primary="Kelola Orlap" sx={{ color: 'inherit' }} />
@@ -233,13 +224,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/field-staff-dashboard')}
                   onClick={() => navigate('/field-staff-dashboard')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
                   <ListItemText primary="Dashboard Orlap" sx={{ color: 'inherit' }} />
@@ -251,13 +236,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/orders')}
                   onClick={() => navigate('/orders')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><AddShoppingCart /></ListItemIcon>
                   <ListItemText primary="Order Management" sx={{ color: 'inherit' }} />
@@ -269,13 +248,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/cashflow')}
                   onClick={() => navigate('/cashflow')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><AccountBalanceWallet /></ListItemIcon>
                   <ListItemText primary="Cashflow" sx={{ color: 'inherit' }} />
@@ -287,13 +260,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/balance-tracker')}
                   onClick={() => navigate('/balance-tracker')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><Calculate /></ListItemIcon>
                   <ListItemText primary="Pencatatan Saldo" sx={{ color: 'inherit' }} />
@@ -305,13 +272,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/complaints')}
                   onClick={() => navigate('/complaints')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><Info /></ListItemIcon>
                   <ListItemText primary="Komplain" sx={{ color: 'inherit' }} />
@@ -323,13 +284,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/handphone')}
                   onClick={() => navigate('/handphone')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><Android /></ListItemIcon>
                   <ListItemText primary="Detail Handphone" sx={{ color: 'inherit' }} />
@@ -341,13 +296,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/backup')}
                   onClick={() => navigate('/backup')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><Backup /></ListItemIcon>
                   <ListItemText primary="Database Backup" sx={{ color: 'inherit' }} />
@@ -359,13 +308,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/menu-permissions')}
                   onClick={() => navigate('/menu-permissions')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><Settings /></ListItemIcon>
                   <ListItemText primary="Menu Permissions" sx={{ color: 'inherit' }} />
@@ -377,13 +320,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                 <ListItemButton
                   selected={isActive('/users')}
                   onClick={() => navigate('/users')}
-                  sx={{
-                    color: 'inherit',
-                    borderRadius: 2,
-                    mx: 1,
-                    '&.Mui-selected': { bgcolor: 'rgba(255,255,255,0.2)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } },
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }
-                  }}
+                  sx={navItemSx}
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><AdminPanelSettings /></ListItemIcon>
                   <ListItemText primary="User Management" sx={{ color: 'inherit' }} />
@@ -397,7 +334,7 @@ const SidebarLayout = ({ children, onLogout }) => {
                   color: 'inherit',
                   borderRadius: 2,
                   mx: 1,
-                  '&:hover': { bgcolor: 'rgba(255,0,0,0.1)' }
+                  '&:hover': { bgcolor: isLightMono ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.1)' }
                 }}
               >
                 <ListItemIcon sx={{ color: 'inherit' }}><Logout /></ListItemIcon>

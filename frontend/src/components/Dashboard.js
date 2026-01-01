@@ -16,6 +16,8 @@ import { Edit, Delete, Add, CloudUpload, CloudDownload, PictureAsPdf } from '@mu
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
 import { useNotification } from '../contexts/NotificationContext';
+import { useThemeMode } from '../contexts/ThemeModeContext';
+import { THEME_MODE } from '../theme/themes';
 import SidebarLayout from './SidebarLayout';
 import ProductDetailDrawer from './ProductDetailDrawer';
 import FloatingNIKSearchBar from './FloatingNIKSearchBar';
@@ -420,6 +422,8 @@ const initialFormState = {
 
 const Dashboard = ({ setToken }) => {
   const { showSuccess, showError } = useNotification();
+  const { themeMode } = useThemeMode();
+  const isLightMono = themeMode === THEME_MODE.LIGHT_MONO;
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [search, setSearch] = useState('');
@@ -638,13 +642,13 @@ const Dashboard = ({ setToken }) => {
         return acc;
       }, {});
       const data = [
-        { name: 'Pending', value: statusCounts.pending || 0, color: '#ff9800' },
-        { name: 'In Progress', value: statusCounts.in_progress || 0, color: '#2196f3' },
-        { name: 'Completed', value: statusCounts.completed || 0, color: '#4caf50' },
+        { name: 'Pending', value: statusCounts.pending || 0, color: isLightMono ? '#111111' : '#ff9800' },
+        { name: 'In Progress', value: statusCounts.in_progress || 0, color: isLightMono ? '#555555' : '#2196f3' },
+        { name: 'Completed', value: statusCounts.completed || 0, color: isLightMono ? '#999999' : '#4caf50' },
       ];
       setChartData(data);
     }
-  }, [products]);
+  }, [products, isLightMono]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -968,8 +972,9 @@ const Dashboard = ({ setToken }) => {
         <Grid container spacing={3}>
            <Grid item xs={12} sm={6} md={6}>
              <Card sx={{
-               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-               color: 'white',
+               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+               color: isLightMono ? 'text.primary' : 'white',
+               border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
                borderRadius: 3,
                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
                transition: 'transform 0.3s',
@@ -985,8 +990,9 @@ const Dashboard = ({ setToken }) => {
            </Grid>
            <Grid item xs={12} sm={6} md={6}>
              <Card sx={{
-               background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-               color: 'white',
+               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+               color: isLightMono ? 'text.primary' : 'white',
+               border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
                borderRadius: 3,
                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
                transition: 'transform 0.3s',
@@ -1002,8 +1008,9 @@ const Dashboard = ({ setToken }) => {
            </Grid>
            <Grid item xs={12} sm={6} md={6}>
              <Card sx={{
-               background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-               color: 'white',
+               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+               color: isLightMono ? 'text.primary' : 'white',
+               border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
                borderRadius: 3,
                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
                transition: 'transform 0.3s',
@@ -1019,8 +1026,9 @@ const Dashboard = ({ setToken }) => {
            </Grid>
            <Grid item xs={12} sm={6} md={6}>
              <Card sx={{
-               background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-               color: 'white',
+               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+               color: isLightMono ? 'text.primary' : 'white',
+               border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
                borderRadius: 3,
                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
                transition: 'transform 0.3s',
@@ -1052,7 +1060,7 @@ const Dashboard = ({ setToken }) => {
                       labelLine={false}
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
-                      fill="#8884d8"
+                      fill={isLightMono ? '#111111' : '#8884d8'}
                       dataKey="value"
                     >
                       {chartData.map((entry, index) => (
@@ -1076,7 +1084,7 @@ const Dashboard = ({ setToken }) => {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Bar dataKey="value" fill="#8884d8" />
+                    <Bar dataKey="value" fill={isLightMono ? '#111111' : '#8884d8'} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -1224,6 +1232,8 @@ const Dashboard = ({ setToken }) => {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 'bold' }}>No. Order</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Nama</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>NIK</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>No. Rekening</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Handphone</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Expired</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
@@ -1245,6 +1255,8 @@ const Dashboard = ({ setToken }) => {
                   >
                     <TableCell>{product.noOrder}</TableCell>
                     <TableCell>{product.nama}</TableCell>
+                    <TableCell>{product.nik || '-'}</TableCell>
+                    <TableCell>{product.noRek || '-'}</TableCell>
                     <TableCell>
                       {product.handphoneId && typeof product.handphoneId === 'object'
                         ? `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim() || 'Handphone Assigned'
@@ -1376,13 +1388,13 @@ const Dashboard = ({ setToken }) => {
                             borderColor: 'rgba(0, 0, 0, 0.87)',
                           },
                           '&.Mui-focused fieldset': {
-                            borderColor: '#1976d2',
+                            borderColor: isLightMono ? '#111111' : '#1976d2',
                           },
                         },
                         '& .MuiInputLabel-root': {
                           color: 'rgba(0, 0, 0, 0.6)',
                           '&.Mui-focused': {
-                            color: '#1976d2',
+                            color: isLightMono ? '#111111' : '#1976d2',
                           },
                         },
                         '& .MuiInputBase-input': {

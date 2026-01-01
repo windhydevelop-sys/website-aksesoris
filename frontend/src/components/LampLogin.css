@@ -27,11 +27,20 @@
   --glow-color-dark: hsl(320, 40%, 35%);
 }
 
-body {
+body.theme-original {
   min-height: 100vh;
   display: grid;
   place-items: center;
   background: #121921;
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body.theme-light-mono {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
   margin: 0;
   font-family: system-ui, -apple-system, sans-serif;
 }
@@ -43,6 +52,10 @@ body {
   gap: 8vmin;
   flex-wrap: wrap;
   padding: 2rem;
+}
+
+body.theme-light-mono .container {
+  gap: 0;
 }
 
 .login-form {
@@ -58,6 +71,16 @@ body {
   box-shadow: 0 0 0px rgba(255, 255, 255, 0);
 }
 
+body.theme-light-mono .login-form {
+  background: #ffffff;
+  color: #111111;
+  opacity: 1;
+  transform: none;
+  pointer-events: all;
+  border: 1px solid #111111;
+  box-shadow: none;
+}
+
 .login-form.active {
   opacity: 1;
   transform: scale(1) translateY(0);
@@ -66,12 +89,22 @@ body {
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.1), 0 0 30px var(--glow-color), inset 0 0 15px rgba(255, 255, 255, 0.05);
 }
 
+body.theme-light-mono .login-form.active {
+  border-color: #111111;
+  box-shadow: none;
+}
+
 .login-form h2 {
   color: #fff;
   font-size: 2rem;
   margin: 0 0 2rem 0;
   text-align: center;
   text-shadow: 0 0 8px var(--glow-color);
+}
+
+body.theme-light-mono .login-form h2 {
+  color: #111111;
+  text-shadow: none;
 }
 
 .form-group {
@@ -86,6 +119,11 @@ body {
   text-shadow: 0 0 5px var(--glow-color);
 }
 
+body.theme-light-mono .form-group label {
+  color: #444444;
+  text-shadow: none;
+}
+
 .form-group input {
   width: 100%;
   padding: 0.75rem 1rem;
@@ -97,11 +135,23 @@ body {
   transition: all 0.3s ease;
 }
 
+body.theme-light-mono .form-group input {
+  background: #ffffff;
+  border: 1px solid #111111;
+  color: #111111;
+}
+
 .form-group input:focus {
   outline: none;
   border-color: var(--glow-color);
   box-shadow: 0 0 10px var(--glow-color);
   background: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-light-mono .form-group input:focus {
+  border-color: #111111;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
 }
 
 .form-group input::placeholder {
@@ -123,9 +173,19 @@ body {
   margin-top: 0.5rem;
 }
 
+body.theme-light-mono .login-btn {
+  background: #111111;
+  box-shadow: none;
+}
+
 .login-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 20px var(--glow-color);
+}
+
+body.theme-light-mono .login-btn:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 .login-btn:active {
@@ -144,9 +204,18 @@ body {
   transition: all 0.3s ease;
 }
 
+body.theme-light-mono .forgot-link {
+  color: #444444;
+}
+
 .forgot-link:hover {
   color: var(--glow-color);
   text-shadow: 0 0 10px var(--glow-color);
+}
+
+body.theme-light-mono .forgot-link:hover {
+  color: #111111;
+  text-shadow: none;
 }
 
 .radio-controls {
@@ -165,6 +234,10 @@ body {
   display: block; /* changed from none to ensure lamp is visible even if JS fails */
   height: 40vmin;
   overflow: visible !important;
+}
+
+body.theme-light-mono .lamp {
+  display: none !important;
 }
 
 .cord {

@@ -12,8 +12,12 @@ import {
 import { Search, Close } from '@mui/icons-material';
 import axios from '../utils/axios';
 import { getStatusLabel, getStatusColor } from '../utils/statusHelpers';
+import { useThemeMode } from '../contexts/ThemeModeContext';
+import { THEME_MODE } from '../theme/themes';
 
 const FloatingNIKSearchBar = ({ onProductSelect, openProductDrawer }) => {
+  const { themeMode } = useThemeMode();
+  const isLightMono = themeMode === THEME_MODE.LIGHT_MONO;
   const [searchValue, setSearchValue] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -141,7 +145,7 @@ const FloatingNIKSearchBar = ({ onProductSelect, openProductDrawer }) => {
         top: 0,
         zIndex: 1000,
         p: 2,
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+        backgroundColor: isLightMono ? '#ffffff' : 'rgba(255, 255, 255, 0.98)',
         backdropFilter: 'blur(10px)',
         borderBottom: '1px solid',
         borderColor: 'divider',
@@ -244,7 +248,7 @@ const FloatingNIKSearchBar = ({ onProductSelect, openProductDrawer }) => {
                     borderColor: 'rgba(0, 0, 0, 0.87)'
                   },
                   '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#1976d2'
+                    borderColor: isLightMono ? '#111111' : '#1976d2'
                   }
                 }
               }}

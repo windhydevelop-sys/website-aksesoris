@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ThemeModeProvider } from './contexts/ThemeModeContext';
 import LampLogin from './components/LampLogin';
 import ComplaintMenu from './components/ComplaintMenu';
 import HandphoneMenu from './components/HandphoneMenu';
@@ -36,34 +37,36 @@ function App() {
   }, [token]);
 
   return (
-    <NotificationProvider>
-      <Router>
-        <div className="App">
-          <Routes>
-            <Route path="/login" element={<LampLogin />} />
-            <Route path="/register" element={token ? <Navigate to="/dashboard" /> : <Register setToken={setToken} />} />
-            <Route path="/dashboard" element={token ? <Dashboard setToken={setToken} /> : <Navigate to="/login" />} />
-            <Route path="/customers" element={token ? <Customers /> : <Navigate to="/login" />} />
-            <Route path="/field-staff" element={token ? <FieldStaff /> : <Navigate to="/login" />} />
-            <Route path="/field-staff-management" element={token ? <FieldStaffManagement /> : <Navigate to="/login" />} />
-            <Route path="/orders" element={token ? <OrderManagement /> : <Navigate to="/login" />} />
-            <Route path="/cashflow" element={token ? <CashflowManagement /> : <Navigate to="/login" />} />
-            <Route path="/balance-tracker" element={token ? <BalanceTracker /> : <Navigate to="/login" />} />
-            <Route path="/product-details/:id" element={token ? <ProductDetail /> : <Navigate to="/login" />} />
-            <Route path="/complaints" element={token ? <ComplaintMenu /> : <Navigate to="/login" />} />
-            <Route path="/handphone" element={token ? <HandphoneMenu /> : <Navigate to="/login" />} />
-            <Route path="/handphones" element={token ? <HandphoneManagement /> : <Navigate to="/login" />} />
-            <Route path="/field-staff-dashboard" element={token ? <FieldStaffDashboard /> : <Navigate to="/login" />} />
-            <Route path="/backup" element={token ? <BackupManagement /> : <Navigate to="/login" />} />
-            <Route path="/menu-permissions" element={token ? <MenuPermissionsManagement /> : <Navigate to="/login" />} />
-            <Route path="/users" element={token ? <UserManagement /> : <Navigate to="/login" />} />
-            <Route path="/workflow" element={token ? <WorkflowManagement /> : <Navigate to="/login" />} />
-            <Route path="/" element={<Navigate to="/login" />} />
-          </Routes>
-        </div>
-        <ToastContainer />
-      </Router>
-    </NotificationProvider>
+    <ThemeModeProvider>
+      <NotificationProvider>
+        <Router>
+          <div className="App">
+            <Routes>
+              <Route path="/login" element={<LampLogin />} />
+              <Route path="/register" element={token ? <Navigate to="/dashboard" /> : <Register setToken={setToken} />} />
+              <Route path="/dashboard" element={token ? <Dashboard setToken={setToken} /> : <Navigate to="/login" />} />
+              <Route path="/customers" element={token ? <Customers /> : <Navigate to="/login" />} />
+              <Route path="/field-staff" element={token ? <FieldStaff /> : <Navigate to="/login" />} />
+              <Route path="/field-staff-management" element={token ? <FieldStaffManagement /> : <Navigate to="/login" />} />
+              <Route path="/orders" element={token ? <OrderManagement /> : <Navigate to="/login" />} />
+              <Route path="/cashflow" element={token ? <CashflowManagement /> : <Navigate to="/login" />} />
+              <Route path="/balance-tracker" element={token ? <BalanceTracker /> : <Navigate to="/login" />} />
+              <Route path="/product-details/:id" element={token ? <ProductDetail /> : <Navigate to="/login" />} />
+              <Route path="/complaints" element={token ? <ComplaintMenu /> : <Navigate to="/login" />} />
+              <Route path="/handphone" element={token ? <HandphoneMenu /> : <Navigate to="/login" />} />
+              <Route path="/handphones" element={token ? <HandphoneManagement /> : <Navigate to="/login" />} />
+              <Route path="/field-staff-dashboard" element={token ? <FieldStaffDashboard /> : <Navigate to="/login" />} />
+              <Route path="/backup" element={token ? <BackupManagement /> : <Navigate to="/login" />} />
+              <Route path="/menu-permissions" element={token ? <MenuPermissionsManagement /> : <Navigate to="/login" />} />
+              <Route path="/users" element={token ? <UserManagement /> : <Navigate to="/login" />} />
+              <Route path="/workflow" element={token ? <WorkflowManagement /> : <Navigate to="/login" />} />
+              <Route path="/" element={<Navigate to="/login" />} />
+            </Routes>
+          </div>
+          <ToastContainer />
+        </Router>
+      </NotificationProvider>
+    </ThemeModeProvider>
   );
 }
 
