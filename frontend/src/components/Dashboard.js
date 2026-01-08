@@ -669,7 +669,7 @@ const Dashboard = ({ setToken }) => {
   const handlePrintInvoiceFromDrawer = async (product) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/orders/${product._id}/invoice`, {
+      const response = await axios.get(`/api/orders/by-noorder/${product.noOrder}/invoice`, {
         responseType: 'blob',
         headers: {
           'Authorization': `Bearer ${token}`

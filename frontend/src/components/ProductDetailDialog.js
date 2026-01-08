@@ -29,7 +29,7 @@ import {
   Person,
   Storefront
 } from '@mui/icons-material';
-import axios from 'axios';
+import axios from '../utils/axios';
 import { useNotification } from '../contexts/NotificationContext';
 
 const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
@@ -89,10 +89,28 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
     }
   };
 
-  const handlePrintInvoice = (product) => {
-    // TODO: Implement print invoice functionality
-    console.log('Print invoice for product:', product);
-    showSuccess('Print invoice functionality coming soon');
+  const handlePrintInvoice = async (product) => {
+    try {
+      if (product.status !== 'completed') {
+        showError('Invoice hanya tersedia untuk status completed');
+        return;
+      }
+      const response = await axios.get(`/api/orders/by-noorder/${product.noOrder}/invoice`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${product.noOrder}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      showSuccess('Invoice berhasil diunduh');
+    } catch (err) {
+      console.error('Error downloading invoice:', err);
+      showError(err.response?.data?.error || 'Gagal mengunduh invoice');
+    }
   };
 
   const getStatusChip = (status) => {
@@ -274,14 +292,16 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
                         >
                           <Delete fontSize="small" />
                         </IconButton>
-                        <IconButton
-                          onClick={() => handlePrintInvoice(product)}
-                          color="info"
-                          size="small"
-                          title="Print Invoice"
-                        >
-                          <Print fontSize="small" />
-                        </IconButton>
+                        {product.status === 'completed' && (
+                          <IconButton
+                            onClick={() => handlePrintInvoice(product)}
+                            color="info"
+                            size="small"
+                            title="Print Invoice"
+                          >
+                            <Print fontSize="small" />
+                          </IconButton>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
