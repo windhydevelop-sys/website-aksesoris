@@ -26,7 +26,27 @@ const telegramUserSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    // Anda bisa menambahkan field lain dari objek 'from' Telegram jika diperlukan
+    state: {
+      type: String,
+      default: 'idle'
+    },
+    sessionStep: {
+      type: Number,
+      default: 0
+    },
+    formData: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {}
+    },
+    fieldStaffId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'FieldStaff',
+      default: null
+    },
+    kodeOrlap: {
+      type: String,
+      default: null
+    }
   },
   {
     timestamps: true,

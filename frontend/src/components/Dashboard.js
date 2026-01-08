@@ -793,7 +793,11 @@ const Dashboard = ({ setToken }) => {
         if (key === 'expired' && value) {
           formData.append(backendKey, new Date(value).toISOString());
         } else {
-          formData.append(backendKey, value);
+          if (editing && backendKey === 'handphoneId') {
+            // Skip handphoneId on edit to prevent reassignment
+          } else {
+            formData.append(backendKey, value);
+          }
         }
       }
     }
@@ -1339,6 +1343,7 @@ const Dashboard = ({ setToken }) => {
                   renderInput={(params) => <TextField {...params} label="Orang Lapangan" name="fieldStaff" placeholder="Pilih orang lapangan dari daftar atau ketik baru" margin="normal" />}
                 />
                 {/* Manual handphone selection */}
+                {!editing && (
                 <Autocomplete
                   key={phoneAutocompleteKey}
                   fullWidth
@@ -1414,6 +1419,7 @@ const Dashboard = ({ setToken }) => {
                     },
                   }}
                 />
+                )}
                 {availableHandphones.length === 0 && (
                   <Alert severity="warning" sx={{ mt: 1, mb: 1 }}>
                     <strong>Tidak ada handphone tersedia!</strong> Silakan tambahkan handphone baru di menu "Detail Handphone" terlebih dahulu.

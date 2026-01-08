@@ -61,20 +61,30 @@ router.get('/:id', auth, async (req, res) => {
 // Create new order
 router.post('/', auth, async (req, res) => {
   try {
-    const { noOrder, customer, fieldStaff, status, notes, harga } = req.body;
+    const { customer, fieldStaff, status, notes, harga } = req.body;
 
     // Validate required fields
-    if (!noOrder || !customer || !fieldStaff) {
+    if (!customer || !fieldStaff) {
       return res.status(400).json({
         success: false,
-        error: 'No Order, Customer, and Field Staff are required'
+        error: 'Customer and Field Staff are required'
       });
     }
 
+    const latestNumeric = await Order.aggregate([
+      { $match: { noOrder: { $regex: '^[0-9]+$' } } },
+      { $addFields: { noOrderInt: { $toInt: '$noOrder' } } },
+      { $sort: { noOrderInt: -1 } },
+      { $limit: 1 }
+    ]);
+    const lastInt = latestNumeric.length > 0 ? latestNumeric[0].noOrderInt : 0;
+    const nextInt = lastInt + 1;
+    const generatedNoOrder = String(nextInt).padStart(3, '0');
+
     const newOrder = new Order({
-      noOrder: noOrder.trim(),
-      customer: customer.trim(),
-      fieldStaff: fieldStaff.trim(),
+      noOrder: generatedNoOrder,
+      customer: String(customer).trim(),
+      fieldStaff: String(fieldStaff).trim(),
       status: (status || 'pending').toLowerCase(),
       notes: notes?.trim(),
       harga: harga || 0,
@@ -89,7 +99,7 @@ router.post('/', auth, async (req, res) => {
       req.user.id,
       'order',
       savedOrder._id,
-      { noOrder },
+      { noOrder: generatedNoOrder },
       req
     );
 

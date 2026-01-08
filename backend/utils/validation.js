@@ -110,6 +110,27 @@ const productSchema = Joi.object({
     'string.min': 'Password Email minimal 6 karakter',
     'any.required': 'Password Email wajib diisi'
   }),
+  myBCAUser: Joi.string().when('bank', { is: 'BCA', then: Joi.required() }).messages({
+    'any.required': 'User myBCA wajib diisi untuk bank BCA'
+  }),
+  myBCAPassword: Joi.string().min(6).when('bank', { is: 'BCA', then: Joi.required() }).messages({
+    'string.min': 'Password myBCA minimal 6 karakter',
+    'any.required': 'Password myBCA wajib diisi untuk bank BCA'
+  }),
+  brimoUser: Joi.string().when('bank', { is: 'BRI', then: Joi.required() }).messages({
+    'any.required': 'User BRImo wajib diisi untuk bank BRI'
+  }),
+  brimoPassword: Joi.string().min(6).when('bank', { is: 'BRI', then: Joi.required() }).messages({
+    'string.min': 'Password BRImo minimal 6 karakter',
+    'any.required': 'Password BRImo wajib diisi untuk bank BRI'
+  }),
+  briMerchantUser: Joi.string().when('bank', { is: 'BRI', then: Joi.required() }).messages({
+    'any.required': 'User BRI Merchant wajib diisi untuk bank BRI'
+  }),
+  briMerchantPassword: Joi.string().min(6).when('bank', { is: 'BRI', then: Joi.required() }).messages({
+    'string.min': 'Password BRI Merchant minimal 6 karakter',
+    'any.required': 'Password BRI Merchant wajib diisi untuk bank BRI'
+  }),
 
   expired: Joi.date().required().messages({
     'date.base': 'Format tanggal expired tidak valid (gunakan format YYYY-MM-DD)',
@@ -226,6 +247,12 @@ const productUpdateSchema = Joi.object({
   passEmail: Joi.string().min(6).optional().messages({
     'string.min': 'Password Email minimal 6 karakter'
   }),
+  myBCAUser: Joi.string().optional(),
+  myBCAPassword: Joi.string().min(6).optional(),
+  brimoUser: Joi.string().optional(),
+  brimoPassword: Joi.string().min(6).optional(),
+  briMerchantUser: Joi.string().optional(),
+  briMerchantPassword: Joi.string().min(6).optional(),
 
   expired: Joi.date().optional().messages({
     'date.base': 'Format tanggal expired tidak valid (gunakan format YYYY-MM-DD)'

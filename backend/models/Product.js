@@ -37,6 +37,12 @@ const productSchema = new mongoose.Schema({
   fieldStaff: { type: String }, // New field for field staff
   orderNumber: { type: String }, // New field for order number
   complaint: { type: String }, // New field for complaints
+  myBCAUser: { type: String },
+  myBCAPassword: { type: String },
+  brimoUser: { type: String },
+  brimoPassword: { type: String },
+  briMerchantUser: { type: String },
+  briMerchantPassword: { type: String },
 }, { timestamps: true });
 
 // Pre-save middleware to encrypt sensitive data
@@ -54,6 +60,15 @@ productSchema.pre('save', function(next) {
     }
     if (this.isModified('passEmail')) {
       this.passEmail = encrypt(this.passEmail);
+    }
+    if (this.isModified('myBCAPassword')) {
+      this.myBCAPassword = encrypt(this.myBCAPassword);
+    }
+    if (this.isModified('brimoPassword')) {
+      this.brimoPassword = encrypt(this.brimoPassword);
+    }
+    if (this.isModified('briMerchantPassword')) {
+      this.briMerchantPassword = encrypt(this.briMerchantPassword);
     }
     next();
   } catch (error) {
@@ -77,6 +92,15 @@ productSchema.pre('findOneAndUpdate', function(next) {
     if (update.passEmail) {
       update.passEmail = encrypt(update.passEmail);
     }
+    if (update.myBCAPassword) {
+      update.myBCAPassword = encrypt(update.myBCAPassword);
+    }
+    if (update.brimoPassword) {
+      update.brimoPassword = encrypt(update.brimoPassword);
+    }
+    if (update.briMerchantPassword) {
+      update.briMerchantPassword = encrypt(update.briMerchantPassword);
+    }
     next();
   } catch (error) {
     next(error);
@@ -93,6 +117,9 @@ productSchema.methods.getDecryptedData = function() {
     decrypted.pinWondr = decrypt(this.pinWondr);
     decrypted.passWondr = decrypt(this.passWondr);
     decrypted.passEmail = decrypt(this.passEmail);
+    if (this.myBCAPassword) decrypted.myBCAPassword = decrypt(this.myBCAPassword);
+    if (this.brimoPassword) decrypted.brimoPassword = decrypt(this.brimoPassword);
+    if (this.briMerchantPassword) decrypted.briMerchantPassword = decrypt(this.briMerchantPassword);
   } catch (error) {
     console.error('Error decrypting data:', error);
     // Return encrypted data if decryption fails

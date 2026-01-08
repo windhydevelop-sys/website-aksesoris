@@ -47,8 +47,8 @@ import axios from '../utils/axios';
 import { useNotification } from '../contexts/NotificationContext';
 
 const steps = [
-  'Input Customer',
   'Input Field Staff (Orlap)',
+  'Input Customer',
   'Input No Order',
   'Pilih Handphone',
   'Input Product'
@@ -131,7 +131,9 @@ const WorkflowManagement = () => {
     passWondr: '',
     email: '',
     passEmail: '',
-    expired: ''
+    expired: '',
+    uploadFotoId: null,
+    uploadFotoSelfie: null
   });
 
   const handleLogout = () => {
@@ -254,9 +256,11 @@ const WorkflowManagement = () => {
     setLoading(true);
     try {
       const submitData = {
-        ...orderForm,
         customer: workflowData.customer.kodeCustomer,
-        fieldStaff: workflowData.fieldStaff.kodeOrlap
+        fieldStaff: workflowData.fieldStaff.kodeOrlap,
+        status: orderForm.status,
+        notes: orderForm.notes,
+        harga: orderForm.harga
       };
       const response = await axios.post('/api/orders', submitData);
       setWorkflowData(prev => ({ ...prev, order: response.data.data }));
@@ -297,15 +301,29 @@ const WorkflowManagement = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const submitData = {
-        ...productForm,
-        noOrder: workflowData.order.noOrder,
-        codeAgen: workflowData.fieldStaff.kodeOrlap, // Auto-fill from selected field staff
-        customer: workflowData.customer.kodeCustomer,
-        fieldStaff: workflowData.fieldStaff.kodeOrlap,
-        handphoneId: workflowData.handphone._id // Required field for product creation
-      };
-      const response = await axios.post('/api/products', submitData);
+      const formData = new FormData();
+      formData.append('noOrder', workflowData.order.noOrder);
+      formData.append('codeAgen', workflowData.fieldStaff.kodeOrlap);
+      formData.append('customer', workflowData.customer.kodeCustomer);
+      formData.append('fieldStaff', workflowData.fieldStaff.kodeOrlap);
+      formData.append('handphoneId', workflowData.handphone._id);
+
+      Object.entries(productForm).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === '') return;
+        if (key === 'expired') {
+          formData.append('expired', new Date(value).toISOString());
+        } else if (key === 'uploadFotoId' || key === 'uploadFotoSelfie') {
+          if (value instanceof File) {
+            formData.append(key, value);
+          }
+        } else {
+          formData.append(key, value);
+        }
+      });
+
+      const response = await axios.post('/api/products', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setWorkflowData(prev => ({ ...prev, product: response.data.data }));
       showSuccess('Product berhasil dibuat');
       setProductDialog(false);
@@ -323,71 +341,7 @@ const WorkflowManagement = () => {
         return (
           <Box sx={{ py: 4 }}>
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 4, fontSize: '1.8rem' }}>
-              Langkah 1: Input Customer
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 5, fontSize: '1.2rem', lineHeight: 1.6 }}>
-              Buat customer baru atau pilih customer yang sudah ada. Kode customer akan digunakan di order dan product.
-            </Typography>
-
-            <Grid container spacing={4}>
-              <Grid item xs={12} md={6}>
-                <Button
-                  variant="contained"
-                  startIcon={<PersonAdd />}
-                  onClick={() => setCustomerDialog(true)}
-                  fullWidth
-                  sx={{
-                    mb: 3,
-                    py: 2,
-                    fontSize: '1.1rem',
-                    fontWeight: 600
-                  }}
-                >
-                  Buat Customer Baru
-                </Button>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Autocomplete
-                  options={customers}
-                  getOptionLabel={(option) => option?.kodeCustomer || ''}
-                  onChange={(event, newValue) => {
-                    if (newValue) handleCustomerSelect(newValue);
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Pilih Customer yang Sudah Ada"
-                      variant="outlined"
-                      fullWidth
-                      helperText="Hanya menampilkan kode customer"
-                      sx={{
-                        '& .MuiInputBase-input': {
-                          fontSize: '1.1rem',
-                          py: 1.5
-                        },
-                        '& .MuiInputLabel-root': {
-                          fontSize: '1.1rem'
-                        }
-                      }}
-                    />
-                  )}
-                />
-              </Grid>
-            </Grid>
-
-            {workflowData.customer && (
-              <Alert severity="success" sx={{ mt: 2 }}>
-                Customer dipilih: {workflowData.customer.kodeCustomer} - {workflowData.customer.namaCustomer}
-              </Alert>
-            )}
-          </Box>
-        );
-
-      case 1:
-        return (
-          <Box sx={{ py: 4 }}>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 4, fontSize: '1.8rem' }}>
-              Langkah 2: Input Field Staff (Orlap)
+              Langkah 1: Input Field Staff (Orlap)
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 5, fontSize: '1.2rem', lineHeight: 1.6 }}>
               Buat field staff baru atau pilih field staff yang sudah ada. Kode orlap akan digunakan di order dan untuk penugasan handphone.
@@ -442,6 +396,70 @@ const WorkflowManagement = () => {
             {workflowData.fieldStaff && (
               <Alert severity="success" sx={{ mt: 2 }}>
                 Field Staff dipilih: {workflowData.fieldStaff.kodeOrlap} - {workflowData.fieldStaff.namaOrlap}
+              </Alert>
+            )}
+          </Box>
+        );
+
+      case 1:
+        return (
+          <Box sx={{ py: 4 }}>
+            <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 4, fontSize: '1.8rem' }}>
+              Langkah 2: Input Customer
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 5, fontSize: '1.2rem', lineHeight: 1.6 }}>
+              Buat customer baru atau pilih customer yang sudah ada. Kode customer akan digunakan di order dan product.
+            </Typography>
+
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={6}>
+                <Button
+                  variant="contained"
+                  startIcon={<PersonAdd />}
+                  onClick={() => setCustomerDialog(true)}
+                  fullWidth
+                  sx={{
+                    mb: 3,
+                    py: 2,
+                    fontSize: '1.1rem',
+                    fontWeight: 600
+                  }}
+                >
+                  Buat Customer Baru
+                </Button>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Autocomplete
+                  options={customers}
+                  getOptionLabel={(option) => option?.kodeCustomer || ''}
+                  onChange={(event, newValue) => {
+                    if (newValue) handleCustomerSelect(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Pilih Customer yang Sudah Ada"
+                      variant="outlined"
+                      fullWidth
+                      helperText="Hanya menampilkan kode customer"
+                      sx={{
+                        '& .MuiInputBase-input': {
+                          fontSize: '1.1rem',
+                          py: 1.5
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontSize: '1.1rem'
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
+
+            {workflowData.customer && (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                Customer dipilih: {workflowData.customer.kodeCustomer} - {workflowData.customer.namaCustomer}
               </Alert>
             )}
           </Box>
@@ -502,7 +520,6 @@ const WorkflowManagement = () => {
               </Typography>
             </Alert>
 
-            {/* Show existing handphones for this field staff */}
             {handphones.filter(hp => hp.assignedTo?._id === workflowData.fieldStaff?._id).length > 0 && (
               <Box sx={{ mb: 4 }}>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
@@ -947,36 +964,6 @@ const WorkflowManagement = () => {
             <DialogContent sx={{ py: 3 }}>
               <TextField
                 fullWidth
-                label="No. Order"
-                name="noOrder"
-                value={orderForm.noOrder}
-                onChange={(e) => setOrderForm(prev => ({ ...prev, noOrder: e.target.value }))}
-                margin="normal"
-                required
-                sx={{
-                  mb: 3,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    backgroundColor: 'rgba(255,255,255,0.9)',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
-                    '&.Mui-focused': { backgroundColor: 'white' }
-                  },
-                  '& .MuiInputBase-input': {
-                    color: 'black',
-                    fontSize: '1.1rem',
-                    py: 1.5
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: 'rgba(0,0,0,0.7)',
-                    fontSize: '1.1rem'
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: 'primary.main'
-                  }
-                }}
-              />
-              <TextField
-                fullWidth
                 label="Total Amount"
                 name="harga"
                 type="number"
@@ -1409,6 +1396,32 @@ const WorkflowManagement = () => {
                       }
                     }}
                   />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Upload Foto KTP (opsional)</Typography>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setProductForm(prev => ({ ...prev, uploadFotoId: file }));
+                      }}
+                    />
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Upload Foto Selfie (opsional)</Typography>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setProductForm(prev => ({ ...prev, uploadFotoSelfie: file }));
+                      }}
+                    />
+                  </Box>
                 </Grid>
               </Grid>
             </DialogContent>
