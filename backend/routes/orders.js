@@ -315,24 +315,12 @@ router.get('/:id/invoice', auth, async (req, res) => {
       });
     }
 
-    // Add JavaScript to populate the table
-    const script = `
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const tbody = document.getElementById('productsTableBody');
-          if (tbody) {
-            tbody.innerHTML = \`${productsHtml}\`;
-          }
-        });
-      </script>
-    `;
-
-    html = html.replace('</body>', script + '</body>');
+    html = html.replace(/<tbody id="productsTableBody">[\s\S]*?<\/tbody>/, `<tbody id="productsTableBody">${productsHtml}</tbody>`);
 
     // Generate PDF
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
-    await page.setContent(html);
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -435,24 +423,12 @@ router.get('/by-noorder/:noOrder/invoice', auth, async (req, res) => {
       });
     }
 
-    // Add JavaScript to populate the table
-    const script = `
-      <script>
-        document.addEventListener('DOMContentLoaded', function() {
-          const tbody = document.getElementById('productsTableBody');
-          if (tbody) {
-            tbody.innerHTML = \`${productsHtml}\`;
-          }
-        });
-      </script>
-    `;
-
-    html = html.replace('</body>', script + '</body>');
+    html = html.replace(/<tbody id="productsTableBody">[\s\S]*?<\/tbody>/, `<tbody id="productsTableBody">${productsHtml}</tbody>`);
 
     // Generate PDF
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ args: ['--no-sandbox', '--disable-setuid-sandbox'] });
     const page = await browser.newPage();
-    await page.setContent(html);
+    await page.setContent(html, { waitUntil: 'domcontentloaded' });
     const pdfBuffer = await page.pdf({
       format: 'A4',
       printBackground: true,
