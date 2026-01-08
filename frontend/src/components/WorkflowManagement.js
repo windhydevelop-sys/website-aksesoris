@@ -1304,7 +1304,7 @@ const WorkflowManagement = () => {
                     fullWidth
                     label="PIN ATM (4-6 digit)"
                     name="pinAtm"
-                    type="password"
+                    type="text"
                     value={productForm.pinAtm}
                     onChange={(e) => setProductForm(prev => ({ ...prev, pinAtm: e.target.value }))}
                     margin="normal"
@@ -1317,7 +1317,7 @@ const WorkflowManagement = () => {
                     fullWidth
                     label="PIN Mbanking (4-6 digit)"
                     name="pinWondr"
-                    type="password"
+                    type="text"
                     value={productForm.pinWondr}
                     onChange={(e) => setProductForm(prev => ({ ...prev, pinWondr: e.target.value }))}
                     margin="normal"
@@ -1330,7 +1330,7 @@ const WorkflowManagement = () => {
                     fullWidth
                     label="Password Mbanking (min 6 karakter)"
                     name="passWondr"
-                    type="password"
+                    type="text"
                     value={productForm.passWondr}
                     onChange={(e) => setProductForm(prev => ({ ...prev, passWondr: e.target.value }))}
                     margin="normal"
@@ -1354,7 +1354,7 @@ const WorkflowManagement = () => {
                     fullWidth
                     label="Password Email (min 6 karakter)"
                     name="passEmail"
-                    type="password"
+                    type="text"
                     value={productForm.passEmail}
                     onChange={(e) => setProductForm(prev => ({ ...prev, passEmail: e.target.value }))}
                     margin="normal"
