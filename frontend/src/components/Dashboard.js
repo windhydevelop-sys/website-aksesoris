@@ -394,6 +394,14 @@ const initialFormState = {
   customer: '',
   fieldStaff: '',
   bank: '',
+  myBCAUser: '',
+  myBCAPassword: '',
+  mobileUser: '',
+  mobilePassword: '',
+  ibUser: '',
+  ibPassword: '',
+  merchantUser: '',
+  merchantPassword: '',
   grade: '',
   kcp: '',
   expired: '',
@@ -713,6 +721,14 @@ const Dashboard = ({ setToken }) => {
         kepemilikan: product.kepemilikan || '',
         handphoneId: product.handphoneId || '',
         bank: product.bank || '',
+        myBCAUser: product.myBCAUser || '',
+        myBCAPassword: product.myBCAPassword || '',
+        mobileUser: product.mobileUser || '',
+        mobilePassword: product.mobilePassword || '',
+        ibUser: product.ibUser || '',
+        ibPassword: product.ibPassword || '',
+        merchantUser: product.merchantUser || '',
+        merchantPassword: product.merchantPassword || '',
         grade: product.grade || '',
         kcp: product.kcp || '',
         nik: product.nik ? formatCardNumber(product.nik) : '',
@@ -1426,6 +1442,126 @@ const Dashboard = ({ setToken }) => {
                   </Alert>
                 )}
                 <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" required />
+                {form.bank && form.bank.toUpperCase() === 'BCA' && (
+                  <>
+                    <TextField
+                      fullWidth
+                      label="User myBCA"
+                      name="myBCAUser"
+                      value={form.myBCAUser}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                    />
+                    <TextField
+                      fullWidth
+                      label="Password myBCA"
+                      name="myBCAPassword"
+                      value={form.myBCAPassword}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                      type="text"
+                    />
+                    <TextField
+                      fullWidth
+                      label="User BCA Mobile"
+                      name="mobileUser"
+                      value={form.mobileUser}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                    />
+                    <TextField
+                      fullWidth
+                      label="Password BCA Mobile"
+                      name="mobilePassword"
+                      value={form.mobilePassword}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                      type="text"
+                    />
+                    <TextField
+                      fullWidth
+                      label="User Internet Banking"
+                      name="ibUser"
+                      value={form.ibUser}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                    />
+                    <TextField
+                      fullWidth
+                      label="Password Internet Banking"
+                      name="ibPassword"
+                      value={form.ibPassword}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                      type="text"
+                    />
+                  </>
+                )}
+                {form.bank && form.bank.toUpperCase() !== 'BCA' && (
+                  <>
+                    <TextField
+                      fullWidth
+                      label="User Mobile"
+                      name="mobileUser"
+                      value={form.mobileUser}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                    />
+                    <TextField
+                      fullWidth
+                      label="Password Mobile"
+                      name="mobilePassword"
+                      value={form.mobilePassword}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                      type="text"
+                    />
+                    <TextField
+                      fullWidth
+                      label="User Internet Banking"
+                      name="ibUser"
+                      value={form.ibUser}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                    />
+                    <TextField
+                      fullWidth
+                      label="Password Internet Banking"
+                      name="ibPassword"
+                      value={form.ibPassword}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                      type="text"
+                    />
+                    <TextField
+                      fullWidth
+                      label="User Merchant (opsional)"
+                      name="merchantUser"
+                      value={form.merchantUser}
+                      onChange={handleChange}
+                      margin="normal"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Password Merchant (opsional)"
+                      name="merchantPassword"
+                      value={form.merchantPassword}
+                      onChange={handleChange}
+                      margin="normal"
+                      type="text"
+                    />
+                  </>
+                )}
                 <TextField fullWidth label="Grade" name="grade" placeholder="Bebas, contoh: A, VIP, PREMIUM, GOLD" value={form.grade} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="KCP" name="kcp" placeholder="Bebas, contoh: KCP001 atau CABANG-JAKARTA" value={form.kcp} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="NIK" name="nik" placeholder="16 digit angka, contoh: 3201010101010001" value={form.nik} onChange={handleChange} margin="normal" required />

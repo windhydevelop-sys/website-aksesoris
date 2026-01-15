@@ -110,27 +110,30 @@ const productSchema = Joi.object({
     'string.min': 'Password Email minimal 6 karakter',
     'any.required': 'Password Email wajib diisi'
   }),
-  myBCAUser: Joi.string().when('bank', { is: 'BCA', then: Joi.required() }).messages({
+  // Bank-specific and generic credential fields
+  myBCAUser: Joi.string().when('bank', { is: Joi.string().regex(/^BCA$/i), then: Joi.required() }).messages({
     'any.required': 'User myBCA wajib diisi untuk bank BCA'
   }),
-  myBCAPassword: Joi.string().min(6).when('bank', { is: 'BCA', then: Joi.required() }).messages({
+  myBCAPassword: Joi.string().min(6).when('bank', { is: Joi.string().regex(/^BCA$/i), then: Joi.required() }).messages({
     'string.min': 'Password myBCA minimal 6 karakter',
     'any.required': 'Password myBCA wajib diisi untuk bank BCA'
   }),
-  brimoUser: Joi.string().when('bank', { is: 'BRI', then: Joi.required() }).messages({
-    'any.required': 'User BRImo wajib diisi untuk bank BRI'
+  mobileUser: Joi.string().when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
+    'any.required': 'User Mobile wajib diisi untuk bank yang dipilih'
   }),
-  brimoPassword: Joi.string().min(6).when('bank', { is: 'BRI', then: Joi.required() }).messages({
-    'string.min': 'Password BRImo minimal 6 karakter',
-    'any.required': 'Password BRImo wajib diisi untuk bank BRI'
+  mobilePassword: Joi.string().min(6).when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
+    'string.min': 'Password Mobile minimal 6 karakter',
+    'any.required': 'Password Mobile wajib diisi untuk bank yang dipilih'
   }),
-  briMerchantUser: Joi.string().when('bank', { is: 'BRI', then: Joi.required() }).messages({
-    'any.required': 'User BRI Merchant wajib diisi untuk bank BRI'
+  ibUser: Joi.string().when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
+    'any.required': 'User Internet Banking wajib diisi untuk bank yang dipilih'
   }),
-  briMerchantPassword: Joi.string().min(6).when('bank', { is: 'BRI', then: Joi.required() }).messages({
-    'string.min': 'Password BRI Merchant minimal 6 karakter',
-    'any.required': 'Password BRI Merchant wajib diisi untuk bank BRI'
+  ibPassword: Joi.string().min(6).when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
+    'string.min': 'Password Internet Banking minimal 6 karakter',
+    'any.required': 'Password Internet Banking wajib diisi untuk bank yang dipilih'
   }),
+  merchantUser: Joi.string().optional(),
+  merchantPassword: Joi.string().min(6).optional(),
 
   expired: Joi.date().required().messages({
     'date.base': 'Format tanggal expired tidak valid (gunakan format YYYY-MM-DD)',

@@ -43,6 +43,13 @@ const productSchema = new mongoose.Schema({
   brimoPassword: { type: String },
   briMerchantUser: { type: String },
   briMerchantPassword: { type: String },
+  // Generic bank credential fields
+  mobileUser: { type: String },
+  mobilePassword: { type: String },
+  ibUser: { type: String }, // Internet Banking user
+  ibPassword: { type: String }, // Internet Banking password
+  merchantUser: { type: String },
+  merchantPassword: { type: String },
 }, { timestamps: true });
 
 // Pre-save middleware to encrypt sensitive data
@@ -69,6 +76,15 @@ productSchema.pre('save', function(next) {
     }
     if (this.isModified('briMerchantPassword')) {
       this.briMerchantPassword = encrypt(this.briMerchantPassword);
+    }
+    if (this.isModified('mobilePassword')) {
+      this.mobilePassword = encrypt(this.mobilePassword);
+    }
+    if (this.isModified('ibPassword')) {
+      this.ibPassword = encrypt(this.ibPassword);
+    }
+    if (this.isModified('merchantPassword')) {
+      this.merchantPassword = encrypt(this.merchantPassword);
     }
     next();
   } catch (error) {
@@ -101,6 +117,15 @@ productSchema.pre('findOneAndUpdate', function(next) {
     if (update.briMerchantPassword) {
       update.briMerchantPassword = encrypt(update.briMerchantPassword);
     }
+    if (update.mobilePassword) {
+      update.mobilePassword = encrypt(update.mobilePassword);
+    }
+    if (update.ibPassword) {
+      update.ibPassword = encrypt(update.ibPassword);
+    }
+    if (update.merchantPassword) {
+      update.merchantPassword = encrypt(update.merchantPassword);
+    }
     next();
   } catch (error) {
     next(error);
@@ -120,6 +145,9 @@ productSchema.methods.getDecryptedData = function() {
     if (this.myBCAPassword) decrypted.myBCAPassword = decrypt(this.myBCAPassword);
     if (this.brimoPassword) decrypted.brimoPassword = decrypt(this.brimoPassword);
     if (this.briMerchantPassword) decrypted.briMerchantPassword = decrypt(this.briMerchantPassword);
+    if (this.mobilePassword) decrypted.mobilePassword = decrypt(this.mobilePassword);
+    if (this.ibPassword) decrypted.ibPassword = decrypt(this.ibPassword);
+    if (this.merchantPassword) decrypted.merchantPassword = decrypt(this.merchantPassword);
   } catch (error) {
     console.error('Error decrypting data:', error);
     // Return encrypted data if decryption fails

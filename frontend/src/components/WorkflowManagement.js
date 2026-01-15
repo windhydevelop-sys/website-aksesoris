@@ -133,7 +133,13 @@ const WorkflowManagement = () => {
     passEmail: '',
     expired: '',
     uploadFotoId: null,
-    uploadFotoSelfie: null
+    uploadFotoSelfie: null,
+    myBCAUser: '',
+    myBCAPassword: '',
+    brimoUser: '',
+    brimoPassword: '',
+    briMerchantUser: '',
+    briMerchantPassword: ''
   });
 
   const handleLogout = () => {
@@ -1151,6 +1157,150 @@ const WorkflowManagement = () => {
                     required
                   />
                 </Grid>
+                {productForm.bank && productForm.bank.toUpperCase() === 'BCA' && (
+                  <>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="User myBCA"
+                        name="myBCAUser"
+                        value={productForm.myBCAUser}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, myBCAUser: e.target.value }))}
+                        margin="normal"
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Password myBCA"
+                        name="myBCAPassword"
+                        value={productForm.myBCAPassword}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, myBCAPassword: e.target.value }))}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="User BCA Mobile"
+                        name="mobileUser"
+                        value={productForm.mobileUser}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, mobileUser: e.target.value }))}
+                        margin="normal"
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Password BCA Mobile"
+                        name="mobilePassword"
+                        value={productForm.mobilePassword}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, mobilePassword: e.target.value }))}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="User Internet Banking"
+                        name="ibUser"
+                        value={productForm.ibUser}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
+                        margin="normal"
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Password Internet Banking"
+                        name="ibPassword"
+                        value={productForm.ibPassword}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    </Grid>
+                  </>
+                )}
+                {productForm.bank && productForm.bank.toUpperCase() !== 'BCA' && (
+                  <>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="User Mobile"
+                        name="mobileUser"
+                        value={productForm.mobileUser}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, mobileUser: e.target.value }))}
+                        margin="normal"
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Password Mobile"
+                        name="mobilePassword"
+                        value={productForm.mobilePassword}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, mobilePassword: e.target.value }))}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="User Internet Banking"
+                        name="ibUser"
+                        value={productForm.ibUser}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
+                        margin="normal"
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Password Internet Banking"
+                        name="ibPassword"
+                        value={productForm.ibPassword}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
+                        margin="normal"
+                        type="text"
+                        required
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="User Merchant (opsional)"
+                        name="merchantUser"
+                        value={productForm.merchantUser}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, merchantUser: e.target.value }))}
+                        margin="normal"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Password Merchant (opsional)"
+                        name="merchantPassword"
+                        value={productForm.merchantPassword}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, merchantPassword: e.target.value }))}
+                        margin="normal"
+                        type="text"
+                      />
+                    </Grid>
+                  </>
+                )}
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
