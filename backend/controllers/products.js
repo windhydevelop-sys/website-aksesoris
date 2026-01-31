@@ -115,65 +115,78 @@ const createProduct = async (req, res) => {
     data.createdBy = req.userId;
     data.lastModifiedBy = req.userId;
 
-    // Assign phone (auto or manual)
-    console.log('DEBUG: Starting phone assignment logic');
+    // Assign phone (auto or manual) - OPTIONAL
+    console.log('DEBUG: Starting phone assignment logic (optional)');
     console.log('DEBUG: data.handphoneId:', data.handphoneId);
 
-    let phone;
-    if (data.handphoneId) {
-      console.log('DEBUG: Manual phone assignment - looking up phone');
-      phone = await Handphone.findById(data.handphoneId);
-      console.log('DEBUG: Phone found:', phone ? 'YES' : 'NO');
-      if (!phone) {
-        console.log('DEBUG: Phone not found, returning error');
-        return res.status(404).json({ success: false, error: 'Phone not found' });
+    let phone = null;
+    try {
+      if (data.handphoneId) {
+        console.log('DEBUG: Manual phone assignment - looking up phone');
+        phone = await Handphone.findById(data.handphoneId);
+        console.log('DEBUG: Phone found:', phone ? 'YES' : 'NO');
+        if (!phone) {
+          console.log('DEBUG: Phone not found, skipping assignment');
+        } else {
+          // Persist correct field name in product document
+          data.handphoneId = phone._id;
+        }
+      } else if (data.codeAgen) {
+        console.log('DEBUG: Auto phone assignment attempt');
+        // Attempt auto assignment; if none available, continue without assignment
+        const assigned = await autoAssignHandphone(data.codeAgen);
+        if (assigned && assigned._id) {
+          phone = assigned;
+          data.handphoneId = assigned._id;
+        } else {
+          console.log('DEBUG: No phone assigned automatically, proceeding without handphone');
+        }
+      } else {
+        console.log('DEBUG: No codeAgen provided, skipping auto assignment');
       }
-      data.phoneId = data.handphoneId; // Map to the correct field name for the model
-    } else {
-      console.log('DEBUG: Auto phone assignment');
-      phone = await autoAssignHandphone(data.codeAgen);
-      if (!phone) {
-        return res.status(404).json({ success: false, error: 'No available phone for assignment' });
-      }
-      data.phoneId = phone._id;
+    } catch (assignErr) {
+      console.log('DEBUG: Phone assignment error, proceeding without handphone:', assignErr.message);
     }
-    console.log('DEBUG: Phone assignment completed, phoneId:', phone._id);
+    console.log('DEBUG: Phone assignment completed, handphoneId:', data.handphoneId || 'NONE');
 
     // Create product document
     const product = new Product(data);
     await product.save();
     console.error('After Product save - stored customer data:', product.customer); // Log to verify customer storage
 
-    // Update phone's currentProduct and assignedProducts
-    console.log('DEBUG: Before phone update:', {
-      phoneId: phone._id,
-      currentProduct: phone.currentProduct,
-      assignedProducts: phone.assignedProducts,
-      status: phone.status
-    });
+    // Update phone data only if a phone was assigned
+    if (phone) {
+      console.log('DEBUG: Before phone update:', {
+        phoneId: phone._id,
+        currentProduct: phone.currentProduct,
+        assignedProducts: phone.assignedProducts,
+        status: phone.status
+      });
 
-    phone.currentProduct = product._id;
-    phone.status = 'in_use';
-    if (!phone.assignedProducts.includes(product._id)) {
-      phone.assignedProducts.push(product._id);
+      phone.currentProduct = product._id;
+      phone.status = 'in_use';
+      if (!phone.assignedProducts.includes(product._id)) {
+        phone.assignedProducts.push(product._id);
+      }
+
+      console.log('DEBUG: After phone update:', {
+        phoneId: phone._id,
+        currentProduct: phone.currentProduct,
+        assignedProducts: phone.assignedProducts,
+        status: phone.status
+      });
+
+      await phone.save();
+      console.log('DEBUG: Phone saved successfully');
+    } else {
+      console.log('DEBUG: No phone assigned, skipping phone update');
     }
-
-    console.log('DEBUG: After phone update:', {
-      phoneId: phone._id,
-      currentProduct: phone.currentProduct,
-      assignedProducts: phone.assignedProducts,
-      status: phone.status
-    });
-
-    await phone.save();
-
-    console.log('DEBUG: Phone saved successfully');
 
     // Audit log
     auditLog('CREATE', req.userId, 'Product', product._id, {
       noOrder: product.noOrder,
       nama: product.nama,
-      phoneId: product.phoneId
+      handphoneId: product.handphoneId
     }, req);
 
     // Return decrypted product with populated phone
