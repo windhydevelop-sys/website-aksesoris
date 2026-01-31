@@ -758,6 +758,10 @@ const Dashboard = ({ setToken }) => {
           if (editing && backendKey === 'handphoneId') {
             // Skip handphoneId on edit to prevent reassignment
           } else {
+            // Skip empty strings to satisfy Joi optional fields
+            if (typeof value === 'string' && value.trim() === '') {
+              continue;
+            }
             if (backendKey === 'codeAgen' && typeof value === 'string') {
               const match = value.match(/^([^-]+)/);
               const codeOnly = match ? match[1].trim() : value;
