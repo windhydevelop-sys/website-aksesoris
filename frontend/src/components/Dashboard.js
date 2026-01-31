@@ -1383,7 +1383,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibUser}
                       onChange={handleChange}
                       margin="normal"
-                      required
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI'}
                     />
                     <TextField
                       fullWidth
@@ -1392,7 +1392,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibPassword}
                       onChange={handleChange}
                       margin="normal"
-                      required
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI'}
                       type="text"
                     />
                   </>
@@ -1451,7 +1451,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibUser}
                       onChange={handleChange}
                       margin="normal"
-                      required
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI'}
                     />
                     <TextField
                       fullWidth
@@ -1460,7 +1460,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibPassword}
                       onChange={handleChange}
                       margin="normal"
-                      required
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI'}
                       type="text"
                     />
                     {form.bank && form.bank.toUpperCase() === 'OCBC NISP' && (

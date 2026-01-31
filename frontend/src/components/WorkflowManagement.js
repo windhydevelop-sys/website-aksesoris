@@ -1246,7 +1246,7 @@ const WorkflowManagement = () => {
                         value={productForm.ibUser}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
                         margin="normal"
-                        required
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1257,7 +1257,7 @@ const WorkflowManagement = () => {
                         value={productForm.ibPassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
                         margin="normal"
-                        required
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI'}
                         type="text"
                       />
                     </Grid>
@@ -1339,7 +1339,7 @@ const WorkflowManagement = () => {
                         value={productForm.ibUser}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
                         margin="normal"
-                        required
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1351,7 +1351,7 @@ const WorkflowManagement = () => {
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
                         margin="normal"
                         type="text"
-                        required
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>

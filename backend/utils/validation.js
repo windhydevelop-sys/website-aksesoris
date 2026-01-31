@@ -135,10 +135,22 @@ const productSchema = Joi.object({
   mobilePin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
     'string.pattern.base': 'Pin Mobile harus 4-6 digit angka'
   }),
-  ibUser: Joi.string().when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
+  ibUser: Joi.string().when('bank', {
+    switch: [
+      { is: Joi.string().regex(/^MANDIRI$/i), then: Joi.optional() },
+      { is: Joi.string().regex(/^(BCA|BRI|BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
+    ],
+    otherwise: Joi.optional()
+  }).messages({
     'any.required': 'User Internet Banking wajib diisi untuk bank yang dipilih'
   }),
-  ibPassword: Joi.string().min(6).when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
+  ibPassword: Joi.string().min(6).when('bank', {
+    switch: [
+      { is: Joi.string().regex(/^MANDIRI$/i), then: Joi.optional() },
+      { is: Joi.string().regex(/^(BCA|BRI|BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
+    ],
+    otherwise: Joi.optional()
+  }).messages({
     'string.min': 'Password Internet Banking minimal 6 karakter',
     'any.required': 'Password Internet Banking wajib diisi untuk bank yang dipilih'
   }),
