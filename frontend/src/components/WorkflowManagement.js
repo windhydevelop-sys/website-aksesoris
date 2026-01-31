@@ -1303,6 +1303,20 @@ const WorkflowManagement = () => {
                         type="text"
                       />
                     </Grid>
+                    {productForm.bank && productForm.bank.toUpperCase() === 'MANDIRI' && (
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Pin Livin"
+                          name="mobilePin"
+                          value={productForm.mobilePin}
+                          onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
+                          margin="normal"
+                          required
+                          type="text"
+                        />
+                      </Grid>
+                    )}
                     {productForm.bank && productForm.bank.toUpperCase() === 'OCBC NISP' && (
                       <Grid item xs={12} sm={6}>
                         <TextField
