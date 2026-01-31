@@ -396,12 +396,15 @@ const initialFormState = {
   bank: '',
   myBCAUser: '',
   myBCAPassword: '',
+  myBCAPin: '',
   mobileUser: '',
   mobilePassword: '',
+  mobilePin: '',
   ibUser: '',
   ibPassword: '',
   merchantUser: '',
   merchantPassword: '',
+  ocbcNyalaUser: '',
   grade: '',
   kcp: '',
   expired: '',
@@ -422,8 +425,6 @@ const initialFormState = {
   validThru: '',
   noHp: '',
   pinAtm: '',
-  pinWondr: '',
-  passWondr: '',
   email: '',
   passEmail: '',
 };
@@ -740,8 +741,6 @@ const Dashboard = ({ setToken }) => {
         validThru: product.validThru || '',
         noHp: product.noHp || '',
         pinAtm: product.pinAtm || '',
-        pinWondr: product.pinWondr || '',
-        passWondr: product.passWondr || '',
         email: product.email || '',
         passEmail: product.passEmail || '',
       });
@@ -812,7 +811,13 @@ const Dashboard = ({ setToken }) => {
           if (editing && backendKey === 'handphoneId') {
             // Skip handphoneId on edit to prevent reassignment
           } else {
-            formData.append(backendKey, value);
+            if (backendKey === 'codeAgen' && typeof value === 'string') {
+              const match = value.match(/^([^-]+)/);
+              const codeOnly = match ? match[1].trim() : value;
+              formData.append(backendKey, codeOnly);
+            } else {
+              formData.append(backendKey, value);
+            }
           }
         }
       }
@@ -1358,89 +1363,7 @@ const Dashboard = ({ setToken }) => {
                   }}
                   renderInput={(params) => <TextField {...params} label="Orang Lapangan" name="fieldStaff" placeholder="Pilih orang lapangan dari daftar atau ketik baru" margin="normal" />}
                 />
-                {/* Manual handphone selection */}
-                {!editing && (
-                <Autocomplete
-                  key={phoneAutocompleteKey}
-                  fullWidth
-                  value={(() => {
-                    const currentOptions = filteredPhones.length > 0 ? filteredPhones : availableHandphones;
-                    const selectedPhone = currentOptions.find(h => h._id === form.handphoneId);
-                    console.log('Phone Autocomplete - Current value:', {
-                      phoneId: form.handphoneId,
-                      filteredPhonesLength: filteredPhones.length,
-                      availableHandphonesLength: availableHandphones.length,
-                      selectedPhone: selectedPhone ? `${selectedPhone.merek} ${selectedPhone.tipe}` : 'none'
-                    });
-                    return selectedPhone || null;
-                  })()}
-                  options={filteredPhones.length > 0 ? filteredPhones : availableHandphones}
-                  getOptionLabel={(option) => option ? `${option.merek} ${option.tipe}${option.imei ? ` - IMEI: ${option.imei}` : ''}` : ''}
-                  onChange={(event, newValue) => {
-                    setForm({
-                      ...form,
-                      handphoneId: newValue ? newValue._id : '',
-                      handphone: newValue ? newValue.merek : ''
-                    });
-                  }}
-                  loading={isPhoneLoading}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={`Pilih Handphone ${filteredPhones.length > 0 ? `(Filtered by Field Staff: ${filteredPhones.length} phones)` : '(All Available)'}`}
-                      name="handphoneId"
-                      placeholder="Pilih handphone yang tersedia untuk di-assign ke produk ini"
-                      margin="normal"
-                      required
-                      helperText={(() => {
-                        if (filteredPhones.length > 0) {
-                          return `Showing ${filteredPhones.length} phones assigned to ${form.fieldStaff}`;
-                        }
-                        return `Available phones: ${availableHandphones.length}. Select a field staff to filter phones.`;
-                      })()}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          backgroundColor: 'white',
-                          '& fieldset': {
-                            borderColor: 'rgba(0, 0, 0, 0.23)',
-                          },
-                          '&:hover fieldset': {
-                            borderColor: 'rgba(0, 0, 0, 0.87)',
-                          },
-                          '&.Mui-focused fieldset': {
-                            borderColor: isLightMono ? '#111111' : '#1976d2',
-                          },
-                        },
-                        '& .MuiInputLabel-root': {
-                          color: 'rgba(0, 0, 0, 0.6)',
-                          '&.Mui-focused': {
-                            color: isLightMono ? '#111111' : '#1976d2',
-                          },
-                        },
-                        '& .MuiInputBase-input': {
-                          color: 'rgba(0, 0, 0, 0.87)',
-                        },
-                      }}
-                    />
-                  )}
-                  sx={{
-                    mt: 2,
-                    mb: 1,
-                    '& .MuiAutocomplete-popupIndicator': {
-                      color: 'rgba(0, 0, 0, 0.54)',
-                    },
-                    '& .MuiAutocomplete-clearIndicator': {
-                      color: 'rgba(0, 0, 0, 0.54)',
-                    },
-                  }}
-                />
-                )}
-                {availableHandphones.length === 0 && (
-                  <Alert severity="warning" sx={{ mt: 1, mb: 1 }}>
-                    <strong>Tidak ada handphone tersedia!</strong> Silakan tambahkan handphone baru di menu "Detail Handphone" terlebih dahulu.
-                  </Alert>
-                )}
+                
                 <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" required />
                 {form.bank && form.bank.toUpperCase() === 'BCA' && (
                   <>
@@ -1465,6 +1388,16 @@ const Dashboard = ({ setToken }) => {
                     />
                     <TextField
                       fullWidth
+                      label="Pin MyBCA"
+                      name="myBCAPin"
+                      value={form.myBCAPin}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                      type="text"
+                    />
+                    <TextField
+                      fullWidth
                       label="User BCA Mobile"
                       name="mobileUser"
                       value={form.mobileUser}
@@ -1474,9 +1407,19 @@ const Dashboard = ({ setToken }) => {
                     />
                     <TextField
                       fullWidth
-                      label="Password BCA Mobile"
+                      label="Kode Akses"
                       name="mobilePassword"
                       value={form.mobilePassword}
+                      onChange={handleChange}
+                      margin="normal"
+                      required
+                      type="text"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Pin Mobile BCA"
+                      name="mobilePin"
+                      value={form.mobilePin}
                       onChange={handleChange}
                       margin="normal"
                       required
@@ -1524,6 +1467,18 @@ const Dashboard = ({ setToken }) => {
                       required
                       type="text"
                     />
+                    {form.bank && form.bank.toUpperCase() === 'OCBC NISP' && (
+                      <TextField
+                        fullWidth
+                        label="Pin"
+                        name="mobilePin"
+                        value={form.mobilePin}
+                        onChange={handleChange}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    )}
                     <TextField
                       fullWidth
                       label="User Internet Banking"
@@ -1543,6 +1498,17 @@ const Dashboard = ({ setToken }) => {
                       required
                       type="text"
                     />
+                    {form.bank && form.bank.toUpperCase() === 'OCBC NISP' && (
+                      <TextField
+                        fullWidth
+                        label="User Nyala"
+                        name="ocbcNyalaUser"
+                        value={form.ocbcNyalaUser}
+                        onChange={handleChange}
+                        margin="normal"
+                        required
+                      />
+                    )}
                     <TextField
                       fullWidth
                       label="User Merchant (opsional)"
@@ -1574,8 +1540,7 @@ const Dashboard = ({ setToken }) => {
                 <TextField fullWidth label="Valid Thru" name="validThru" placeholder="Bebas, contoh: 12/25 atau Dec 2025" value={form.validThru} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="No. HP" name="noHp" placeholder="Format Indonesia, contoh: 081234567890" value={form.noHp} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="PIN ATM" name="pinAtm" placeholder="4-6 digit angka, contoh: 1234" value={form.pinAtm} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="PIN Mbanking" name="pinWondr" placeholder="4-6 digit angka, contoh: 5678" value={form.pinWondr} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Password Mbanking" name="passWondr" placeholder="Minimal 6 karakter, contoh: wondrpass123" value={form.passWondr} onChange={handleChange} margin="normal" required />
+                
                 <TextField fullWidth label="Email" name="email" placeholder="Format email valid, contoh: user@example.com" value={form.email} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Password Email" name="passEmail" placeholder="Minimal 6 karakter, contoh: emailpass123" value={form.passEmail} onChange={handleChange} margin="normal" required />
 

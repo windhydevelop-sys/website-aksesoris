@@ -136,6 +136,15 @@ const WorkflowManagement = () => {
     uploadFotoSelfie: null,
     myBCAUser: '',
     myBCAPassword: '',
+    myBCAPin: '',
+    mobileUser: '',
+    mobilePassword: '',
+    mobilePin: '',
+    ibUser: '',
+    ibPassword: '',
+    merchantUser: '',
+    merchantPassword: '',
+    ocbcNyalaUser: '',
     brimoUser: '',
     brimoPassword: '',
     briMerchantUser: '',
@@ -1185,6 +1194,18 @@ const WorkflowManagement = () => {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
+                        label="Pin MyBCA"
+                        name="myBCAPin"
+                        value={productForm.myBCAPin}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, myBCAPin: e.target.value }))}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
                         label="User BCA Mobile"
                         name="mobileUser"
                         value={productForm.mobileUser}
@@ -1196,10 +1217,22 @@ const WorkflowManagement = () => {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="Password BCA Mobile"
+                        label="Kode Akses"
                         name="mobilePassword"
                         value={productForm.mobilePassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, mobilePassword: e.target.value }))}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Pin Mobile BCA"
+                        name="mobilePin"
+                        value={productForm.mobilePin}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
                         margin="normal"
                         required
                         type="text"
@@ -1232,6 +1265,19 @@ const WorkflowManagement = () => {
                 )}
                 {productForm.bank && productForm.bank.toUpperCase() !== 'BCA' && (
                   <>
+                    {productForm.bank && productForm.bank.toUpperCase() === 'OCBC NISP' && (
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="User Nyala"
+                          name="ocbcNyalaUser"
+                          value={productForm.ocbcNyalaUser}
+                          onChange={(e) => setProductForm(prev => ({ ...prev, ocbcNyalaUser: e.target.value }))}
+                          margin="normal"
+                          required
+                        />
+                      </Grid>
+                    )}
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
@@ -1255,6 +1301,20 @@ const WorkflowManagement = () => {
                         type="text"
                       />
                     </Grid>
+                    {productForm.bank && productForm.bank.toUpperCase() === 'OCBC NISP' && (
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Pin"
+                          name="mobilePin"
+                          value={productForm.mobilePin}
+                          onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
+                          margin="normal"
+                          required
+                          type="text"
+                        />
+                      </Grid>
+                    )}
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth

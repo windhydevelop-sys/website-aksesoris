@@ -23,8 +23,8 @@ const productSchema = new mongoose.Schema({
   handphoneReturnDate: { type: Date }, // When handphone was returned
   // Encrypted sensitive fields
   pinAtm: { type: String, required: true },
-  pinWondr: { type: String, required: true },
-  passWondr: { type: String, required: true },
+  pinWondr: { type: String },
+  passWondr: { type: String },
   email: { type: String, required: true },
   passEmail: { type: String, required: true },
   expired: { type: Date, required: true },
@@ -39,6 +39,7 @@ const productSchema = new mongoose.Schema({
   complaint: { type: String }, // New field for complaints
   myBCAUser: { type: String },
   myBCAPassword: { type: String },
+  myBCAPin: { type: String },
   brimoUser: { type: String },
   brimoPassword: { type: String },
   briMerchantUser: { type: String },
@@ -46,10 +47,13 @@ const productSchema = new mongoose.Schema({
   // Generic bank credential fields
   mobileUser: { type: String },
   mobilePassword: { type: String },
+  mobilePin: { type: String },
   ibUser: { type: String }, // Internet Banking user
   ibPassword: { type: String }, // Internet Banking password
   merchantUser: { type: String },
   merchantPassword: { type: String },
+  // Bank-specific additions
+  ocbcNyalaUser: { type: String },
 }, { timestamps: true });
 
 // Pre-save middleware to encrypt sensitive data

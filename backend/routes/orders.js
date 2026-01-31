@@ -61,7 +61,7 @@ router.get('/:id', auth, async (req, res) => {
 // Create new order
 router.post('/', auth, async (req, res) => {
   try {
-    const { customer, fieldStaff, status, notes, harga } = req.body;
+    const { noOrder, customer, fieldStaff, status, notes, harga } = req.body;
 
     // Validate required fields
     if (!customer || !fieldStaff) {
@@ -71,18 +71,22 @@ router.post('/', auth, async (req, res) => {
       });
     }
 
-    const latestNumeric = await Order.aggregate([
-      { $match: { noOrder: { $regex: '^[0-9]+$' } } },
-      { $addFields: { noOrderInt: { $toInt: '$noOrder' } } },
-      { $sort: { noOrderInt: -1 } },
-      { $limit: 1 }
-    ]);
-    const lastInt = latestNumeric.length > 0 ? latestNumeric[0].noOrderInt : 0;
-    const nextInt = lastInt + 1;
-    const generatedNoOrder = String(nextInt).padStart(3, '0');
+    // Determine noOrder: use provided if present, else auto-generate 3-digit sequence
+    let assignedNoOrder = (noOrder || '').trim();
+    if (!assignedNoOrder) {
+      const latestNumeric = await Order.aggregate([
+        { $match: { noOrder: { $regex: '^[0-9]+$' } } },
+        { $addFields: { noOrderInt: { $toInt: '$noOrder' } } },
+        { $sort: { noOrderInt: -1 } },
+        { $limit: 1 }
+      ]);
+      const lastInt = latestNumeric.length > 0 ? latestNumeric[0].noOrderInt : 0;
+      const nextInt = lastInt + 1;
+      assignedNoOrder = String(nextInt).padStart(3, '0');
+    }
 
     const newOrder = new Order({
-      noOrder: generatedNoOrder,
+      noOrder: assignedNoOrder,
       customer: String(customer).trim(),
       fieldStaff: String(fieldStaff).trim(),
       status: (status || 'pending').toLowerCase(),
@@ -99,7 +103,7 @@ router.post('/', auth, async (req, res) => {
       req.user.id,
       'order',
       savedOrder._id,
-      { noOrder: generatedNoOrder },
+      { noOrder: assignedNoOrder },
       req
     );
 
@@ -303,11 +307,25 @@ router.get('/:id/invoice', auth, async (req, res) => {
                .replace(/{{currentDate}}/g, formatDate(new Date()));
 
     // Handle products loop with JavaScript insertion
+    const getViaBank = (product) => {
+      const bankName = (product.bank || '').toUpperCase();
+      if (bankName === 'BCA') {
+        return 'myBCA, BCA Mobile, Internet Banking';
+      }
+      const vias = [];
+      if (product.mobileUser || product.mobilePassword) vias.push('Mobile');
+      if (product.ibUser || product.ibPassword) vias.push('Internet Banking');
+      if (
+        product.merchantUser || product.merchantPassword ||
+        product.briMerchantUser || product.briMerchantPassword
+      ) vias.push('Merchant (opsional)');
+      return vias.length ? vias.join(', ') : '-';
+    };
     let productsHtml = '';
     if (products.length === 0) {
       productsHtml = `
         <tr>
-          <td colspan="6" style="text-align: center; color: #999;">Tidak ada produk terkait</td>
+          <td colspan="7" style="text-align: center; color: #999;">Tidak ada produk terkait</td>
         </tr>
       `;
     } else {
@@ -318,6 +336,7 @@ router.get('/:id/invoice', auth, async (req, res) => {
             <td>${product.nik || '-'}</td>
             <td>${product.nama || '-'}</td>
             <td>${product.bank || '-'}</td>
+            <td>${getViaBank(product)}</td>
             <td>${product.noRek || '-'}</td>
             <td>Rp ${formatNumber(order.harga)}</td>
           </tr>
@@ -411,11 +430,25 @@ router.get('/by-noorder/:noOrder/invoice', auth, async (req, res) => {
                .replace(/{{currentDate}}/g, formatDate(new Date()));
 
     // Handle products loop with JavaScript insertion
+    const getViaBank2 = (product) => {
+      const bankName = (product.bank || '').toUpperCase();
+      if (bankName === 'BCA') {
+        return 'myBCA, BCA Mobile, Internet Banking';
+      }
+      const vias = [];
+      if (product.mobileUser || product.mobilePassword) vias.push('Mobile');
+      if (product.ibUser || product.ibPassword) vias.push('Internet Banking');
+      if (
+        product.merchantUser || product.merchantPassword ||
+        product.briMerchantUser || product.briMerchantPassword
+      ) vias.push('Merchant (opsional)');
+      return vias.length ? vias.join(', ') : '-';
+    };
     let productsHtml = '';
     if (products.length === 0) {
       productsHtml = `
         <tr>
-          <td colspan="6" style="text-align: center; color: #999;">Tidak ada produk terkait</td>
+          <td colspan="7" style="text-align: center; color: #999;">Tidak ada produk terkait</td>
         </tr>
       `;
     } else {
@@ -426,6 +459,7 @@ router.get('/by-noorder/:noOrder/invoice', auth, async (req, res) => {
             <td>${product.nik || '-'}</td>
             <td>${product.nama || '-'}</td>
             <td>${product.bank || '-'}</td>
+            <td>${getViaBank2(product)}</td>
             <td>${product.noRek || '-'}</td>
             <td>Rp ${formatNumber(order.harga)}</td>
           </tr>

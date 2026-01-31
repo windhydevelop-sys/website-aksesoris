@@ -91,14 +91,12 @@ const productSchema = Joi.object({
     'any.required': 'PIN ATM wajib diisi'
   }),
 
-  pinWondr: Joi.string().pattern(/^\d{4,6}$/).required().messages({
-    'string.pattern.base': 'PIN Wondr harus 4-6 digit angka',
-    'any.required': 'PIN Wondr wajib diisi'
+  pinWondr: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+    'string.pattern.base': 'PIN Wondr harus 4-6 digit angka'
   }),
 
-  passWondr: Joi.string().min(6).required().messages({
-    'string.min': 'Password Wondr minimal 6 karakter',
-    'any.required': 'Password Wondr wajib diisi'
+  passWondr: Joi.string().min(6).optional().messages({
+    'string.min': 'Password Wondr minimal 6 karakter'
   }),
 
   email: Joi.string().email().required().messages({
@@ -118,12 +116,18 @@ const productSchema = Joi.object({
     'string.min': 'Password myBCA minimal 6 karakter',
     'any.required': 'Password myBCA wajib diisi untuk bank BCA'
   }),
+  myBCAPin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+    'string.pattern.base': 'Pin MyBCA harus 4-6 digit angka'
+  }),
   mobileUser: Joi.string().when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
     'any.required': 'User Mobile wajib diisi untuk bank yang dipilih'
   }),
   mobilePassword: Joi.string().min(6).when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
     'string.min': 'Password Mobile minimal 6 karakter',
     'any.required': 'Password Mobile wajib diisi untuk bank yang dipilih'
+  }),
+  mobilePin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+    'string.pattern.base': 'Pin Mobile harus 4-6 digit angka'
   }),
   ibUser: Joi.string().when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
     'any.required': 'User Internet Banking wajib diisi untuk bank yang dipilih'
@@ -132,6 +136,7 @@ const productSchema = Joi.object({
     'string.min': 'Password Internet Banking minimal 6 karakter',
     'any.required': 'Password Internet Banking wajib diisi untuk bank yang dipilih'
   }),
+  ocbcNyalaUser: Joi.string().optional(),
   merchantUser: Joi.string().optional(),
   merchantPassword: Joi.string().min(6).optional(),
 
@@ -252,10 +257,21 @@ const productUpdateSchema = Joi.object({
   }),
   myBCAUser: Joi.string().optional(),
   myBCAPassword: Joi.string().min(6).optional(),
+  myBCAPin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+    'string.pattern.base': 'Pin MyBCA harus 4-6 digit angka'
+  }),
   brimoUser: Joi.string().optional(),
   brimoPassword: Joi.string().min(6).optional(),
   briMerchantUser: Joi.string().optional(),
   briMerchantPassword: Joi.string().min(6).optional(),
+  mobileUser: Joi.string().optional(),
+  mobilePassword: Joi.string().min(6).optional(),
+  mobilePin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+    'string.pattern.base': 'Pin Mobile harus 4-6 digit angka'
+  }),
+  ibUser: Joi.string().optional(),
+  ibPassword: Joi.string().min(6).optional(),
+  ocbcNyalaUser: Joi.string().optional(),
 
   expired: Joi.date().optional().messages({
     'date.base': 'Format tanggal expired tidak valid (gunakan format YYYY-MM-DD)'
