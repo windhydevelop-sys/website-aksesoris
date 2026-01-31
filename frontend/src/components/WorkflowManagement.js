@@ -1278,21 +1278,23 @@ const WorkflowManagement = () => {
                         />
                       </Grid>
                     )}
+                    {productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && (
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="User Mobile"
+                          name="mobileUser"
+                          value={productForm.mobileUser}
+                          onChange={(e) => setProductForm(prev => ({ ...prev, mobileUser: e.target.value }))}
+                          margin="normal"
+                          required
+                        />
+                      </Grid>
+                    )}
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="User Mobile"
-                        name="mobileUser"
-                        value={productForm.mobileUser}
-                        onChange={(e) => setProductForm(prev => ({ ...prev, mobileUser: e.target.value }))}
-                        margin="normal"
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
-                        label="Password Mobile"
+                        label={productForm.bank && productForm.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' : 'Password Mobile'}
                         name="mobilePassword"
                         value={productForm.mobilePassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, mobilePassword: e.target.value }))}

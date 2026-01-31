@@ -119,7 +119,13 @@ const productSchema = Joi.object({
   myBCAPin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
     'string.pattern.base': 'Pin MyBCA harus 4-6 digit angka'
   }),
-  mobileUser: Joi.string().when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
+  mobileUser: Joi.string().when('bank', {
+    switch: [
+      { is: Joi.string().regex(/^MANDIRI$/i), then: Joi.optional() },
+      { is: Joi.string().regex(/^(BCA|BRI|BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
+    ],
+    otherwise: Joi.optional()
+  }).messages({
     'any.required': 'User Mobile wajib diisi untuk bank yang dipilih'
   }),
   mobilePassword: Joi.string().min(6).when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({

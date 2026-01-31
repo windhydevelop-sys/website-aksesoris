@@ -1399,18 +1399,20 @@ const Dashboard = ({ setToken }) => {
                 )}
                 {form.bank && form.bank.toUpperCase() !== 'BCA' && (
                   <>
+                    {form.bank && form.bank.toUpperCase() !== 'MANDIRI' && (
+                      <TextField
+                        fullWidth
+                        label="User Mobile"
+                        name="mobileUser"
+                        value={form.mobileUser}
+                        onChange={handleChange}
+                        margin="normal"
+                        required
+                      />
+                    )}
                     <TextField
                       fullWidth
-                      label="User Mobile"
-                      name="mobileUser"
-                      value={form.mobileUser}
-                      onChange={handleChange}
-                      margin="normal"
-                      required
-                    />
-                    <TextField
-                      fullWidth
-                      label="Password Mobile"
+                      label={form.bank && form.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' : 'Password Mobile'}
                       name="mobilePassword"
                       value={form.mobilePassword}
                       onChange={handleChange}
