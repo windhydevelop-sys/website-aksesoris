@@ -446,12 +446,9 @@ const Dashboard = ({ setToken }) => {
   const [customers, setCustomers] = useState([]);
   const [fieldStaff, setFieldStaff] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [availableHandphones, setAvailableHandphones] = useState([]);
   const [totalHandphones, setTotalHandphones] = useState(0);
   
-  // Filtered phones based on field staff
-  const [filteredPhones, setFilteredPhones] = useState([]);
-  const [isPhoneLoading, setIsPhoneLoading] = useState(false);
+  
   
   // Drawer states for product detail
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -485,13 +482,7 @@ const Dashboard = ({ setToken }) => {
       setImeiError(error);
     }
 
-    // Special handling for fieldStaff changes to filter phones
-    if (name === 'fieldStaff') {
-      // Extract code from fieldStaff (format: "CODE - NAME")
-      const codeMatch = formattedValue.match(/^([^-]+)/);
-      const codeAgen = codeMatch ? codeMatch[1].trim() : formattedValue;
-      fetchPhonesByFieldStaff(codeAgen);
-    }
+    
   };
 
 
@@ -541,48 +532,14 @@ const Dashboard = ({ setToken }) => {
     try {
       const res = await axios.get('/api/handphones');
       const allHandphones = res.data.data || [];
-      // Allow handphones that are available or already assigned (for multiple product assignment)
-      const available = allHandphones.filter(h => h.status === 'available' || h.status === 'assigned');
-      setAvailableHandphones(available);
       setTotalHandphones(allHandphones.length);
     } catch (error) {
       console.error('Error fetching available handphones:', error);
-      setAvailableHandphones([]);
       setTotalHandphones(0);
     }
   }, []);
 
-  const fetchPhonesByFieldStaff = async (codeAgen) => {
-    if (!codeAgen) {
-      console.log('No codeAgen provided, clearing filtered phones');
-      setFilteredPhones([]);
-      return;
-    }
-
-    console.log('Starting to fetch phones for field staff:', codeAgen);
-    setIsPhoneLoading(true);
-    try {
-      const response = await axios.get(`/api/handphones/by-fieldstaff/${encodeURIComponent(codeAgen)}`);
-      const phones = response.data.data || [];
-      console.log('API Response for field staff', codeAgen, ':', phones.length, 'phones');
-      console.log('Phones data:', phones);
-      
-      // Force state update with explicit logging
-      setFilteredPhones(phones);
-      console.log('Set filteredPhones state with', phones.length, 'phones');
-      
-      // Debug: Check if state is immediately updated
-      setTimeout(() => {
-        console.log('Debug: filteredPhones length after update:', phones.length);
-      }, 100);
-      
-    } catch (error) {
-      console.error('Error fetching phones by field staff:', error);
-      setFilteredPhones([]);
-    } finally {
-      setIsPhoneLoading(false);
-    }
-  };
+  
 
 
   useEffect(() => {
@@ -593,19 +550,9 @@ const Dashboard = ({ setToken }) => {
     fetchAvailableHandphones();
   }, [fetchProducts, fetchCustomers, fetchFieldStaff, fetchOrders, fetchAvailableHandphones]);
 
-  // Clear filtered phones when field staff is reset
-  useEffect(() => {
-    if (!form.fieldStaff) {
-      setFilteredPhones([]);
-    }
-  }, [form.fieldStaff]);
+  
 
-  // Force re-render of phone autocomplete when filtered phones change
-  const [phoneAutocompleteKey, setPhoneAutocompleteKey] = useState(0);
-  useEffect(() => {
-    setPhoneAutocompleteKey(prev => prev + 1);
-    console.log('Phone autocomplete key updated due to filtered phones change:', filteredPhones.length);
-  }, [filteredPhones.length]);
+  
 
 
 
