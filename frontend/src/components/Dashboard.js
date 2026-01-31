@@ -738,8 +738,8 @@ const Dashboard = ({ setToken }) => {
           value = value.length > 0 ? value[0] : '';
         }
 
-        // Clean formatted card numbers for backend
-        if ((key === 'nik' || key === 'noAtm') && typeof value === 'string') {
+        // Clean formatted card/number inputs for backend
+        if ((key === 'nik' || key === 'noAtm' || key === 'noRek' || key === 'noHp') && typeof value === 'string') {
           value = cleanCardNumber(value);
         }
 
