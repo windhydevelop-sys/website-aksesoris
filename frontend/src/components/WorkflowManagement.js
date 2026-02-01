@@ -1246,7 +1246,7 @@ const WorkflowManagement = () => {
                         value={productForm.ibUser}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
                         margin="normal"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI'}
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1257,7 +1257,7 @@ const WorkflowManagement = () => {
                         value={productForm.ibPassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
                         margin="normal"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI'}
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI'}
                         type="text"
                       />
                     </Grid>
@@ -1282,7 +1282,7 @@ const WorkflowManagement = () => {
                       <Grid item xs={12} sm={6}>
                         <TextField
                           fullWidth
-                          label="User Mobile"
+                          label={productForm.bank && productForm.bank.toUpperCase() === 'BRI' ? 'User BRIMO' : 'User Mobile'}
                           name="mobileUser"
                           value={productForm.mobileUser}
                           onChange={(e) => setProductForm(prev => ({ ...prev, mobileUser: e.target.value }))}
@@ -1294,7 +1294,11 @@ const WorkflowManagement = () => {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label={productForm.bank && productForm.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' : 'Password Mobile'}
+                        label={
+                          productForm.bank && productForm.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' :
+                          productForm.bank && productForm.bank.toUpperCase() === 'BRI' ? 'Password BRIMO' :
+                          'Password Mobile'
+                        }
                         name="mobilePassword"
                         value={productForm.mobilePassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, mobilePassword: e.target.value }))}
@@ -1308,6 +1312,20 @@ const WorkflowManagement = () => {
                         <TextField
                           fullWidth
                           label="Pin Livin"
+                          name="mobilePin"
+                          value={productForm.mobilePin}
+                          onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
+                          margin="normal"
+                          required
+                          type="text"
+                        />
+                      </Grid>
+                    )}
+                    {productForm.bank && productForm.bank.toUpperCase() === 'BRI' && (
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Pin BRIMO"
                           name="mobilePin"
                           value={productForm.mobilePin}
                           onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
@@ -1339,7 +1357,7 @@ const WorkflowManagement = () => {
                         value={productForm.ibUser}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
                         margin="normal"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI'}
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1351,7 +1369,7 @@ const WorkflowManagement = () => {
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
                         margin="normal"
                         type="text"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI'}
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>

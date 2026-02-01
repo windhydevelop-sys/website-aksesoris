@@ -137,8 +137,8 @@ const productSchema = Joi.object({
   }),
   ibUser: Joi.string().when('bank', {
     switch: [
-      { is: Joi.string().regex(/^MANDIRI$/i), then: Joi.optional() },
-      { is: Joi.string().regex(/^(BCA|BRI|BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
+      { is: Joi.string().regex(/^(MANDIRI|BRI)$/i), then: Joi.optional() },
+      { is: Joi.string().regex(/^(BCA|BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
     ],
     otherwise: Joi.optional()
   }).messages({
@@ -146,8 +146,8 @@ const productSchema = Joi.object({
   }),
   ibPassword: Joi.string().min(6).when('bank', {
     switch: [
-      { is: Joi.string().regex(/^MANDIRI$/i), then: Joi.optional() },
-      { is: Joi.string().regex(/^(BCA|BRI|BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
+      { is: Joi.string().regex(/^(MANDIRI|BRI)$/i), then: Joi.optional() },
+      { is: Joi.string().regex(/^(BCA|BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
     ],
     otherwise: Joi.optional()
   }).messages({

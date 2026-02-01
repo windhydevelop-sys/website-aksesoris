@@ -1383,7 +1383,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibUser}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI'}
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI'}
                     />
                     <TextField
                       fullWidth
@@ -1392,7 +1392,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibPassword}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI'}
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI'}
                       type="text"
                     />
                   </>
@@ -1402,7 +1402,7 @@ const Dashboard = ({ setToken }) => {
                     {form.bank && form.bank.toUpperCase() !== 'MANDIRI' && (
                       <TextField
                         fullWidth
-                        label="User Mobile"
+                        label={form.bank && form.bank.toUpperCase() === 'BRI' ? 'User BRIMO' : 'User Mobile'}
                         name="mobileUser"
                         value={form.mobileUser}
                         onChange={handleChange}
@@ -1412,7 +1412,11 @@ const Dashboard = ({ setToken }) => {
                     )}
                     <TextField
                       fullWidth
-                      label={form.bank && form.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' : 'Password Mobile'}
+                      label={
+                        form.bank && form.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' :
+                        form.bank && form.bank.toUpperCase() === 'BRI' ? 'Password BRIMO' :
+                        'Password Mobile'
+                      }
                       name="mobilePassword"
                       value={form.mobilePassword}
                       onChange={handleChange}
@@ -1424,6 +1428,18 @@ const Dashboard = ({ setToken }) => {
                       <TextField
                         fullWidth
                         label="Pin Livin"
+                        name="mobilePin"
+                        value={form.mobilePin}
+                        onChange={handleChange}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    )}
+                    {form.bank && form.bank.toUpperCase() === 'BRI' && (
+                      <TextField
+                        fullWidth
+                        label="Pin BRIMO"
                         name="mobilePin"
                         value={form.mobilePin}
                         onChange={handleChange}
@@ -1451,7 +1467,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibUser}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI'}
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI'}
                     />
                     <TextField
                       fullWidth
@@ -1460,7 +1476,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibPassword}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI'}
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI'}
                       type="text"
                     />
                     {form.bank && form.bank.toUpperCase() === 'OCBC NISP' && (
