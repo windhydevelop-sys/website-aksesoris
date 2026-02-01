@@ -74,6 +74,7 @@ const WorkflowManagement = () => {
   const [customers, setCustomers] = useState([]);
   const [fieldStaff, setFieldStaff] = useState([]);
   const [handphones, setHandphones] = useState([]);
+  const [orders, setOrders] = useState([]);
 
   // Dialog states
   const [customerDialog, setCustomerDialog] = useState(false);
@@ -169,6 +170,7 @@ const WorkflowManagement = () => {
     fetchCustomers();
     fetchFieldStaff();
     fetchHandphones();
+    fetchOrders();
   }, []);
 
   const fetchCustomers = async () => {
@@ -196,6 +198,15 @@ const WorkflowManagement = () => {
       setHandphones(response.data.data);
     } catch (error) {
       console.error('Error fetching handphones:', error);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get('/api/orders');
+      setOrders(response.data.data);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
     }
   };
 
@@ -270,20 +281,33 @@ const WorkflowManagement = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const submitData = {
-        customer: workflowData.customer.kodeCustomer,
-        fieldStaff: workflowData.fieldStaff.kodeOrlap,
-        status: orderForm.status,
-        notes: orderForm.notes,
-        harga: orderForm.harga
-      };
-      const response = await axios.post('/api/orders', submitData);
-      setWorkflowData(prev => ({ ...prev, order: response.data.data }));
-      showSuccess('Order berhasil dibuat');
-      setOrderDialog(false);
-      handleComplete();
+      // Check if noOrder matches existing order
+      const existingOrder = orders.find(o => o.noOrder === orderForm.noOrder);
+
+      if (existingOrder) {
+         // Use existing order
+         setWorkflowData(prev => ({ ...prev, order: existingOrder }));
+         showSuccess('Menggunakan Order yang sudah ada');
+         setOrderDialog(false);
+         handleComplete();
+      } else {
+        const submitData = {
+          noOrder: orderForm.noOrder,
+          customer: workflowData.customer.kodeCustomer,
+          fieldStaff: workflowData.fieldStaff.kodeOrlap,
+          status: orderForm.status,
+          notes: orderForm.notes,
+          harga: orderForm.harga
+        };
+        const response = await axios.post('/api/orders', submitData);
+        setWorkflowData(prev => ({ ...prev, order: response.data.data }));
+        showSuccess('Order berhasil dibuat');
+        setOrderDialog(false);
+        fetchOrders();
+        handleComplete();
+      }
     } catch (error) {
-      showError(error.response?.data?.error || 'Gagal membuat order');
+      showError(error.response?.data?.error || 'Gagal memproses order');
     } finally {
       setLoading(false);
     }
@@ -977,6 +1001,51 @@ const WorkflowManagement = () => {
           <form onSubmit={handleOrderSubmit}>
             <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', py: 2 }}>Buat Order Baru</DialogTitle>
             <DialogContent sx={{ py: 3 }}>
+              <Autocomplete
+                fullWidth
+                value={orderForm.noOrder}
+                options={orders.map(o => o.noOrder)}
+                freeSolo
+                onChange={(event, newValue) => {
+                  const safeValue = Array.isArray(newValue) ? (newValue.length > 0 ? newValue[0] : '') : (newValue || '');
+                  setOrderForm(prev => ({ ...prev, noOrder: safeValue }));
+                }}
+                onInputChange={(event, newInputValue) => {
+                  const safeValue = Array.isArray(newInputValue) ? (newInputValue.length > 0 ? newInputValue[0] : '') : (newInputValue || '');
+                  setOrderForm(prev => ({ ...prev, noOrder: safeValue }));
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="No. Order"
+                    name="noOrder"
+                    placeholder="Pilih existing atau ketik baru"
+                    margin="normal"
+                    required
+                    sx={{
+                      mb: 3,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 2,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputBase-input': {
+                        color: 'black',
+                        fontSize: '1.1rem',
+                        py: 1.5
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: 'rgba(0,0,0,0.7)',
+                        fontSize: '1.1rem'
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'primary.main'
+                      }
+                    }}
+                  />
+                )}
+              />
               <TextField
                 fullWidth
                 label="Total Amount"
@@ -1267,7 +1336,7 @@ const WorkflowManagement = () => {
                         />
                       </Grid>
                     )}
-                    {productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && (
+                    {productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BNI' && (
                       <Grid item xs={12} sm={6}>
                         <TextField
                           fullWidth
@@ -1286,6 +1355,7 @@ const WorkflowManagement = () => {
                         label={
                           productForm.bank && productForm.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' :
                           productForm.bank && productForm.bank.toUpperCase() === 'BRI' ? 'Password BRIMO' :
+                          productForm.bank && productForm.bank.toUpperCase() === 'BNI' ? 'Password Wondr' :
                           'Password Mobile'
                         }
                         name="mobilePassword"
@@ -1324,6 +1394,20 @@ const WorkflowManagement = () => {
                         />
                       </Grid>
                     )}
+                    {productForm.bank && productForm.bank.toUpperCase() === 'BNI' && (
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          label="Pin Wondr"
+                          name="mobilePin"
+                          value={productForm.mobilePin}
+                          onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
+                          margin="normal"
+                          required
+                          type="text"
+                        />
+                      </Grid>
+                    )}
                     {productForm.bank && productForm.bank.toUpperCase() === 'OCBC NISP' && (
                       <Grid item xs={12} sm={6}>
                         <TextField
@@ -1346,7 +1430,7 @@ const WorkflowManagement = () => {
                         value={productForm.ibUser}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
                         margin="normal"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI'}
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI' && productForm.bank.toUpperCase() !== 'BNI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1358,7 +1442,7 @@ const WorkflowManagement = () => {
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
                         margin="normal"
                         type="text"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI'}
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI' && productForm.bank.toUpperCase() !== 'BNI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>

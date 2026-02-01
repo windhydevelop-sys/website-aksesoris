@@ -1398,7 +1398,7 @@ const Dashboard = ({ setToken }) => {
                 )}
                 {form.bank && form.bank.toUpperCase() !== 'BCA' && (
                   <>
-                    {form.bank && form.bank.toUpperCase() !== 'MANDIRI' && (
+                    {form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BNI' && (
                       <TextField
                         fullWidth
                         label={form.bank && form.bank.toUpperCase() === 'BRI' ? 'User BRIMO' : 'User Mobile'}
@@ -1414,6 +1414,7 @@ const Dashboard = ({ setToken }) => {
                       label={
                         form.bank && form.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' :
                         form.bank && form.bank.toUpperCase() === 'BRI' ? 'Password BRIMO' :
+                        form.bank && form.bank.toUpperCase() === 'BNI' ? 'Password Wondr' :
                         'Password Mobile'
                       }
                       name="mobilePassword"
@@ -1447,6 +1448,18 @@ const Dashboard = ({ setToken }) => {
                         type="text"
                       />
                     )}
+                    {form.bank && form.bank.toUpperCase() === 'BNI' && (
+                      <TextField
+                        fullWidth
+                        label="Pin Wondr"
+                        name="mobilePin"
+                        value={form.mobilePin}
+                        onChange={handleChange}
+                        margin="normal"
+                        required
+                        type="text"
+                      />
+                    )}
                     {form.bank && form.bank.toUpperCase() === 'OCBC NISP' && (
                       <TextField
                         fullWidth
@@ -1466,7 +1479,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibUser}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI'}
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI' && form.bank.toUpperCase() !== 'BNI'}
                     />
                     <TextField
                       fullWidth
@@ -1475,7 +1488,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibPassword}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI'}
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI' && form.bank.toUpperCase() !== 'BNI'}
                       type="text"
                     />
                     {form.bank && form.bank.toUpperCase() === 'OCBC NISP' && (

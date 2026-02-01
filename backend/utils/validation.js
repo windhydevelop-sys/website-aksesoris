@@ -121,10 +121,10 @@ const productSchema = Joi.object({
   }),
   mobileUser: Joi.string().when('bank', {
     switch: [
-      { is: Joi.string().regex(/^(MANDIRI|BCA)$/i), then: Joi.optional() },
-      { is: Joi.string().regex(/^(BRI|BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
+      { is: Joi.string().regex(/^(MANDIRI|BCA|BNI)$/i), then: Joi.optional().allow('') },
+      { is: Joi.string().regex(/^(BRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
     ],
-    otherwise: Joi.optional()
+    otherwise: Joi.optional().allow('')
   }).messages({
     'any.required': 'User Mobile wajib diisi untuk bank yang dipilih'
   }),
@@ -132,24 +132,24 @@ const productSchema = Joi.object({
     'string.min': 'Password Mobile minimal 6 karakter',
     'any.required': 'Password Mobile wajib diisi untuk bank yang dipilih'
   }),
-  mobilePin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+  mobilePin: Joi.string().pattern(/^\d{4,6}$/).allow('').optional().messages({
     'string.pattern.base': 'Pin Mobile harus 4-6 digit angka'
   }),
   ibUser: Joi.string().when('bank', {
     switch: [
-      { is: Joi.string().regex(/^(MANDIRI|BRI|BCA)$/i), then: Joi.optional() },
-      { is: Joi.string().regex(/^(BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
+      { is: Joi.string().regex(/^(MANDIRI|BRI|BCA|BNI)$/i), then: Joi.optional().allow('') },
+      { is: Joi.string().regex(/^(BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
     ],
-    otherwise: Joi.optional()
+    otherwise: Joi.optional().allow('')
   }).messages({
     'any.required': 'User Internet Banking wajib diisi untuk bank yang dipilih'
   }),
   ibPassword: Joi.string().min(6).when('bank', {
     switch: [
-      { is: Joi.string().regex(/^(MANDIRI|BRI|BCA)$/i), then: Joi.optional() },
-      { is: Joi.string().regex(/^(BNI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
+      { is: Joi.string().regex(/^(MANDIRI|BRI|BCA|BNI)$/i), then: Joi.optional().allow('') },
+      { is: Joi.string().regex(/^(BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
     ],
-    otherwise: Joi.optional()
+    otherwise: Joi.optional().allow('')
   }).messages({
     'string.min': 'Password Internet Banking minimal 6 karakter',
     'any.required': 'Password Internet Banking wajib diisi untuk bank yang dipilih'
