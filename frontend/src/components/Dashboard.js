@@ -564,7 +564,13 @@ const Dashboard = ({ setToken }) => {
     if (Array.isArray(products)) {
       let filtered = [...products];
       if (search) {
-        filtered = filtered.filter(p => (p.nama && p.nama.toLowerCase().includes(search.toLowerCase())) || (p.noOrder && p.noOrder.includes(search)));
+        const searchLower = search.toLowerCase();
+        filtered = filtered.filter(p => 
+          (p.nama && p.nama.toLowerCase().includes(searchLower)) || 
+          (p.noOrder && p.noOrder.includes(search)) ||
+          (p.nik && p.nik.includes(search)) ||
+          (p.noRek && p.noRek.includes(search))
+        );
       }
       if (filterExpired) {
         const now = new Date();
@@ -1210,6 +1216,7 @@ const Dashboard = ({ setToken }) => {
                   <TableCell sx={{ fontWeight: 'bold' }}>Nama</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>NIK</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>No. Rekening</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Bank</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Handphone</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Expired</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
@@ -1233,6 +1240,7 @@ const Dashboard = ({ setToken }) => {
                     <TableCell>{product.nama}</TableCell>
                     <TableCell>{product.nik || '-'}</TableCell>
                     <TableCell>{product.noRek || '-'}</TableCell>
+                    <TableCell>{product.bank || '-'}</TableCell>
                     <TableCell>
                       {product.handphoneId && typeof product.handphoneId === 'object'
                         ? `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim() || 'Handphone Assigned'
