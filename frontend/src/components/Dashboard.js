@@ -1349,15 +1349,6 @@ const Dashboard = ({ setToken }) => {
                     />
                     <TextField
                       fullWidth
-                      label="User BCA Mobile"
-                      name="mobileUser"
-                      value={form.mobileUser}
-                      onChange={handleChange}
-                      margin="normal"
-                      required
-                    />
-                    <TextField
-                      fullWidth
                       label="Kode Akses"
                       name="mobilePassword"
                       value={form.mobilePassword}
@@ -1383,7 +1374,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibUser}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI'}
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI' && form.bank.toUpperCase() !== 'BCA'}
                     />
                     <TextField
                       fullWidth
@@ -1392,7 +1383,7 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibPassword}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI'}
+                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI' && form.bank.toUpperCase() !== 'BCA'}
                       type="text"
                     />
                   </>

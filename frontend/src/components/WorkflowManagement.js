@@ -1206,17 +1206,6 @@ const WorkflowManagement = () => {
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
-                        label="User BCA Mobile"
-                        name="mobileUser"
-                        value={productForm.mobileUser}
-                        onChange={(e) => setProductForm(prev => ({ ...prev, mobileUser: e.target.value }))}
-                        margin="normal"
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <TextField
-                        fullWidth
                         label="Kode Akses"
                         name="mobilePassword"
                         value={productForm.mobilePassword}
@@ -1246,7 +1235,7 @@ const WorkflowManagement = () => {
                         value={productForm.ibUser}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
                         margin="normal"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI'}
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI' && productForm.bank.toUpperCase() !== 'BCA'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1257,7 +1246,7 @@ const WorkflowManagement = () => {
                         value={productForm.ibPassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
                         margin="normal"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI'}
+                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI' && productForm.bank.toUpperCase() !== 'BCA'}
                         type="text"
                       />
                     </Grid>
