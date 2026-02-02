@@ -313,6 +313,11 @@ const WorkflowManagement = () => {
     }
   };
 
+  const handleOrderSelect = (order) => {
+    setWorkflowData(prev => ({ ...prev, order }));
+    handleComplete();
+  };
+
   // Handphone handlers
   const handleHandphoneSubmit = async (e) => {
     e.preventDefault();
@@ -511,7 +516,7 @@ const WorkflowManagement = () => {
               Langkah 3: Input No Order
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ mb: 5, fontSize: '1.2rem', lineHeight: 1.6 }}>
-              Buat order baru yang menghubungkan customer dan field staff yang sudah dipilih.
+              Buat order baru atau pilih order yang sudah ada.
             </Typography>
 
             <Alert severity="info" sx={{ mb: 4, py: 3, px: 3 }}>
@@ -520,24 +525,56 @@ const WorkflowManagement = () => {
               </Typography>
             </Alert>
 
-            <Button
-              variant="contained"
-              startIcon={<AddShoppingCart />}
-              onClick={() => setOrderDialog(true)}
-              fullWidth
-              sx={{
-                py: 3,
-                fontSize: '1.2rem',
-                fontWeight: 600,
-                borderRadius: 3
-              }}
-            >
-              Buat Order Baru
-            </Button>
+            <Grid container spacing={4}>
+              <Grid item xs={12} md={6}>
+                <Button
+                  variant="contained"
+                  startIcon={<AddShoppingCart />}
+                  onClick={() => setOrderDialog(true)}
+                  fullWidth
+                  sx={{
+                    mb: 3,
+                    py: 2,
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    borderRadius: 3
+                  }}
+                >
+                  Buat Order Baru
+                </Button>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Autocomplete
+                  options={orders}
+                  getOptionLabel={(option) => option?.noOrder || ''}
+                  onChange={(event, newValue) => {
+                    if (newValue) handleOrderSelect(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Pilih Order yang Sudah Ada"
+                      variant="outlined"
+                      fullWidth
+                      helperText="Cari berdasarkan No Order"
+                      sx={{
+                        '& .MuiInputBase-input': {
+                          fontSize: '1.1rem',
+                          py: 1.5
+                        },
+                        '& .MuiInputLabel-root': {
+                          fontSize: '1.1rem'
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
 
             {workflowData.order && (
               <Alert severity="success" sx={{ mt: 2 }}>
-                Order dibuat: {workflowData.order.noOrder}
+                Order dipilih: {workflowData.order.noOrder}
               </Alert>
             )}
           </Box>
