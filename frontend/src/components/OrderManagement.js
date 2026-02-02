@@ -355,35 +355,49 @@ const OrderManagement = () => {
           </DialogTitle>
           <form onSubmit={handleSubmit}>
             <DialogContent sx={{ py: 5, px: 5 }}>
-              <TextField
+              <Autocomplete
                 fullWidth
-                label="No. Order"
-                name="noOrder"
                 value={formData.noOrder}
-                onChange={handleFormChange}
-                margin="normal"
-                required
-                sx={{
-                  mb: 4,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 3,
-                    backgroundColor: 'rgba(255,255,255,0.9)',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
-                    '&.Mui-focused': { backgroundColor: 'white' }
-                  },
-                  '& .MuiInputBase-input': {
-                    color: 'black',
-                    fontSize: '1.2rem',
-                    py: 2
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: 'rgba(0,0,0,0.7)',
-                    fontSize: '1.2rem'
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: 'primary.main'
-                  }
+                options={orders.map(o => o.noOrder)}
+                freeSolo
+                onChange={(event, newValue) => {
+                  const safeValue = Array.isArray(newValue) ? (newValue.length > 0 ? newValue[0] : '') : (newValue || '');
+                  setFormData(prev => ({ ...prev, noOrder: safeValue }));
                 }}
+                onInputChange={(event, newInputValue) => {
+                  const safeValue = Array.isArray(newInputValue) ? (newInputValue.length > 0 ? newInputValue[0] : '') : (newInputValue || '');
+                  setFormData(prev => ({ ...prev, noOrder: safeValue }));
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="No. Order"
+                    name="noOrder"
+                    margin="normal"
+                    required
+                    sx={{
+                      mb: 4,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputBase-input': {
+                        color: 'black',
+                        fontSize: '1.2rem',
+                        py: 2
+                      },
+                      '& .MuiInputLabel-root': {
+                        color: 'rgba(0,0,0,0.7)',
+                        fontSize: '1.2rem'
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: 'primary.main'
+                      }
+                    }}
+                  />
+                )}
               />
 
               <Autocomplete
