@@ -90,14 +90,14 @@ function TelegramProductForm() {
             <option value="BRI">BRI</option>
           </select>
           <input placeholder="Grade" value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })} />
-          <input placeholder="KCP" value={form.kcp} onChange={e => setForm({ ...form, kcp: e.target.value })} />
+          <input placeholder="Kantor Cabang" value={form.kcp} onChange={e => setForm({ ...form, kcp: e.target.value })} />
           <input placeholder="NIK" value={form.nik} onChange={e => setForm({ ...form, nik: e.target.value })} />
           <input placeholder="Nama" value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} />
           <input placeholder="Nama Ibu Kandung" value={form.namaIbuKandung} onChange={e => setForm({ ...form, namaIbuKandung: e.target.value })} />
           <input placeholder="Tempat/Tanggal Lahir" value={form.tempatTanggalLahir} onChange={e => setForm({ ...form, tempatTanggalLahir: e.target.value })} />
           <input placeholder="No. Rekening" value={form.noRek} onChange={e => setForm({ ...form, noRek: e.target.value })} />
           <input placeholder="No. ATM" value={form.noAtm} onChange={e => setForm({ ...form, noAtm: e.target.value })} />
-          <input placeholder="Valid Thru" value={form.validThru} onChange={e => setForm({ ...form, validThru: e.target.value })} />
+          <input placeholder="Valid Kartu" value={form.validThru} onChange={e => setForm({ ...form, validThru: e.target.value })} />
           <input placeholder="No. HP" value={form.noHp} onChange={e => setForm({ ...form, noHp: e.target.value })} />
           <input placeholder="PIN ATM" value={form.pinAtm} onChange={e => setForm({ ...form, pinAtm: e.target.value })} />
           <input placeholder="PIN Wondr" value={form.pinWondr} onChange={e => setForm({ ...form, pinWondr: e.target.value })} />

@@ -218,28 +218,29 @@ const getProducts = async (req, res) => {
     const decryptedProducts = await Promise.all(products.map(async (product, index) => {
       console.log('DEBUG: Processing product', index + 1, 'with noOrder:', product.noOrder);
       const decrypted = product.getDecryptedData();
-      
+
       // Ensure phoneId remains populated
       if (product.handphoneId && typeof product.handphoneId === 'object') {
         decrypted.handphoneId = product.handphoneId;
       }
-      
+
       // Add order status
       if (product.noOrder) {
         try {
           console.log('DEBUG: Looking for order with noOrder:', product.noOrder);
           const order = await Order.findOne({ noOrder: product.noOrder });
           console.log('DEBUG: Found order:', order ? 'YES' : 'NO', 'Status:', order ? order.status : 'N/A');
-          decrypted.status = order ? order.status : null;
+          // If order exists, use its status, otherwise fallback to product's own status
+          decrypted.status = order ? order.status : (product.status || 'pending');
         } catch (error) {
           console.error('Error fetching order status for product:', product._id, error);
-          decrypted.status = null;
+          decrypted.status = product.status || 'pending';
         }
       } else {
-        console.log('DEBUG: Product has no noOrder field');
-        decrypted.status = null;
+        console.log('DEBUG: Product has no noOrder field, using product status');
+        decrypted.status = product.status || 'pending';
       }
-      
+
       console.log('DEBUG: Final status for product', index + 1, ':', decrypted.status);
       return decrypted;
     }));
@@ -303,7 +304,7 @@ const getProductById = async (req, res) => {
     }, req);
 
     const decryptedData = product.getDecryptedData();
-    
+
     // Add order status to the response
     decryptedData.status = orderStatus;
 
@@ -661,18 +662,18 @@ const getProductsExport = async (req, res) => {
               if (magicBytes[0] === 0xFF && magicBytes[1] === 0xD8) {
                 mimeType = 'image/jpeg';
               } else if (magicBytes[0] === 0x89 && magicBytes[1] === 0x50 &&
-                         magicBytes[2] === 0x4E && magicBytes[3] === 0x47) {
+                magicBytes[2] === 0x4E && magicBytes[3] === 0x47) {
                 mimeType = 'image/png';
               } else if (magicBytes[0] === 0x47 && magicBytes[1] === 0x49 &&
-                         magicBytes[2] === 0x46 && magicBytes[3] === 0x38) {
+                magicBytes[2] === 0x46 && magicBytes[3] === 0x38) {
                 mimeType = 'image/gif';
               } else if (magicBytes[0] === 0x42 && magicBytes[1] === 0x4D) {
                 mimeType = 'image/bmp';
               } else if (magicBytes[0] === 0x52 && magicBytes[1] === 0x49 &&
-                         magicBytes[2] === 0x46 && magicBytes[3] === 0x46) {
+                magicBytes[2] === 0x46 && magicBytes[3] === 0x46) {
                 // Check for WebP
                 if (magicBytes[8] === 0x57 && magicBytes[9] === 0x45 &&
-                    magicBytes[10] === 0x42 && magicBytes[11] === 0x50) {
+                  magicBytes[10] === 0x42 && magicBytes[11] === 0x50) {
                   mimeType = 'image/webp';
                 }
               }

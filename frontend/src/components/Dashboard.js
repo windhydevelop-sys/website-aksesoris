@@ -21,6 +21,7 @@ import { THEME_MODE } from '../theme/themes';
 import SidebarLayout from './SidebarLayout';
 import ProductDetailDrawer from './ProductDetailDrawer';
 import FloatingNIKSearchBar from './FloatingNIKSearchBar';
+import DocumentImport from './DocumentImport';
 
 // Create styles for the PDF document
 const styles = StyleSheet.create({
@@ -219,7 +220,7 @@ const ProductExportPdfDocument = ({ products }) => (
               <Text style={styles.value}>{product.grade || '-'}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>KCP:</Text>
+              <Text style={styles.label}>Kantor Cabang:</Text>
               <Text style={styles.value}>{product.kcp || '-'}</Text>
             </View>
           </View>
@@ -252,7 +253,7 @@ const ProductExportPdfDocument = ({ products }) => (
               <Text style={styles.value}>{product.noAtm || '-'}</Text>
             </View>
             <View style={styles.row}>
-              <Text style={styles.label}>Valid Thru:</Text>
+              <Text style={styles.label}>Valid Kartu:</Text>
               <Text style={styles.value}>{product.validThru || '-'}</Text>
             </View>
             <View style={styles.row}>
@@ -397,6 +398,7 @@ const initialFormState = {
   myBCAUser: '',
   myBCAPassword: '',
   myBCAPin: '',
+  ibPin: '',
   mobileUser: '',
   mobilePassword: '',
   mobilePin: '',
@@ -404,7 +406,6 @@ const initialFormState = {
   ibPassword: '',
   merchantUser: '',
   merchantPassword: '',
-  ocbcNyalaUser: '',
   grade: '',
   kcp: '',
   expired: '',
@@ -447,13 +448,20 @@ const Dashboard = ({ setToken }) => {
   const [fieldStaff, setFieldStaff] = useState([]);
   const [orders, setOrders] = useState([]);
   const [totalHandphones, setTotalHandphones] = useState(0);
-  
-  
-  
+
+
+
   // Drawer states for product detail
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [docImportOpen, setDocImportOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
 
+  const handleDocImportSuccess = () => {
+    fetchProducts();
+    showSuccess('Data successfully imported from document');
+  };
   const handleChange = (e) => {
     const { name, value } = e.target;
     let formattedValue = value;
@@ -482,7 +490,7 @@ const Dashboard = ({ setToken }) => {
       setImeiError(error);
     }
 
-    
+
   };
 
 
@@ -539,7 +547,7 @@ const Dashboard = ({ setToken }) => {
     }
   }, []);
 
-  
+
 
 
   useEffect(() => {
@@ -550,9 +558,9 @@ const Dashboard = ({ setToken }) => {
     fetchAvailableHandphones();
   }, [fetchProducts, fetchCustomers, fetchFieldStaff, fetchOrders, fetchAvailableHandphones]);
 
-  
 
-  
+
+
 
 
 
@@ -565,8 +573,8 @@ const Dashboard = ({ setToken }) => {
       let filtered = [...products];
       if (search) {
         const searchLower = search.toLowerCase();
-        filtered = filtered.filter(p => 
-          (p.nama && p.nama.toLowerCase().includes(searchLower)) || 
+        filtered = filtered.filter(p =>
+          (p.nama && p.nama.toLowerCase().includes(searchLower)) ||
           (p.noOrder && p.noOrder.includes(search)) ||
           (p.nik && p.nik.includes(search)) ||
           (p.noRek && p.noRek.includes(search))
@@ -679,6 +687,7 @@ const Dashboard = ({ setToken }) => {
         myBCAPassword: product.myBCAPassword || '',
         mobileUser: product.mobileUser || '',
         mobilePassword: product.mobilePassword || '',
+        ibPin: product.ibPin || '',
         ibUser: product.ibUser || '',
         ibPassword: product.ibPassword || '',
         merchantUser: product.merchantUser || '',
@@ -847,13 +856,26 @@ const Dashboard = ({ setToken }) => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleOpenDeleteConfirm = (id) => {
+    setProductToDelete(id);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleCloseDeleteConfirm = () => {
+    setProductToDelete(null);
+    setConfirmDeleteOpen(false);
+  };
+
+  const handleDelete = async () => {
+    if (!productToDelete) return;
+
     try {
-      await axios.delete(`/api/products/${id}`, {
+      await axios.delete(`/api/products/${productToDelete}`, {
         headers: { 'x-auth-token': token }
       });
       fetchProducts();
       showSuccess('Produk berhasil dihapus!');
+      handleCloseDeleteConfirm();
     } catch (error) {
       console.error('Error deleting product:', error);
       showError('Error menghapus produk: ' + (error.response?.data?.error || error.message));
@@ -929,19 +951,19 @@ const Dashboard = ({ setToken }) => {
     <SidebarLayout onLogout={handleLogout}>
       <Container maxWidth="lg">
         <Box sx={{ mt: 8 }}>
-        <Typography variant="h4" component="h1" gutterBottom className="page-title">
-          Input Product
-        </Typography>
-        {notifications.length > 0 && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            {notifications.length} produk akan expired dalam 7 hari!
-          </Alert>
-        )}
+          <Typography variant="h4" component="h1" gutterBottom className="page-title">
+            Input Product
+          </Typography>
+          {notifications.length > 0 && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              {notifications.length} produk akan expired dalam 7 hari!
+            </Alert>
+          )}
         </Box>
       </Container>
 
       {/* Floating NIK Search Bar */}
-      <FloatingNIKSearchBar 
+      <FloatingNIKSearchBar
         onProductSelect={(product) => {
           // Handle product selection if needed
           console.log('Product selected from search:', product);
@@ -952,83 +974,83 @@ const Dashboard = ({ setToken }) => {
       {/* Full Width Cards Section */}
       <Box sx={{ px: 3, mb: 4 }}>
         <Grid container spacing={3}>
-           <Grid item xs={12} sm={6} md={6}>
-             <Card sx={{
-               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-               color: isLightMono ? 'text.primary' : 'white',
-               border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
-               borderRadius: 3,
-               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-               transition: 'transform 0.3s',
-               '&:hover': { transform: 'translateY(-5px)' },
-               minHeight: 220
-             }}>
-               <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
-                 <Inventory sx={{ fontSize: 64, mb: 3 }} />
-                 <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{products.length}</Typography>
-                 <Typography variant="h5" sx={{ fontWeight: 600 }}>Total Produk</Typography>
-               </CardContent>
-             </Card>
-           </Grid>
-           <Grid item xs={12} sm={6} md={6}>
-             <Card sx={{
-               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-               color: isLightMono ? 'text.primary' : 'white',
-               border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
-               borderRadius: 3,
-               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-               transition: 'transform 0.3s',
-               '&:hover': { transform: 'translateY(-5px)' },
-               minHeight: 220
-             }}>
-               <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
-                 <People sx={{ fontSize: 64, mb: 3 }} />
-                 <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{customers.length}</Typography>
-                 <Typography variant="h5" sx={{ fontWeight: 600 }}>Jumlah Customer</Typography>
-               </CardContent>
-             </Card>
-           </Grid>
-           <Grid item xs={12} sm={6} md={6}>
-             <Card sx={{
-               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-               color: isLightMono ? 'text.primary' : 'white',
-               border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
-               borderRadius: 3,
-               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-               transition: 'transform 0.3s',
-               '&:hover': { transform: 'translateY(-5px)' },
-               minHeight: 220
-             }}>
-               <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
-                 <Smartphone sx={{ fontSize: 64, mb: 3 }} />
-                 <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{totalHandphones}</Typography>
-                 <Typography variant="h5" sx={{ fontWeight: 600 }}>Jumlah Handphone</Typography>
-               </CardContent>
-             </Card>
-           </Grid>
-           <Grid item xs={12} sm={6} md={6}>
-             <Card sx={{
-               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-               color: isLightMono ? 'text.primary' : 'white',
-               border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
-               borderRadius: 3,
-               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
-               transition: 'transform 0.3s',
-               '&:hover': { transform: 'translateY(-5px)' },
-               minHeight: 220
-             }}>
-               <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
-                 <TrendingUp sx={{ fontSize: 64, mb: 3 }} />
-                 <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{notifications.length}</Typography>
-                 <Typography variant="h5" sx={{ fontWeight: 600 }}>Expired Soon</Typography>
-               </CardContent>
-             </Card>
-           </Grid>
-         </Grid>
-     </Box>
+          <Grid item xs={12} sm={6} md={6}>
+            <Card sx={{
+              background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: isLightMono ? 'text.primary' : 'white',
+              border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)' },
+              minHeight: 220
+            }}>
+              <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+                <Inventory sx={{ fontSize: 64, mb: 3 }} />
+                <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{products.length}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>Total Produk</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={6}>
+            <Card sx={{
+              background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              color: isLightMono ? 'text.primary' : 'white',
+              border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)' },
+              minHeight: 220
+            }}>
+              <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+                <People sx={{ fontSize: 64, mb: 3 }} />
+                <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{customers.length}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>Jumlah Customer</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={6}>
+            <Card sx={{
+              background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+              color: isLightMono ? 'text.primary' : 'white',
+              border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)' },
+              minHeight: 220
+            }}>
+              <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+                <Smartphone sx={{ fontSize: 64, mb: 3 }} />
+                <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{totalHandphones}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>Jumlah Handphone</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={6}>
+            <Card sx={{
+              background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+              color: isLightMono ? 'text.primary' : 'white',
+              border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)' },
+              minHeight: 220
+            }}>
+              <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+                <TrendingUp sx={{ fontSize: 64, mb: 3 }} />
+                <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{notifications.length}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>Expired Soon</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
 
-     <Container maxWidth="lg">
-       <Grid container spacing={3} sx={{ mb: 3 }}>
+      <Container maxWidth="lg">
+        <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} md={6}>
             <Card sx={{ borderRadius: 3, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
               <CardContent>
@@ -1184,13 +1206,20 @@ const Dashboard = ({ setToken }) => {
                 Export Excel
               </Button>
               <Button
-                variant="contained"
-                color="error"
-                onClick={handleExportProductsPdf}
-                startIcon={<PictureAsPdf />}
+                variant="outlined"
+                startIcon={<CloudUpload />}
+                onClick={() => setDocImportOpen(true)}
                 sx={{ borderRadius: 2 }}
               >
-                Export PDF Lengkap
+                Bulk Upload
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<PictureAsPdf />}
+                onClick={handleExportProductsPdf}
+                sx={{ borderRadius: 2 }}
+              >
+                Export PDF
               </Button>
               {selectedProductForInvoice && selectedProductForInvoice.status === 'completed' && (
                 <Button
@@ -1245,11 +1274,37 @@ const Dashboard = ({ setToken }) => {
                       {product.handphoneId && typeof product.handphoneId === 'object'
                         ? `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim() || 'Handphone Assigned'
                         : product.handphoneId
-                        ? 'Handphone Assigned'
-                        : '-'
+                          ? 'Handphone Assigned'
+                          : '-'
                       }
                     </TableCell>
-                    <TableCell>{new Date(product.expired).toLocaleDateString('id-ID')}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const expiredDate = new Date(product.expired);
+                        const today = new Date();
+                        const diffTime = expiredDate - today;
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                        let chipColor = 'success';
+                        let chipVariant = 'filled';
+
+                        if (diffDays <= 0) {
+                          chipColor = 'error';
+                        } else if (diffDays <= 7) {
+                          chipColor = 'warning';
+                        }
+
+                        return (
+                          <Chip
+                            label={expiredDate.toLocaleDateString('id-ID')}
+                            color={chipColor}
+                            size="small"
+                            variant={chipVariant}
+                            sx={{ fontWeight: 'bold' }}
+                          />
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>
                       <Chip
                         label={getStatusLabel(product.status)}
@@ -1259,11 +1314,11 @@ const Dashboard = ({ setToken }) => {
                       />
                     </TableCell>
                     <TableCell>{product.complaint}</TableCell>
-                    <TableCell onClick={(e)=>e.stopPropagation()}>
-                      <IconButton onClick={(ev) => {ev.stopPropagation(); handleOpen(product);}} color="primary"><Edit /></IconButton>
-                      <IconButton onClick={(ev) => {ev.stopPropagation(); handleDelete(product._id);}} color="error"><Delete /></IconButton>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <IconButton onClick={(ev) => { ev.stopPropagation(); handleOpen(product); }} color="primary"><Edit /></IconButton>
+                      <IconButton onClick={(ev) => { ev.stopPropagation(); handleOpenDeleteConfirm(product._id); }} color="error"><Delete /></IconButton>
                       {product.status === 'completed' && (
-                        <IconButton onClick={(ev) => {ev.stopPropagation(); handlePrintInvoice(product);}} color="success">
+                        <IconButton onClick={(ev) => { ev.stopPropagation(); handlePrintInvoice(product); }} color="success">
                           <PictureAsPdf />
                         </IconButton>
                       )}
@@ -1277,7 +1332,7 @@ const Dashboard = ({ setToken }) => {
         <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}>
           <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>{editing ? 'Edit Product' : 'Add Product'}</DialogTitle>
           <form onSubmit={handleSubmit}>
-          <DialogContent>
+            <DialogContent>
               <Box>
                 <Autocomplete
                   fullWidth
@@ -1322,7 +1377,7 @@ const Dashboard = ({ setToken }) => {
                   }}
                   renderInput={(params) => <TextField {...params} label="Orang Lapangan" name="fieldStaff" placeholder="Pilih orang lapangan dari daftar atau ketik baru" margin="normal" />}
                 />
-                
+
                 <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" required />
                 {form.bank && form.bank.toUpperCase() === 'BCA' && (
                   <>
@@ -1394,6 +1449,15 @@ const Dashboard = ({ setToken }) => {
                       required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI' && form.bank.toUpperCase() !== 'BCA'}
                       type="text"
                     />
+                    <TextField
+                      fullWidth
+                      label="PIN Internet Banking"
+                      name="ibPin"
+                      value={form.ibPin}
+                      onChange={handleChange}
+                      margin="normal"
+                      type="text"
+                    />
                   </>
                 )}
                 {form.bank && form.bank.toUpperCase() !== 'BCA' && (
@@ -1413,9 +1477,9 @@ const Dashboard = ({ setToken }) => {
                       fullWidth
                       label={
                         form.bank && form.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' :
-                        form.bank && form.bank.toUpperCase() === 'BRI' ? 'Password BRIMO' :
-                        form.bank && form.bank.toUpperCase() === 'BNI' ? 'Password Wondr' :
-                        'Password Mobile'
+                          form.bank && form.bank.toUpperCase() === 'BRI' ? 'Password BRIMO' :
+                            form.bank && form.bank.toUpperCase() === 'BNI' ? 'Password Wondr' :
+                              'Password Mobile'
                       }
                       name="mobilePassword"
                       value={form.mobilePassword}
@@ -1522,18 +1586,18 @@ const Dashboard = ({ setToken }) => {
                   </>
                 )}
                 <TextField fullWidth label="Grade" name="grade" placeholder="Bebas, contoh: A, VIP, PREMIUM, GOLD" value={form.grade} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="KCP" name="kcp" placeholder="Bebas, contoh: KCP001 atau CABANG-JAKARTA" value={form.kcp} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="Kantor Cabang" name="kcp" placeholder="Bebas, contoh: KCP001 atau CABANG-JAKARTA" value={form.kcp} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="NIK" name="nik" placeholder="16 digit angka, contoh: 3201010101010001" value={form.nik} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Nama" name="nama" placeholder="Bebas, contoh: Ahmad Susanto" value={form.nama} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Nama Ibu Kandung" name="namaIbuKandung" placeholder="Bebas, contoh: Siti Aminah" value={form.namaIbuKandung} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Tempat / Tanggal Lahir" name="tempatTanggalLahir" placeholder="Bebas, contoh: Jakarta, 01 Januari 1990" value={form.tempatTanggalLahir} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="No. Rekening" name="noRek" placeholder="10-18 digit angka, contoh: 123456789012" value={form.noRek} onChange={handleChange} margin="normal" required />
-                
+
                 <TextField fullWidth label="No. ATM" name="noAtm" placeholder="16 digit angka, contoh: 1234567890123456" value={form.noAtm} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Valid Thru" name="validThru" placeholder="Bebas, contoh: 12/25 atau Dec 2025" value={form.validThru} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="Valid Kartu" name="validThru" placeholder="Bebas, contoh: 12/25 atau Dec 2025" value={form.validThru} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="No. HP" name="noHp" placeholder="Format Indonesia, contoh: 081234567890" value={form.noHp} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="PIN ATM" name="pinAtm" placeholder="4-6 digit angka, contoh: 1234" value={form.pinAtm} onChange={handleChange} margin="normal" required />
-                
+
                 <TextField fullWidth label="Email" name="email" placeholder="Format email valid, contoh: user@example.com" value={form.email} onChange={handleChange} margin="normal" required />
                 <TextField fullWidth label="Password Email" name="passEmail" placeholder="Minimal 6 karakter, contoh: emailpass123" value={form.passEmail} onChange={handleChange} margin="normal" required />
 
@@ -1591,13 +1655,13 @@ const Dashboard = ({ setToken }) => {
                   <Typography variant="caption" display="block" gutterBottom>Upload Foto Selfie (opsional)</Typography>
                 </Box>
               </Box>
-        </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" disabled={!!imeiError}>Save</Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button type="submit" disabled={!!imeiError}>Save</Button>
+            </DialogActions>
+          </form>
+        </Dialog>
 
         {/* PDF Import Dialog */}
 
@@ -1610,6 +1674,36 @@ const Dashboard = ({ setToken }) => {
         product={selectedProduct}
         onPrintInvoice={handlePrintInvoiceFromDrawer}
       />
+      <DocumentImport
+        open={docImportOpen}
+        onClose={() => setDocImportOpen(false)}
+        onImportSuccess={handleDocImportSuccess}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={confirmDeleteOpen}
+        onClose={handleCloseDeleteConfirm}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Konfirmasi Penghapusan"}
+        </DialogTitle>
+        <DialogContent>
+          <Typography id="alert-dialog-description">
+            Yakin ingin menghapus file ini?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeleteConfirm} color="primary">
+            Tidak
+          </Button>
+          <Button onClick={handleDelete} color="error" autoFocus>
+            Ya
+          </Button>
+        </DialogActions>
+      </Dialog>
     </SidebarLayout>
   );
 };

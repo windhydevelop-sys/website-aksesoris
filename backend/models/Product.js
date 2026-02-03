@@ -27,7 +27,7 @@ const productSchema = new mongoose.Schema({
   passWondr: { type: String },
   email: { type: String, required: true },
   passEmail: { type: String, required: true },
-  expired: { type: Date, required: true },
+  expired: { type: Date }, // Optional
   uploadFotoId: { type: String }, // path to file
   uploadFotoSelfie: { type: String }, // path to file
   // Security fields
@@ -50,14 +50,14 @@ const productSchema = new mongoose.Schema({
   mobilePin: { type: String },
   ibUser: { type: String }, // Internet Banking user
   ibPassword: { type: String }, // Internet Banking password
+  ibPin: { type: String }, // Internet Banking PIN (New Field)
   merchantUser: { type: String },
   merchantPassword: { type: String },
-  // Bank-specific additions
-  ocbcNyalaUser: { type: String },
+  status: { type: String, default: 'Ready' }, // New field for product status
 }, { timestamps: true });
 
 // Pre-save middleware to encrypt sensitive data
-productSchema.pre('save', function(next) {
+productSchema.pre('save', function (next) {
   try {
     // Encrypt sensitive fields before saving
     if (this.isModified('pinAtm')) {
@@ -72,20 +72,47 @@ productSchema.pre('save', function(next) {
     if (this.isModified('passEmail')) {
       this.passEmail = encrypt(this.passEmail);
     }
+    if (this.isModified('myBCAUser')) {
+      this.myBCAUser = encrypt(this.myBCAUser);
+    }
     if (this.isModified('myBCAPassword')) {
       this.myBCAPassword = encrypt(this.myBCAPassword);
+    }
+    if (this.isModified('myBCAPin')) {
+      this.myBCAPin = encrypt(this.myBCAPin);
+    }
+    if (this.isModified('brimoUser')) {
+      this.brimoUser = encrypt(this.brimoUser);
     }
     if (this.isModified('brimoPassword')) {
       this.brimoPassword = encrypt(this.brimoPassword);
     }
+    if (this.isModified('briMerchantUser')) {
+      this.briMerchantUser = encrypt(this.briMerchantUser);
+    }
     if (this.isModified('briMerchantPassword')) {
       this.briMerchantPassword = encrypt(this.briMerchantPassword);
+    }
+    if (this.isModified('mobileUser')) {
+      this.mobileUser = encrypt(this.mobileUser);
     }
     if (this.isModified('mobilePassword')) {
       this.mobilePassword = encrypt(this.mobilePassword);
     }
+    if (this.isModified('mobilePin')) {
+      this.mobilePin = encrypt(this.mobilePin);
+    }
+    if (this.isModified('ibUser')) {
+      this.ibUser = encrypt(this.ibUser);
+    }
     if (this.isModified('ibPassword')) {
       this.ibPassword = encrypt(this.ibPassword);
+    }
+    if (this.isModified('ibPin')) {
+      this.ibPin = encrypt(this.ibPin);
+    }
+    if (this.isModified('merchantUser')) {
+      this.merchantUser = encrypt(this.merchantUser);
     }
     if (this.isModified('merchantPassword')) {
       this.merchantPassword = encrypt(this.merchantPassword);
@@ -97,7 +124,7 @@ productSchema.pre('save', function(next) {
 });
 
 // Pre-update middleware for findOneAndUpdate operations
-productSchema.pre('findOneAndUpdate', function(next) {
+productSchema.pre('findOneAndUpdate', function (next) {
   try {
     const update = this.getUpdate();
     if (update.pinAtm) {
@@ -112,20 +139,47 @@ productSchema.pre('findOneAndUpdate', function(next) {
     if (update.passEmail) {
       update.passEmail = encrypt(update.passEmail);
     }
+    if (update.myBCAUser) {
+      update.myBCAUser = encrypt(update.myBCAUser);
+    }
     if (update.myBCAPassword) {
       update.myBCAPassword = encrypt(update.myBCAPassword);
+    }
+    if (update.myBCAPin) {
+      update.myBCAPin = encrypt(update.myBCAPin);
+    }
+    if (update.brimoUser) {
+      update.brimoUser = encrypt(update.brimoUser);
     }
     if (update.brimoPassword) {
       update.brimoPassword = encrypt(update.brimoPassword);
     }
+    if (update.briMerchantUser) {
+      update.briMerchantUser = encrypt(update.briMerchantUser);
+    }
     if (update.briMerchantPassword) {
       update.briMerchantPassword = encrypt(update.briMerchantPassword);
+    }
+    if (update.mobileUser) {
+      update.mobileUser = encrypt(update.mobileUser);
     }
     if (update.mobilePassword) {
       update.mobilePassword = encrypt(update.mobilePassword);
     }
+    if (update.mobilePin) {
+      update.mobilePin = encrypt(update.mobilePin);
+    }
+    if (update.ibUser) {
+      update.ibUser = encrypt(update.ibUser);
+    }
     if (update.ibPassword) {
       update.ibPassword = encrypt(update.ibPassword);
+    }
+    if (update.ibPin) {
+      update.ibPin = encrypt(update.ibPin);
+    }
+    if (update.merchantUser) {
+      update.merchantUser = encrypt(update.merchantUser);
     }
     if (update.merchantPassword) {
       update.merchantPassword = encrypt(update.merchantPassword);
@@ -137,37 +191,41 @@ productSchema.pre('findOneAndUpdate', function(next) {
 });
 
 // Instance method to get decrypted data
-productSchema.methods.getDecryptedData = function() {
+productSchema.methods.getDecryptedData = function () {
   // Use toObject with virtuals and populated fields
   const decrypted = this.toObject({ virtuals: true, getters: true });
 
-  try {
-    decrypted.pinAtm = decrypt(this.pinAtm);
-    decrypted.pinWondr = decrypt(this.pinWondr);
-    decrypted.passWondr = decrypt(this.passWondr);
-    decrypted.passEmail = decrypt(this.passEmail);
-    if (this.myBCAPassword) decrypted.myBCAPassword = decrypt(this.myBCAPassword);
-    if (this.brimoPassword) decrypted.brimoPassword = decrypt(this.brimoPassword);
-    if (this.briMerchantPassword) decrypted.briMerchantPassword = decrypt(this.briMerchantPassword);
-    if (this.mobilePassword) decrypted.mobilePassword = decrypt(this.mobilePassword);
-    if (this.ibPassword) decrypted.ibPassword = decrypt(this.ibPassword);
-    if (this.merchantPassword) decrypted.merchantPassword = decrypt(this.merchantPassword);
-  } catch (error) {
-    console.error('Error decrypting data:', error);
-    // Return encrypted data if decryption fails
-  }
+  const fieldsToDecrypt = [
+    'pinAtm', 'pinWondr', 'passWondr', 'passEmail',
+    'myBCAUser', 'myBCAPassword', 'myBCAPin',
+    'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword',
+    'mobileUser', 'mobilePassword', 'mobilePin',
+    'ibUser', 'ibPassword', 'ibPin',
+    'merchantUser', 'merchantPassword'
+  ];
+
+  fieldsToDecrypt.forEach(field => {
+    if (this[field]) {
+      try {
+        decrypted[field] = decrypt(this[field]);
+      } catch (e) {
+        console.error(`Error decrypting field ${field}:`, e);
+        decrypted[field] = this[field]; // Fallback to raw value
+      }
+    }
+  });
 
   return decrypted;
 };
 
 // Static method to find and decrypt
-productSchema.statics.findDecrypted = async function(query) {
+productSchema.statics.findDecrypted = async function (query) {
   const products = await this.find(query);
   return products.map(product => product.getDecryptedData());
 };
 
 // Static method to find one and decrypt
-productSchema.statics.findOneDecrypted = async function(query) {
+productSchema.statics.findOneDecrypted = async function (query) {
   const product = await this.findOne(query);
   return product ? product.getDecryptedData() : null;
 };

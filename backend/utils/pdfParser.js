@@ -1,310 +1,245 @@
 const fs = require('fs');
 const path = require('path');
+const { logger, securityLog } = require('./audit');
+const { extractImagesFromHtml, saveImageToDisk } = require('./imageExtractor');
 const { parseDocument } = require('./documentParser');
-const { logger } = require('./audit');
 
-// Try to load pdf-parse, but make it optional for environments that don't support it
 let pdfParse = null;
 try {
   pdfParse = require('pdf-parse');
-  logger.info('pdf-parse library loaded successfully');
 } catch (error) {
-  logger.warn('pdf-parse library not available in this environment:', error.message);
-  logger.warn('PDF parsing will use fallback methods only');
+  logger.warn('pdf-parse library not available in this environment');
 }
 
-/**
- * PDF Parser Utility for extracting product data from PDF files
- */
-
-// Extract text content from PDF buffer using multiple fallback methods
+// Extract PDF text
 const extractTextFromPDF = async (pdfBuffer) => {
   try {
-    // Method 1: Try pdf-parse (most reliable for text extraction) - only if available
     if (pdfParse) {
-      try {
-        const data = await pdfParse(pdfBuffer);
-        if (data && data.text && data.text.trim().length > 0) {
-          logger.info('PDF text extracted successfully using pdf-parse');
-          return data.text;
-        }
-      } catch (pdfParseError) {
-        logger.warn('pdf-parse failed, trying alternative methods:', pdfParseError.message);
-      }
-    } else {
-      logger.warn('pdf-parse not available, using fallback methods only');
+      const data = await pdfParse(pdfBuffer);
+      if (data && data.text && data.text.trim().length > 0) return data.text;
     }
-
-    // Method 2: Try basic text extraction from buffer (fallback)
-    // This is a very basic approach - in production you'd want a more robust solution
     const bufferString = pdfBuffer.toString('utf8', 0, Math.min(10000, pdfBuffer.length));
-
-    // Look for common text patterns in PDFs
     const textMatches = bufferString.match(/BT[\s\S]*?ET/g) || [];
     let extractedText = '';
-
-    for (const match of textMatches) {
-      // Basic text extraction from PDF text objects
-      const textContent = match.replace(/BT|ET/g, '').trim();
-      if (textContent.length > 0) {
-        extractedText += textContent + ' ';
-      }
-    }
-
-    if (extractedText.trim().length > 10) {
-      logger.info('PDF text extracted using basic buffer parsing');
-      return extractedText;
-    }
-
-    // Method 3: Return a helpful message if no text can be extracted
-    logger.warn('Could not extract text from PDF using available methods');
-    return 'PDF text extraction not available. Please use manual data entry or ensure the PDF contains extractable text.';
-
+    for (const match of textMatches) extractedText += match.replace(/BT|ET/g, '').trim() + ' ';
+    return extractedText.length > 10 ? extractedText : 'PDF text extraction failed';
   } catch (error) {
     logger.error('PDF text extraction failed:', error);
-    return 'PDF processing error. Please try manual data entry.';
+    return 'PDF processing error';
   }
 };
 
-// Parse product data from extracted text
-const parseProductData = (text) => {
+const parseProductData = (rawText) => {
   const products = [];
-  const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
 
-  logger.info('Parsing PDF text', { totalLines: lines.length });
+  // Normalization
+  let text = rawText
+    .replace(/[\u2013\u2014\u2212]/g, '-')
+    .replace(/[\u00A0\u1680\u180e\u2000-\u200b\u202f\u205f\u3000]/g, ' ')
+    .replace(/[“”‘’]/g, "'");
 
-  // More precise patterns for financial data extraction
-  const patterns = {
-    nik: /(?:^|\n)\s*NIK[\s:]*([0-9]{16})(?:\s|$|\n)/i,
-    nama: /(?:^|\n)\s*Nama[\s:]*([A-Za-z\s]+?)(?:\n|$)/i,
-    namaIbuKandung: /(?:^|\n)\s*Nama Ibu Kandung[\s:]*([A-Za-z\s]+?)(?:\n|$)/i,
-    tempatTanggalLahir: /(?:^|\n)\s*Tempat.*Lahir[\s:]*([A-Za-z\s,0-9]+?)(?:\n|$)/i,
-    noRek: /(?:^|\n)\s*No.*Rekening[\s:]*([0-9]{10,18})(?:\s|$|\n)/i,
-    noAtm: /(?:^|\n)\s*No.*ATM[\s:]*([0-9]{16})(?:\s|$|\n)/i,
-    validThru: /(?:^|\n)\s*Valid.*Thru[\s:]*([0-9\/\-]+)(?:\s|$|\n)/i,
-    noHp: /(?:^|\n)\s*No.*HP[\s:]*([0-9+\-\s]+?)(?:\n|$)/i,
-    pinAtm: /(?:^|\n)\s*PIN.*ATM[\s:]*([0-9]{4,6})(?:\s|$|\n)/i,
-    pinWondr: /(?:^|\n)\s*PIN.*Wondr[\s:]*([0-9]{4,6})(?:\s|$|\n)/i,
-    email: /(?:^|\n)\s*Email[\s:]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})(?:\s|$|\n)/i,
-    bank: /(?:^|\n)\s*Bank[\s:]*([A-Za-z\s]+?)(?:\n|$)/i,
-    grade: /(?:^|\n)\s*Grade[\s:]*([A-Za-z0-9\s]+?)(?:\n|$)/i,
-    kcp: /(?:^|\n)\s*KCP[\s:]*([A-Za-z0-9\s\-]+?)(?:\n|$)/i,
-    noOrder: /(?:^|\n)\s*No.*Order[\s:]*([A-Za-z0-9\-]+)(?:\s|$|\n)/i,
-    codeAgen: /(?:^|\n)\s*Code.*Agen[\s:]*([A-Za-z0-9\-]+)(?:\s|$|\n)/i,
-    passWondr: /(?:^|\n)\s*Password.*Wondr[\s:]*([A-Za-z0-9!@#$%^&*]+?)(?:\n|$)/i,
-    passEmail: /(?:^|\n)\s*Password.*Email[\s:]*([A-Za-z0-9!@#$%^&*]+?)(?:\n|$)/i,
-    expired: /(?:^|\n)\s*Expired[\s:]*([0-9\-\/]+)(?:\s|$|\n)/i,
-    uploadFotoId: /(?:^|\n)\s*Foto KTP[\s:]*([a-zA-Z0-9_\-\.]+)(?:\s|$|\n)/i,
-    uploadFotoSelfie: /(?:^|\n)\s*Foto Selfie[\s:]*([a-zA-Z0-9_\-\.]+)(?:\s|$|\n)/i
-  };
+  const productBlocks = text.split(/(?=No\s*\.?\s*ORDER)/i).filter(block => block && block.length > 20);
 
-  // Try to extract data from the entire text
-  const extractedData = {};
+  logger.info('Parsing text data', { totalChars: text.length, detectedBlocks: productBlocks.length });
 
-  // Apply all patterns to extract data
-  Object.keys(patterns).forEach(key => {
-    const match = text.match(patterns[key]);
-    if (match && match[1]) {
-      extractedData[key] = match[1].trim();
-    }
+  productBlocks.forEach((blockText, index) => {
+    const patterns = {
+      nik: /NIK[\s:]*([0-9\-\s]{16,25})/i,
+      nama: /Nama[\s:]*([A-Za-z\s\.]+?)(?:\s+Ibu|\s+Tempat|\s+No\.|\n|$)/i,
+      namaIbuKandung: /(?:Nama\s*)?Ibu\s*Kandung[\s:]*([A-Za-z\s]+?)(?:\s+Tempat|\s+No\.|\n|$)/i,
+      tempatTanggalLahir: /(?:Tempat|Tpat)?.*(?:Tanggal|Tgl)?.*Lahir[\s:]*([A-Za-z\s,0-9\-]+?)(?:\s+No\.|\n|$)/i,
+      noRek: /No.*?Rek(?:ening)?[\s:]*([0-9\s\-]{8,25})/i,
+      noAtm: /No.*ATM[\s:]*([0-9\s\-]{16,25})/i,
+      validThru: /(?:Valid.*Thru|Valid.*Kartu)\s*[\s:]+\s*([0-9\/\-]+)/i,
+      noHp: /No.*HP[\s:]*([0-9+\-\s]+)/i,
+      pinAtm: /Pin.*ATM[\s:]*([0-9\s\-]{4,10})/i,
+      email: /Email[\s:]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
+      bank: /Bank[\s:]*([A-Za-z\s]+?)(?:\s+Grade|\s+KCP|\s+Kantor\s+Cabang|\n|$)/i,
+      grade: /Grade[\s:]*([A-Za-z0-9\s\(\)]+?)(?:\s+KCP|\s+Kantor\s+Cabang|\s+NIK|\n|$)/i,
+      kcp: /(?:KCP|Kantor\s+Cabang)\s*[\s:]+\s*([A-Za-z0-9\s\-\.]+?)(?:\s+NIK|\n|$)/i,
+      noOrder: /No\s*\.?\s*ORDER[\s:]+([A-Za-z0-9\-]+)/i,
+      codeAgen: /(?:Code\s*Agen|Kode\s*Orlap)[\s:]+([A-Za-z0-9\-]+)/i,
+      customer: /(?:Customer|Pelanggan)[\s:]*([A-Za-z0-9\s]+?)(?:\s+NIK|\s+Nama|\n|$)/i,
+
+      // IB Credentials (Priority)
+      ibUser: /(?:User\s*I-Banking|I-Banking|User\s*IB|Internet\s*Banking|IB\s*User|IB)[\s:]+([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      ibPassword: /(?:Pass(?:word)?\s*I-Banking|Pass(?:word)?\s*IB|Password\s*Internet\s*Banking)[\s:]+([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      ibPin: /(?:Pin\s*I-Banking|Pin\s*IB)[\s:]+([0-9]{4,10})/i,
+
+
+      pinWondr: /PIN\s*Wondr[\s:]*([0-9]{4,8})/i,
+      passWondr: /Pass(?:word)?\s*Wondr[\s:]*([A-Za-z0-9!@#$%^&*]+)/i,
+      passEmail: /Pass(?:word)?\s*Email[\s:]*([A-Za-z0-9!@#$%^&*]+)/i,
+      mobileUser: /(?:User|Id|Login|Account|User\s*Id|User\s*M-Banking|User\s*M-Bank)\s*(?:Mobile|M-BCA|BRIMO|Livin|Wondr|Nyala|M-Bank|Login|Account|Nyala)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      mobilePassword: /(?:Kode\s*Akses|Password|Pass|Login|Pass\s*Login|Pass\s*Mobile|Password\s*Mobile)\s*(?:Mobile|M-BCA|BRIMO|Livin|Wondr|M-Bank|Login)?[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      mobilePin: /(?:Pin|Pin\s*Login|Pin\s*Mobile)\s*(?:M-BCA|Mobile|BRIMO|Livin|Wondr|M-Bank|Login)?[\s:]*([0-9]{4,10})/i,
+
+      myBCAUser: /(?:BCA\s*ID|BCA-ID|User\s*myBCA)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      myBCAPassword: /(?:Pass\s*BCA-ID|Pass\s*BCA\s*ID|Password\s*myBCA)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      myBCAPin: /(?:Pin\s*Transaksi|Pin\s*myBCA)[\s:]*([0-9]{4,10})/i
+    };
+
+    const extractedData = {};
+    Object.keys(patterns).forEach(key => {
+      const match = blockText.match(patterns[key]);
+      if (match && match[1]) extractedData[key] = match[1].trim();
+    });
+
+    const cleanNumeric = (str) => str ? str.replace(/[\s\-]/g, '') : '';
+    extractedData.noHp = cleanNumeric(extractedData.noHp);
+    extractedData.noRek = cleanNumeric(extractedData.noRek);
+    extractedData.nik = cleanNumeric(extractedData.nik);
+    extractedData.noAtm = cleanNumeric(extractedData.noAtm);
+    extractedData.pinAtm = cleanNumeric(extractedData.pinAtm);
+
+    // Date parsing removed to use manual input
+    extractedData.expired = null;
+
+    if (extractedData.noOrder || extractedData.nik) products.push(extractedData);
   });
-
-  // Clean up extracted data
-  if (extractedData.noHp) {
-    // Clean phone number
-    extractedData.noHp = extractedData.noHp.replace(/[\s\-]/g, '');
-  }
-
-  if (extractedData.nama) {
-    // Clean name
-    extractedData.nama = extractedData.nama.replace(/\s+/g, ' ').trim();
-  }
-
-  if (extractedData.namaIbuKandung) {
-    // Clean mother's name
-    extractedData.namaIbuKandung = extractedData.namaIbuKandung.replace(/\s+/g, ' ').trim();
-  }
-
-  if (extractedData.bank) {
-    // Clean bank name
-    extractedData.bank = extractedData.bank.replace(/\s+/g, ' ').trim();
-  }
-
-  // Convert expired date to proper format if needed
-  if (extractedData.expired) {
-    try {
-      // Try to parse various date formats
-      const dateStr = extractedData.expired;
-      let parsedDate;
-
-      if (dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
-        // Already in YYYY-MM-DD format
-        parsedDate = new Date(dateStr);
-      } else if (dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-        // MM/DD/YYYY format
-        const [month, day, year] = dateStr.split('/');
-        parsedDate = new Date(`${year}-${month}-${day}`);
-      } else if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
-        // DD-MM-YYYY format
-        const [day, month, year] = dateStr.split('-');
-        parsedDate = new Date(`${year}-${month}-${day}`);
-      }
-
-      if (parsedDate && !isNaN(parsedDate.getTime())) {
-        extractedData.expired = parsedDate.toISOString().split('T')[0];
-      }
-    } catch (error) {
-      logger.warn('Failed to parse expired date from PDF', { dateStr: extractedData.expired });
-    }
-  }
-
-  logger.info('Extracted data from PDF', {
-    extractedFields: Object.keys(extractedData),
-    data: extractedData
-  });
-
-  // Return as array (single product from PDF)
-  if (Object.keys(extractedData).length > 0) {
-    products.push(extractedData);
-  }
-
   return products;
 };
 
-// Main function to process document and extract product data
 const processDocumentFile = async (filePath) => {
   try {
     const extension = path.extname(filePath).toLowerCase();
     logger.info('Processing document file', { filePath, extension });
 
     let text = '';
-    let format = 'unknown';
+    let htmlContent = null;
+    let products = [];
+    let sheetData = null;
 
     if (extension === '.pdf') {
-      // Process PDF files
       const pdfBuffer = fs.readFileSync(filePath);
       text = await extractTextFromPDF(pdfBuffer);
-      format = 'pdf';
+      products = parseProductData(text);
     } else {
-      // Process other document formats (Word, Excel, CSV)
-      const result = await parseDocument(filePath);
+      const parseResult = await parseDocument(filePath);
+      if (!parseResult.success) throw new Error(parseResult.error);
+      text = parseResult.text || '';
+      htmlContent = parseResult.html || null;
+      sheetData = parseResult.sheetData;
 
-      if (result.success) {
-        text = result.text;
-        format = result.format;
+      if (sheetData && parseResult.hasTable) {
+        products = parseTableData(sheetData);
       } else {
-        return {
-          success: false,
-          error: result.error,
-          products: []
-        };
+        products = parseProductData(text);
+        if (extension === '.docx' && htmlContent && products.length > 0) {
+          try {
+            const images = extractImagesFromHtml(htmlContent);
+            if (images.length > 0) {
+              const uploadsDir = path.join(__dirname, '../uploads');
+              if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+              images.forEach(img => {
+                if (products[img.productIndex]) {
+                  const filename = saveImageToDisk(img.base64, uploadsDir);
+                  if (filename) {
+                    if (img.type === 'uploadFotoId') products[img.productIndex].uploadFotoId = filename;
+                    else if (img.type === 'uploadFotoSelfie') products[img.productIndex].uploadFotoSelfie = filename;
+                  }
+                }
+              });
+            }
+          } catch (e) { logger.warn('Image extraction warning:', e.message); }
+        }
       }
     }
 
-    // Parse product data from extracted text
-    const products = parseProductData(text);
-
-    logger.info('Document processing completed', {
-      filePath,
-      format,
-      extractedProducts: products.length,
-      textLength: text.length
-    });
-
-    return {
-      success: true,
-      products,
-      format,
-      textPreview: text.substring(0, 500) + (text.length > 500 ? '...' : '')
-    };
+    const validationResult = validateExtractedData(products);
+    return { success: true, ...validationResult };
 
   } catch (error) {
-    logger.error('Document processing failed', {
-      filePath,
-      error: error.message,
-      stack: error.stack
-    });
-
-    return {
-      success: false,
-      error: error.message,
-      products: []
-    };
+    logger.error('Document processing failed', { error: error.message });
+    return { success: false, validProducts: [], errors: [], summary: { total: 0, valid: 0, invalid: 0 }, error: error.message };
   }
 };
 
-// Backward compatibility - alias for PDF processing
-const processPDFFile = processDocumentFile;
+const parseTableData = (tableData) => {
+  const products = [];
+  if (!tableData || tableData.length < 2) return products;
+  const headers = tableData[0].map(h => String(h).trim().toLowerCase());
+  const fieldMapping = {
+    'no. order': 'noOrder', 'kode agen': 'codeAgen', 'bank': 'bank', 'grade': 'grade', 'kcp': 'kcp',
+    'nik': 'nik', 'nama': 'nama', 'nama ibu kandung': 'namaIbuKandung', 'tempat tanggal lahir': 'tempatTanggalLahir',
+    'no. rekening': 'noRek', 'no. atm': 'noAtm', 'valid thru': 'validThru', 'valid kartu': 'validThru', 'no. hp': 'noHp', 'pin atm': 'pinAtm',
+    'kcp': 'kcp', 'kantor cabang': 'kcp',
+    'email': 'email', 'expired': 'expired', 'foto ktp': 'uploadFotoId', 'foto selfie': 'uploadFotoSelfie',
+    'customer': 'customer', 'pelanggan': 'customer',
+    'kode akses': 'mobilePassword', 'user m-bca': 'mobileUser', 'pin m-bca': 'mobilePin', 'bca-id': 'myBCAUser', 'pass bca-id': 'myBCAPassword',
+    'pin transaksi': 'myBCAPin', 'user i-banking': 'ibUser', 'pin i-banking': 'ibPin', 'i-banking': 'ibUser', 'pass i-banking': 'ibPassword', 'password internet banking': 'ibPassword',
+    'pass i-banking': 'ibPassword', 'password i-banking': 'ibPassword', 'pin i-banking': 'ibPin',
+    'user ib': 'ibUser', 'pass ib': 'ibPassword', 'password ib': 'ibPassword', 'pin ib': 'ibPin',
+    // OCBC (Nyala)
+    'user nyala': 'mobileUser', 'id nyala': 'mobileUser', 'user id nyala': 'mobileUser',
+    'nyala id': 'mobileUser', 'nyala user': 'mobileUser',
+    'pin mobile': 'mobilePin', 'pass mobile': 'mobilePassword', 'password mobile': 'mobilePassword',
+    // Generic / Other
+    'user m-banking': 'mobileUser', 'user m-bank': 'mobileUser', 'pin login': 'mobilePin', 'pass login': 'mobilePassword', 'password login': 'mobilePassword',
+    // BRI (BRIMO)
+    'user brimo': 'mobileUser', 'id brimo': 'mobileUser', 'password brimo': 'mobilePassword', 'pass brimo': 'mobilePassword', 'pin brimo': 'mobilePin',
+    'brimo id': 'mobileUser', 'brimo user': 'mobileUser', 'brimo password': 'mobilePassword', 'brimo pass': 'mobilePassword', 'brimo pin': 'mobilePin',
+    // Mandiri (Livin)
+    'user livin': 'mobileUser', 'id livin': 'mobileUser', 'password livin': 'mobilePassword', 'pass livin': 'mobilePassword', 'pin livin': 'mobilePin',
+    'livin id': 'mobileUser', 'livin user': 'mobileUser', 'livin password': 'mobilePassword', 'livin pass': 'mobilePassword', 'livin pin': 'mobilePin',
+    // BNI (Wondr)
+    'user wondr': 'mobileUser', 'id wondr': 'mobileUser', 'password wondr': 'mobilePassword', 'pass wondr': 'mobilePassword', 'pin wondr': 'mobilePin',
+    'wondr id': 'mobileUser', 'wondr user': 'mobileUser', 'wondr password': 'mobilePassword', 'wondr pass': 'mobilePassword', 'wondr pin': 'mobilePin',
+    // Generic variations for Mobile Banking
+    'user mobile': 'mobileUser', 'id mobile': 'mobileUser', 'password mobile': 'mobilePassword', 'pass mobile': 'mobilePassword', 'pin mobile': 'mobilePin',
+    'user mbanking': 'mobileUser', 'id mbanking': 'mobileUser', 'password mbanking': 'mobilePassword', 'pass mbanking': 'mobilePassword', 'pin mbanking': 'mobilePin',
+    'kata sandi mobile': 'mobilePassword', 'login mobile': 'mobileUser', 'akun mobile': 'mobileUser'
+  };
 
-// Validate extracted product data
+  const headerMap = {};
+  headers.forEach((h, i) => { headerMap[i] = fieldMapping[h] || fieldMapping[h.replace(/[.]/g, '')] || h; });
+  for (let i = 1; i < tableData.length; i++) {
+    const row = tableData[i];
+    const p = {};
+    if (!row) continue;
+    row.forEach((cell, idx) => {
+      const field = headerMap[idx];
+      if (field) p[field] = String(cell).trim();
+    });
+    if (p.noHp) p.noHp = p.noHp.replace(/[\s\-]/g, '');
+    if (p.noRek) p.noRek = p.noRek.replace(/[\s\-]/g, '');
+    if (p.nik) p.nik = p.nik.replace(/[\s\-]/g, '');
+    if (Object.keys(p).length > 3) products.push(p);
+  }
+  return products;
+};
+
 const validateExtractedData = (products) => {
   const errors = [];
   const validProducts = [];
-
   products.forEach((product, index) => {
     const productErrors = [];
+    const mandatoryFields = ['nik', 'nama', 'noRek', 'noAtm', 'noHp', 'pinAtm', 'email'];
 
-    // Required field validation
-    const requiredFields = ['nik', 'nama', 'noRek', 'noAtm', 'noHp', 'pinAtm', 'pinWondr', 'email', 'expired'];
-    requiredFields.forEach(field => {
-      if (!product[field]) {
+    // DEBUG LOG
+    if (index === 0) console.log('DEBUG VALIDATION FIELDS:', mandatoryFields);
+
+    const bank = (product.bank || '').toLowerCase();
+
+    if (bank.includes('bni')) {
+      if (product.pinWondr) mandatoryFields.push('pinWondr');
+    }
+
+    mandatoryFields.forEach(field => {
+      if (!product[field] || String(product[field]).trim() === '') {
         productErrors.push(`${field} is required`);
       }
     });
-
-    // Format validation
-    if (product.nik && !/^\d{16}$/.test(product.nik)) {
-      productErrors.push('NIK must be 16 digits');
-    }
-
-    if (product.noRek && !/^\d{10,18}$/.test(product.noRek)) {
-      productErrors.push('No. Rekening must be 10-18 digits');
-    }
-
-    if (product.noAtm && !/^\d{16}$/.test(product.noAtm)) {
-      productErrors.push('No. ATM must be 16 digits');
-    }
-
-    if (product.noHp && !/^(\+62|62|0)8[1-9][0-9]{6,9}$/.test(product.noHp.replace(/[\s\-]/g, ''))) {
-      productErrors.push('No. HP format is invalid');
-    }
-
-    if (product.pinAtm && !/^\d{4,6}$/.test(product.pinAtm)) {
-      productErrors.push('PIN ATM must be 4-6 digits');
-    }
-
-    if (product.pinWondr && !/^\d{4,6}$/.test(product.pinWondr)) {
-      productErrors.push('PIN Wondr must be 4-6 digits');
-    }
-
-    if (product.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(product.email)) {
-      productErrors.push('Email format is invalid');
-    }
-
-    if (productErrors.length === 0) {
-      validProducts.push(product);
-    } else {
-      errors.push({
-        productIndex: index,
-        errors: productErrors,
-        data: product
-      });
-    }
+    if (product.nik && !/^\d{16}$/.test(product.nik)) productErrors.push('NIK must be 16 digits');
+    if (productErrors.length === 0) validProducts.push(product);
+    else errors.push({ productIndex: index, errors: productErrors, data: product });
   });
-
-  return {
-    validProducts,
-    errors,
-    summary: {
-      total: products.length,
-      valid: validProducts.length,
-      invalid: errors.length
-    }
-  };
+  return { validProducts, errors, summary: { total: products.length, valid: validProducts.length, invalid: errors.length } };
 };
 
 module.exports = {
-  processPDFFile,
+  processPDFFile: processDocumentFile,
+  processDocumentFile,
   extractTextFromPDF,
   parseProductData,
   validateExtractedData

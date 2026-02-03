@@ -154,7 +154,9 @@ const productSchema = Joi.object({
     'string.min': 'Password Internet Banking minimal 6 karakter',
     'any.required': 'Password Internet Banking wajib diisi untuk bank yang dipilih'
   }),
-  ocbcNyalaUser: Joi.string().optional(),
+  ibPin: Joi.string().pattern(/^\d{4,8}$/).optional().allow('').messages({
+    'string.pattern.base': 'PIN Internet Banking harus 4-8 digit angka'
+  }),
   merchantUser: Joi.string().optional(),
   merchantPassword: Joi.string().min(6).optional(),
 
@@ -289,7 +291,6 @@ const productUpdateSchema = Joi.object({
   }),
   ibUser: Joi.string().optional(),
   ibPassword: Joi.string().min(6).optional(),
-  ocbcNyalaUser: Joi.string().optional(),
 
   expired: Joi.date().optional().messages({
     'date.base': 'Format tanggal expired tidak valid (gunakan format YYYY-MM-DD)'
@@ -303,7 +304,7 @@ const productUpdateSchema = Joi.object({
     'string.base': 'Foto Selfie harus berupa string'
   }),
 
-  status: Joi.string().valid('pending', 'in_progress', 'completed').optional().messages({
+  status: Joi.string().valid('pending', 'in_progress', 'completed', 'cancelled', 'Ready').optional().messages({
     'any.only': 'Status produk tidak valid',
     'string.base': 'Status produk harus berupa string'
   }),

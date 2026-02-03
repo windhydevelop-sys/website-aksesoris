@@ -2,26 +2,68 @@ const fs = require('fs');
 const path = require('path');
 const mammoth = require('mammoth');
 const XLSX = require('xlsx');
+const cheerio = require('cheerio');
 const { logger } = require('./audit');
 
-// Parse Word documents (.docx)
+// Parse Word documents (.docx) - Enhanced to extract tables
 const parseWordDocument = async (filePath) => {
   try {
     logger.info('Parsing Word document', { filePath });
 
-    const result = await mammoth.extractRawText({ path: filePath });
-    const text = result.value;
+    // Try to extract HTML to parse tables
+    const htmlResult = await mammoth.convertToHtml({ path: filePath });
+    const html = htmlResult.value;
 
-    logger.info('Word document parsed successfully', {
-      filePath,
-      textLength: text.length
-    });
+    // Check if document contains tables
+    const $ = cheerio.load(html);
+    const tables = $('table');
 
-    return {
-      success: true,
-      text,
-      format: 'docx'
-    };
+    if (tables.length > 0) {
+      // Extract table data
+      const tableData = [];
+
+      tables.first().find('tr').each((i, row) => {
+        const rowData = [];
+        $(row).find('td, th').each((j, cell) => {
+          rowData.push($(cell).text().trim());
+        });
+        if (rowData.length > 0) {
+          tableData.push(rowData);
+        }
+      });
+
+      logger.info('Word document with table parsed successfully', {
+        filePath,
+        rows: tableData.length,
+        hasTable: true
+      });
+
+      return {
+        success: true,
+        text: html,
+        format: 'docx',
+        sheetData: tableData, // Same format as Excel parser
+        hasTable: true
+      };
+    } else {
+      // Fallback to raw text extraction
+      const textResult = await mammoth.extractRawText({ path: filePath });
+      const text = textResult.value;
+
+      logger.info('Word document parsed successfully (no table)', {
+        filePath,
+        textLength: text.length,
+        hasTable: false
+      });
+
+      return {
+        success: true,
+        text, // Raw text for regex parsing
+        html, // HTML for image extraction
+        format: 'docx',
+        hasTable: false
+      };
+    }
 
   } catch (error) {
     logger.error('Word document parsing failed', {
@@ -51,8 +93,8 @@ const parseExcelDocument = async (filePath) => {
     // Try to find a sheet with product data
     for (const sheetName of sheetNames) {
       if (sheetName.toLowerCase().includes('product') ||
-          sheetName.toLowerCase().includes('data') ||
-          sheetName.toLowerCase().includes('produk')) {
+        sheetName.toLowerCase().includes('data') ||
+        sheetName.toLowerCase().includes('produk')) {
         targetSheet = workbook.Sheets[sheetName];
         break;
       }

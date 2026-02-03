@@ -26,7 +26,10 @@ import {
   CreditCard,
   LocationOn,
   DateRange,
-  Badge
+  Badge,
+  VpnKey,
+  Email,
+  AccountCircle
 } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 import { getStatusChip } from '../utils/statusHelpers';
@@ -85,21 +88,36 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
     customer: { label: 'Customer', icon: <Person /> },
     bank: { label: 'Bank', icon: <Business /> },
     grade: { label: 'Grade', icon: <Badge /> },
-    kcp: { label: 'KCP', icon: <LocationOn /> },
+    kcp: { label: 'Kantor Cabang', icon: <LocationOn /> },
     nik: { label: 'NIK', icon: <CreditCard /> },
     nama: { label: 'Nama', icon: <Person /> },
     namaIbuKandung: { label: 'Nama Ibu Kandung', icon: <Person /> },
     tempatTanggalLahir: { label: 'Tempat / Tanggal Lahir', icon: <LocationOn /> },
     noRek: { label: 'No. Rekening', icon: <CreditCard /> },
     noAtm: { label: 'No. ATM', icon: <CreditCard /> },
-    validThru: { label: 'Valid Thru', icon: <DateRange /> },
+    validThru: { label: 'Valid Kartu', icon: <DateRange /> },
     noHp: { label: 'No. HP', icon: <Phone /> },
+    pinAtm: { label: 'Pin ATM', icon: <VpnKey /> },
     fieldStaff: { label: 'Field Staff', icon: <Person /> },
-    expired: { label: 'Expired', icon: <DateRange /> }
+    expired: { label: 'Expired', icon: <DateRange /> },
+    // Bank Credentials
+    mobileUser: { label: 'User Mobile', icon: <AccountCircle /> },
+    mobilePassword: { label: 'Kode Akses / Pass Mobile', icon: <VpnKey /> },
+    mobilePin: { label: 'Pin Mobile', icon: <VpnKey /> },
+    ibUser: { label: 'User IB', icon: <AccountCircle /> },
+    ibPassword: { label: 'Pass IB', icon: <VpnKey /> },
+    ibPin: { label: 'Pin IB', icon: <VpnKey /> },
+    myBCAUser: { label: 'BCA-ID', icon: <AccountCircle /> },
+    myBCAPassword: { label: 'Pass BCA-ID', icon: <VpnKey /> },
+    myBCAPin: { label: 'Pin Transaksi', icon: <VpnKey /> },
+    email: { label: 'Email', icon: <Email /> },
+    passEmail: { label: 'Pass Email', icon: <VpnKey /> }
   };
 
   // Sensitive fields to mask
-  const sensitiveFields = ['pinAtm', 'pinWondr', 'passWondr', 'email', 'passEmail'];
+  const sensitiveFields = [
+    'pinWondr', 'passWondr'
+  ];
 
   return (
     <Drawer
@@ -205,7 +223,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
               <TableBody>
                 {Object.entries(fieldConfig).map(([key, config]) => {
                   let value = product[key];
-                  
+
                   if (value === undefined || value === null || value === '') {
                     return null;
                   }
@@ -222,11 +240,11 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
 
                   return (
                     <TableRow key={key}>
-                      <TableCell 
-                        component="th" 
-                        scope="row" 
-                        sx={{ 
-                          fontWeight: 'bold', 
+                      <TableCell
+                        component="th"
+                        scope="row"
+                        sx={{
+                          fontWeight: 'bold',
                           width: '35%',
                           display: 'flex',
                           alignItems: 'center',
@@ -234,15 +252,16 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
                         }}
                       >
                         {config.icon}
-                        {config.label}
+                        {key === 'mobileUser' && product.bank?.toLowerCase().includes('ocbc') ? 'User Nyala' :
+                          config.label}
                       </TableCell>
                       <TableCell>
                         {key === 'status' ? (
                           getStatusChip(value, 'small', { fontSize: '0.75rem' })
                         ) : key === 'nik' ? (
-                          <Chip 
-                            label={value} 
-                            variant="outlined" 
+                          <Chip
+                            label={value}
+                            variant="outlined"
                             color="primary"
                             sx={{ fontWeight: 'bold' }}
                           />

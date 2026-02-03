@@ -9,6 +9,7 @@ const { validateProduct, validateProductUpdate } = require('../utils/validation'
 const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
 const { createProduct, getProducts, getProductById, getProductsExport } = require('../controllers/products');
+const { generateWordTemplate, generateBankSpecificTemplate, generateCorrectedWord } = require('../utils/wordTemplateGenerator');
 
 const router = express.Router();
 
@@ -224,14 +225,16 @@ const pdfFileFilter = (req, file, cb) => {
   }
 };
 
-const pdfUpload = multer({
+const documentUpload = multer({
   storage,
-  fileFilter: pdfFileFilter,
+  fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB for PDF files
-    files: 1 // Only 1 PDF file per request
+    fileSize: 10 * 1024 * 1024, // 10MB for documents
+    files: 1
   }
-}).single('pdfFile');
+}).single('documentFile');
+
+const pdfUpload = documentUpload; // Alias for backward compatibility if needed elsewhere
 
 // Create product with validation and security
 router.post('/',
@@ -253,22 +256,116 @@ router.get('/test', (req, res) => {
   res.json({ success: true, message: 'Products router test working' });
 });
 
+// Validate relational data (Customer, Orlap, Order) before final import
+router.post('/validate-import-data', auth, async (req, res) => {
+  try {
+    const { products } = req.body;
+    if (!products || !Array.isArray(products)) {
+      return res.status(400).json({ success: false, error: 'Invalid products data' });
+    }
+
+    const Customer = require('../models/Customer');
+    const FieldStaff = require('../models/FieldStaff');
+    const Order = require('../models/Order');
+
+    const results = {
+      missingCustomers: [],
+      missingFieldStaff: [],
+      missingOrders: []
+    };
+
+    // Get unique values to check
+    const uniqueCustomers = [...new Set(products.map(p => p.customer))];
+    const uniqueOrlaps = [...new Set(products.map(p => p.codeAgen))];
+    const uniqueOrders = [...new Set(products.map(p => p.noOrder))];
+
+    // Check Customers
+    for (const name of uniqueCustomers) {
+      if (!name || name.trim() === '') {
+        results.missingCustomers.push('(Kosong)');
+        continue;
+      }
+      const exists = await Customer.findOne({
+        $or: [{ namaCustomer: name }, { kodeCustomer: name }]
+      });
+      if (!exists) results.missingCustomers.push(name);
+    }
+
+    // Check FieldStaff
+    for (const code of uniqueOrlaps) {
+      if (!code || code.trim() === '') {
+        results.missingFieldStaff.push('(Kosong)');
+        continue;
+      }
+      const exists = await FieldStaff.findOne({ kodeOrlap: code });
+      if (!exists) results.missingFieldStaff.push(code);
+    }
+
+    // Check Orders
+    for (const no of uniqueOrders) {
+      if (!no || no.trim() === '') {
+        results.missingOrders.push('(Kosong)');
+        continue;
+      }
+      const exists = await Order.findOne({ noOrder: no });
+      if (!exists) results.missingOrders.push(no);
+    }
+
+    res.json({
+      success: true,
+      data: results,
+      isAllValid: results.missingCustomers.length === 0 &&
+        results.missingFieldStaff.length === 0 &&
+        results.missingOrders.length === 0
+    });
+
+  } catch (error) {
+    console.error('Error validating import data:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// Export corrected data as Word
+router.post('/export-corrected-word', auth, async (req, res) => {
+  try {
+    const { products } = req.body;
+    if (!products || !Array.isArray(products)) {
+      return res.status(400).json({ success: false, error: 'Invalid products data' });
+    }
+
+    const { success, buffer, filename, error } = await generateCorrectedWord(products);
+
+    if (!success) {
+      return res.status(500).json({ success: false, error });
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.send(buffer);
+
+  } catch (error) {
+    console.error('Error exporting corrected word:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+
 // Search products by NIK
 router.get('/search', auth, addUserInfo, async (req, res) => {
   console.log('[/api/products/search] Route hit.');
   try {
     const { nik } = req.query;
-    
+
     if (!nik || nik.length < 3) {
-      return res.json({ 
-        success: true, 
+      return res.json({
+        success: true,
         data: [],
         message: 'Minimal 3 digit NIK diperlukan untuk pencarian'
       });
     }
 
     // Search for products with matching NIK (partial match)
-    const query = { 
+    const query = {
       nik: { $regex: nik, $options: 'i' } // Case-insensitive partial match
     };
 
@@ -292,8 +389,8 @@ router.get('/search', auth, addUserInfo, async (req, res) => {
       resultsCount: decryptedProducts.length
     }, req);
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: decryptedProducts,
       count: decryptedProducts.length
     });
@@ -305,13 +402,15 @@ router.get('/search', auth, addUserInfo, async (req, res) => {
       userId: req.userId,
       searchTerm: req.query.nik
     }, req);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: 'Failed to search products',
       data: []
     });
   }
 });
+
+
 
 // Get product by id with decryption
 router.get('/:id', addUserInfo, getProductById);
@@ -378,7 +477,7 @@ router.put('/:id',
         error: 'Failed to update product'
       });
     }
-});
+  });
 
 // Delete product with security checks
 router.delete('/:id', addUserInfo, async (req, res) => {
@@ -436,30 +535,82 @@ router.delete('/:id', addUserInfo, async (req, res) => {
   }
 });
 
-// Generic Document Import endpoint - Preview data without saving
-router.post('/import-document',
+// Download Word Template for Bulk Upload
+router.get('/download-template-word',
+  auth,
   addUserInfo,
-  (req, res, next) => {
-    // Use the document upload configuration for all supported formats
-    const documentUpload = multer({
-      storage,
-      fileFilter,
-      limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB for documents
-        files: 1
-      }
-    }).single('documentFile');
+  async (req, res) => {
+    console.log('Template download requested by user:', req.userId);
+    try {
+      console.log('Generating template...');
+      const result = await generateWordTemplate();
+      console.log('Template generation result:', result.success ? 'Success' : 'Failed');
 
-    documentUpload(req, res, (err) => {
-      if (err) {
-        return res.status(400).json({
+      if (!result.success) {
+        console.error('Template generation failed:', result.error);
+        return res.status(500).json({
           success: false,
-          error: err.message
+          error: 'Failed to generate template'
         });
       }
-      next();
-    });
-  },
+
+      console.log('Sending response...');
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', `attachment; filename=${result.filename}`);
+      res.send(result.buffer);
+      console.log('Response sent.');
+
+    } catch (err) {
+      console.error('TEMPLATE DOWNLOAD CRITICAL ERROR:', err);
+      console.error(err.stack);
+
+      securityLog('TEMPLATE_DOWNLOAD_FAILED', 'low', {
+        error: err.message,
+        userId: req.userId
+      }, req);
+
+      res.status(500).json({
+        success: false,
+        error: 'Failed to download template: ' + err.message
+      });
+    }
+  });
+
+// Download Word Template per Bank
+router.get('/download-template-bank/:bankName',
+  auth,
+  addUserInfo,
+  async (req, res) => {
+    const { bankName } = req.params;
+    console.log(`Bank-specific template download requested: ${bankName} by user:`, req.userId);
+    try {
+      const result = await generateBankSpecificTemplate(bankName);
+
+      if (!result.success) {
+        return res.status(500).json({
+          success: false,
+          error: `Failed to generate ${bankName} template`
+        });
+      }
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', `attachment; filename=${result.filename}`);
+      res.send(result.buffer);
+
+    } catch (err) {
+      console.error(`BANK TEMPLATE DOWNLOAD ERROR (${bankName}):`, err);
+      res.status(500).json({
+        success: false,
+        error: `Failed to download ${bankName} template`
+      });
+    }
+  });
+
+// Generic Document Import endpoint - Preview data without saving
+router.post('/import-document',
+  auth,
+  addUserInfo,
+  documentUpload,
   async (req, res) => {
     try {
       if (!req.file) {
@@ -489,27 +640,31 @@ router.post('/import-document',
         });
       }
 
-      // Validate extracted data
-      const validation = validateExtractedData(result.products);
+      // Validation is already done by processPDFFile
+      const validation = {
+        validProducts: result.validProducts || [],
+        errors: result.errors || [],
+        summary: result.summary || { total: 0, valid: 0, invalid: 0 }
+      };
 
-      // Clean up uploaded file
-      if (fs.existsSync(documentFilePath)) {
-        fs.unlinkSync(documentFilePath);
-      }
+      // Clean up uploaded file (DISABLED FOR DEBUGGING)
+      // if (fs.existsSync(documentFilePath)) {
+      //   fs.unlinkSync(documentFilePath);
+      // }
 
       // Determine document type for logging
       const docType = fileExtension === '.pdf' ? 'PDF' :
-                     fileExtension === '.docx' ? 'Word' :
-                     fileExtension === '.xlsx' || fileExtension === '.xls' ? 'Excel' :
-                     fileExtension === '.csv' ? 'CSV' : 'Document';
+        fileExtension === '.docx' ? 'Word' :
+          fileExtension === '.xlsx' || fileExtension === '.xls' ? 'Excel' :
+            fileExtension === '.csv' ? 'CSV' : 'Document';
 
       // Audit log
       auditLog('DOCUMENT_IMPORT_PREVIEW', req.userId, 'Product', null, {
         filename: originalFilename,
         documentType: docType,
-        extractedProducts: result.products.length,
-        validProducts: validation.validProducts.length,
-        invalidProducts: validation.errors.length
+        extractedProducts: validation.summary.total,
+        validProducts: validation.summary.valid,
+        invalidProducts: validation.summary.invalid
       }, req);
 
       res.json({
@@ -518,7 +673,7 @@ router.post('/import-document',
         data: {
           filename: originalFilename,
           documentType: docType,
-          textPreview: result.textPreview,
+          textPreview: result.textPreview || '',
           extractedData: validation.validProducts,
           validation: {
             total: validation.summary.total,
@@ -546,28 +701,22 @@ router.post('/import-document',
         error: 'Failed to import document'
       });
     }
-  });
+  }
+);
+
+
 
 // Document Import with data saving endpoint
 router.post('/import-document-save',
+  auth,
   addUserInfo,
-  (req, res, next) => {
-    pdfUpload(req, res, (err) => {
-      if (err) {
-        return res.status(400).json({
-          success: false,
-          error: err.message
-        });
-      }
-      next();
-    });
-  },
+  documentUpload,
   async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({
           success: false,
-          error: 'No PDF file uploaded'
+          error: 'No document file uploaded'
         });
       }
 
@@ -590,8 +739,20 @@ router.post('/import-document-save',
         });
       }
 
-      // Validate extracted data
-      const validation = validateExtractedData(result.products);
+      // Use validation results from parser directly
+      const validation = {
+        validProducts: result.validProducts || [],
+        errors: result.errors || [],
+        summary: result.summary || { total: 0, valid: 0, invalid: 0 }
+      };
+
+      const manualExpiredDate = req.body.expiredDate;
+      const manualStatus = req.body.status || 'pending';
+
+      // Clean up uploaded file
+      if (fs.existsSync(pdfFilePath)) {
+        fs.unlinkSync(pdfFilePath);
+      }
 
       // Save valid products to database
       const savedProducts = [];
@@ -603,9 +764,24 @@ router.post('/import-document-save',
           productData.createdBy = req.userId;
           productData.lastModifiedBy = req.userId;
 
+          // Apply manual expired date if provided and product doesn't have one
+          if (manualExpiredDate && (!productData.expired || productData.expired === '')) {
+            productData.expired = manualExpiredDate;
+          }
+
+          // Apply manual status
+          if (manualStatus) {
+            productData.status = manualStatus;
+          }
+
           const product = new Product(productData);
           await product.save();
-          savedProducts.push(product.getDecryptedData());
+          savedProducts.push({
+            id: product._id,
+            nama: productData.nama,
+            noOrder: productData.noOrder,
+            status: 'Success'
+          });
 
           // Audit log for each saved product
           auditLog('CREATE', req.userId, 'Product', product._id, {
@@ -616,39 +792,47 @@ router.post('/import-document-save',
 
         } catch (saveError) {
           saveErrors.push({
-            data: productData,
+            nama: productData.nama,
+            noOrder: productData.noOrder,
             error: saveError.message
           });
         }
       }
 
-      // Clean up uploaded file
-      if (fs.existsSync(pdfFilePath)) {
-        fs.unlinkSync(pdfFilePath);
-      }
-
       // Audit log for import operation
       auditLog('PDF_IMPORT_SAVE', req.userId, 'Product', null, {
         filename: originalFilename,
-        totalExtracted: result.products.length,
-        validProducts: validation.validProducts.length,
+        totalExtracted: validation.summary.total,
+        validProducts: validation.summary.valid,
         savedProducts: savedProducts.length,
-        saveErrors: saveErrors.length
+        saveErrors: saveErrors.length,
+        manualExpiredDateSet: !!manualExpiredDate,
+        manualStatusSet: manualStatus
       }, req);
 
       res.json({
         success: true,
-        message: `PDF import completed. ${savedProducts.length} products saved successfully.`,
+        message: `Import completed. ${savedProducts.length} products saved, ${saveErrors.length + validation.errors.length} failed/invalid.`,
         data: {
           filename: originalFilename,
-          savedProducts,
+          savedCount: savedProducts.length,
+          failedCount: saveErrors.length + validation.errors.length,
+          results: [
+            ...savedProducts,
+            ...saveErrors.map(e => ({ ...e, status: 'Failed' })),
+            ...validation.errors.map(e => ({
+              nama: e.product.nama || 'Unknown',
+              noOrder: e.product.noOrder || '-',
+              status: 'Invalid',
+              error: e.errors.join(', ')
+            }))
+          ],
           summary: {
-            extracted: result.products.length,
-            valid: validation.validProducts.length,
+            extracted: validation.summary.total,
+            valid: validation.summary.valid,
             saved: savedProducts.length,
-            errors: saveErrors.length
-          },
-          errors: saveErrors.length > 0 ? saveErrors : undefined
+            errors: saveErrors.length + validation.errors.length
+          }
         }
       });
 
@@ -669,6 +853,6 @@ router.post('/import-document-save',
         error: 'Failed to import and save PDF data'
       });
     }
-});
+  });
 
 module.exports = router;

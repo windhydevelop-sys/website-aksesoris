@@ -108,14 +108,14 @@ const ProductDetail = () => {
     customer: 'Customer',
     bank: 'Bank',
     grade: 'Grade',
-    kcp: 'KCP',
+    kcp: 'Kantor Cabang',
     nik: 'NIK',
     nama: 'Nama',
     namaIbuKandung: 'Nama Ibu Kandung',
     tempatTanggalLahir: 'Tempat / Tanggal Lahir',
     noRek: 'No. Rekening',
     noAtm: 'No. ATM',
-    validThru: 'Valid Thru',
+    validThru: 'Valid Kartu',
     noHp: 'No. HP',
     handphoneMerek: 'Merek Handphone',
     handphoneTipe: 'Tipe Handphone',
@@ -127,6 +127,14 @@ const ProductDetail = () => {
     email: 'Email',
     passEmail: 'Password Email',
     expired: 'Expired',
+    mobileUser: 'User Mobile',
+    mobilePassword: 'Kode Akses / Pass Mobile',
+    mobilePin: 'Pin Mobile',
+    ibUser: 'User IB',
+    ibPin: 'Pin IB',
+    myBCAUser: 'BCA-ID',
+    myBCAPassword: 'Pass BCA-ID',
+    myBCAPin: 'Pin Transaksi'
   };
 
   const fieldOrder = [
@@ -154,6 +162,14 @@ const ProductDetail = () => {
     'email',
     'passEmail',
     'expired',
+    'mobileUser',
+    'mobilePassword',
+    'mobilePin',
+    'ibUser',
+    'ibPin',
+    'myBCAUser',
+    'myBCAPassword',
+    'myBCAPin'
   ];
 
   return (
@@ -165,7 +181,7 @@ const ProductDetail = () => {
         <Card>
           <CardContent>
             <Typography variant="h4" gutterBottom>Detail Produk</Typography>
-            
+
             {/* Status Section */}
             {product.status && (
               <Box sx={{ mb: 3 }}>
@@ -193,11 +209,11 @@ const ProductDetail = () => {
             )}
             <Grid container spacing={2}>
               {/* Display images first if available */}
-              {['uploadFotoId','uploadFotoSelfie'].map((imgKey)=> (
+              {['uploadFotoId', 'uploadFotoSelfie'].map((imgKey) => (
                 product[imgKey] ? (
                   <Grid item xs={12} sm={6} key={imgKey}>
                     <Typography variant="subtitle2" gutterBottom>{imgKey === 'uploadFotoId' ? 'Foto KTP' : 'Foto Selfie'}</Typography>
-                    <CardMedia component="img" image={buildImageUrl(product[imgKey])} alt={imgKey} sx={{ maxHeight: 300, objectFit: 'contain', borderRadius:2, border:'1px solid #444' }} />
+                    <CardMedia component="img" image={buildImageUrl(product[imgKey])} alt={imgKey} sx={{ maxHeight: 300, objectFit: 'contain', borderRadius: 2, border: '1px solid #444' }} />
                   </Grid>
                 ) : null
               ))}
@@ -205,7 +221,7 @@ const ProductDetail = () => {
               <Grid item xs={12}>
                 <Table size="small">
                   <TableBody>
-                    {fieldOrder.map((key)=>{
+                    {fieldOrder.map((key) => {
                       let value = product[key];
 
                       // Handle handphone data - use direct fields stored in product
@@ -229,19 +245,19 @@ const ProductDetail = () => {
                       const label = fieldLabels[key] || key;
                       return (
                         <TableRow key={key}>
-                          <TableCell component="th" scope="row" sx={{ fontWeight:'bold', width:'35%' }}>{label}</TableCell>
-                          <TableCell>{key==='expired'? new Date(value).toLocaleDateString('id-ID') : String(value)}</TableCell>
+                          <TableCell component="th" scope="row" sx={{ fontWeight: 'bold', width: '35%' }}>{label}</TableCell>
+                          <TableCell>{key === 'expired' ? new Date(value).toLocaleDateString('id-ID') : String(value)}</TableCell>
                         </TableRow>
                       );
                     })}
 
                     {/* Image rows */}
-                    {['uploadFotoId','uploadFotoSelfie'].map((imgKey)=> (
+                    {['uploadFotoId', 'uploadFotoSelfie'].map((imgKey) => (
                       product[imgKey] ? (
                         <TableRow key={imgKey}>
-                          <TableCell component="th" scope="row" sx={{ fontWeight:'bold' }}>{imgKey === 'uploadFotoId' ? 'Foto KTP' : 'Foto Selfie'}</TableCell>
+                          <TableCell component="th" scope="row" sx={{ fontWeight: 'bold' }}>{imgKey === 'uploadFotoId' ? 'Foto KTP' : 'Foto Selfie'}</TableCell>
                           <TableCell>
-                            <CardMedia component="img" image={buildImageUrl(product[imgKey])} alt={imgKey} sx={{ maxWidth:200, maxHeight:200, objectFit:'contain', borderRadius:2, border:'1px solid #444' }} />
+                            <CardMedia component="img" image={buildImageUrl(product[imgKey])} alt={imgKey} sx={{ maxWidth: 200, maxHeight: 200, objectFit: 'contain', borderRadius: 2, border: '1px solid #444' }} />
                           </TableCell>
                         </TableRow>
                       ) : null

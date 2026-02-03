@@ -15,12 +15,24 @@ const encrypt = (text) => {
 
 // Decrypt sensitive data
 const decrypt = (encryptedText) => {
+  if (!encryptedText || typeof encryptedText !== 'string') {
+    return encryptedText;
+  }
+
   try {
     const bytes = crypto.AES.decrypt(encryptedText, ENCRYPTION_KEY);
-    return bytes.toString(crypto.enc.Utf8);
+    const decrypted = bytes.toString(crypto.enc.Utf8);
+
+    // If the result is an empty string but the input was not, 
+    // it's likely not a valid ciphertext or wrong key
+    if (!decrypted && encryptedText) {
+      return encryptedText;
+    }
+
+    return decrypted;
   } catch (error) {
-    console.error('Decryption error:', error);
-    throw new Error('Failed to decrypt data');
+    // If decryption fails, return the original text (might be plain text)
+    return encryptedText;
   }
 };
 

@@ -19,9 +19,9 @@ const menuPermissionRoutes = require('./routes/menuPermissions');
 const path = require('path');
 
 if (process.env.NODE_ENV === 'development') {
-  dotenv.config({ path: '.env.development' });
+  dotenv.config({ path: path.join(__dirname, '.env.development') });
 } else {
-  dotenv.config();
+  dotenv.config({ path: path.join(__dirname, '.env') });
 }
 
 
@@ -59,7 +59,7 @@ const corsOptions = {
 
     const allowedOrigins = [
       'http://localhost:3000',
-      'http://localhost:3001', 
+      'http://localhost:3001',
       'http://localhost:3003',
       'http://localhost:5173',
       'https://website-aksesoris.vercel.app',
@@ -85,7 +85,7 @@ const corsOptions = {
     // Check if origin matches any allowed pattern
     for (let i = 0; i < allowedOrigins.length; i++) {
       const allowed = allowedOrigins[i];
-      
+
       if (allowed instanceof RegExp) {
         if (allowed.test(origin)) {
           console.log('CORS allowed origin (regex):', origin);
@@ -98,12 +98,12 @@ const corsOptions = {
     }
 
     console.log('CORS blocked origin:', origin);
-    
+
     // Log more details for debugging
     console.log('Request headers:', origin);
     console.log('Environment:', process.env.NODE_ENV);
     console.log('Frontend URL env:', process.env.FRONTEND_URL);
-    
+
     // In production, be more restrictive, in development allow with warning
     if (process.env.NODE_ENV === 'production') {
       return callback(new Error('Not allowed by CORS'));
@@ -122,13 +122,46 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use((req, res, next) => {
-  res.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' http://localhost:3001;");
+  console.log('Incoming request:', req.method, req.originalUrl);
+
+  // Ultra-permissive CSP for development to fix favicon/image loading issues
+  res.removeHeader('Content-Security-Policy');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;"
+  );
   next();
 });
 
-app.use((req, res, next) => {
-  console.log('Incoming request:', req.method, req.originalUrl);
-  next();
+// Handle favicon to prevent 404s and CSP errors
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Website Aksesoris API</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
+        .container { text-align: center; padding: 2rem; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #1a73e8; margin-bottom: 0.5rem; }
+        p { color: #5f6368; }
+        .status { display: inline-block; padding: 0.25rem 0.75rem; background: #e6f4ea; color: #1e8e3e; border-radius: 999px; font-size: 0.875rem; font-weight: 500; margin-top: 1rem; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Website Aksesoris API</h1>
+        <p>Backend server is running successfully.</p>
+        <div class="status">● System Operational</div>
+      </div>
+    </body>
+    </html>
+  `);
 });
 
 app.use('/api/products', productRoutes);
@@ -201,10 +234,13 @@ app.get('/api/auth/seed-admin', async (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
+// Global server variable for graceful shutdown
+let server;
+
 const startServer = async () => {
   try {
     await connectDB();
-    const server = app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
@@ -220,10 +256,14 @@ process.stdin.resume();
 
 process.on('SIGINT', () => {
   console.log('Server shutting down...');
-  server.close(() => {
-    console.log('Server gracefully terminated.');
+  if (server) {
+    server.close(() => {
+      console.log('Server gracefully terminated.');
+      process.exit(0);
+    });
+  } else {
     process.exit(0);
-  });
+  }
 });
 
 module.exports = app;

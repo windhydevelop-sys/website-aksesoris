@@ -39,9 +39,11 @@ import {
   ShoppingCart,
   CheckCircle,
   ArrowBack,
-  ArrowForward
+  ArrowForward,
+  CloudUpload
 } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
+import DocumentImport from './DocumentImport';
 import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import { useNotification } from '../contexts/NotificationContext';
@@ -58,6 +60,7 @@ const WorkflowManagement = () => {
   const navigate = useNavigate();
   const { showSuccess, showError } = useNotification();
   const [activeStep, setActiveStep] = useState(0);
+  const [docImportOpen, setDocImportOpen] = useState(false);
   const [completed, setCompleted] = useState({});
   const [loading, setLoading] = useState(false);
 
@@ -143,9 +146,9 @@ const WorkflowManagement = () => {
     mobilePin: '',
     ibUser: '',
     ibPassword: '',
+    ibPin: '',
     merchantUser: '',
     merchantPassword: '',
-    ocbcNyalaUser: '',
     brimoUser: '',
     brimoPassword: '',
     briMerchantUser: '',
@@ -285,11 +288,11 @@ const WorkflowManagement = () => {
       const existingOrder = orders.find(o => o.noOrder === orderForm.noOrder);
 
       if (existingOrder) {
-         // Use existing order
-         setWorkflowData(prev => ({ ...prev, order: existingOrder }));
-         showSuccess('Menggunakan Order yang sudah ada');
-         setOrderDialog(false);
-         handleComplete();
+        // Use existing order
+        setWorkflowData(prev => ({ ...prev, order: existingOrder }));
+        showSuccess('Menggunakan Order yang sudah ada');
+        setOrderDialog(false);
+        handleComplete();
       } else {
         const submitData = {
           noOrder: orderForm.noOrder,
@@ -625,8 +628,8 @@ const WorkflowManagement = () => {
                                 label={handphone.status}
                                 color={
                                   handphone.status === 'available' ? 'success' :
-                                  handphone.status === 'assigned' ? 'info' :
-                                  handphone.status === 'in_use' ? 'warning' : 'error'
+                                    handphone.status === 'assigned' ? 'info' :
+                                      handphone.status === 'in_use' ? 'warning' : 'error'
                                 }
                                 size="medium"
                               />
@@ -736,10 +739,20 @@ const WorkflowManagement = () => {
 
   return (
     <SidebarLayout onLogout={handleLogout}>
-      <Container maxWidth="lg" sx={{ mt: 6, mb: 6, px: 4 }}>
-        <Typography variant="h2" gutterBottom sx={{ mb: 6, fontWeight: 'bold', fontSize: { xs: '2.5rem', sm: '3rem' }, textAlign: 'center' }}>
-          Workflow Management - Panduan Lengkap
-        </Typography>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Workflow Input Produk
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<CloudUpload />}
+            onClick={() => setDocImportOpen(true)}
+          >
+            Bulk Upload
+          </Button>
+        </Box>
 
         <Card sx={{ mb: 6, borderRadius: 4, boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
           <CardContent sx={{ py: 6, px: 4 }}>
@@ -1257,10 +1270,10 @@ const WorkflowManagement = () => {
 
         {/* Product Dialog - Simplified for demo */}
         <Dialog open={productDialog} onClose={() => setProductDialog(false)} maxWidth="lg" fullWidth>
-            <form onSubmit={handleProductSubmit}>
-              <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', py: 2 }}>Buat Product Baru</DialogTitle>
-              <DialogContent>
-                <Grid container spacing={2}>
+          <form onSubmit={handleProductSubmit}>
+            <DialogTitle sx={{ fontSize: '1.5rem', fontWeight: 'bold', py: 2 }}>Buat Product Baru</DialogTitle>
+            <DialogContent>
+              <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
@@ -1269,7 +1282,6 @@ const WorkflowManagement = () => {
                     value={productForm.bank}
                     onChange={(e) => setProductForm(prev => ({ ...prev, bank: e.target.value }))}
                     margin="normal"
-                    required
                   />
                 </Grid>
                 {productForm.bank && productForm.bank.toUpperCase() === 'BCA' && (
@@ -1282,7 +1294,6 @@ const WorkflowManagement = () => {
                         value={productForm.myBCAUser}
                         onChange={(e) => setProductForm(prev => ({ ...prev, myBCAUser: e.target.value }))}
                         margin="normal"
-                        required
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1293,7 +1304,6 @@ const WorkflowManagement = () => {
                         value={productForm.myBCAPassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, myBCAPassword: e.target.value }))}
                         margin="normal"
-                        required
                         type="text"
                       />
                     </Grid>
@@ -1305,7 +1315,6 @@ const WorkflowManagement = () => {
                         value={productForm.myBCAPin}
                         onChange={(e) => setProductForm(prev => ({ ...prev, myBCAPin: e.target.value }))}
                         margin="normal"
-                        required
                         type="text"
                       />
                     </Grid>
@@ -1317,7 +1326,6 @@ const WorkflowManagement = () => {
                         value={productForm.mobilePassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, mobilePassword: e.target.value }))}
                         margin="normal"
-                        required
                         type="text"
                       />
                     </Grid>
@@ -1329,7 +1337,6 @@ const WorkflowManagement = () => {
                         value={productForm.mobilePin}
                         onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
                         margin="normal"
-                        required
                         type="text"
                       />
                     </Grid>
@@ -1341,7 +1348,6 @@ const WorkflowManagement = () => {
                         value={productForm.ibUser}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
                         margin="normal"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI' && productForm.bank.toUpperCase() !== 'BCA'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1352,7 +1358,17 @@ const WorkflowManagement = () => {
                         value={productForm.ibPassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
                         margin="normal"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI' && productForm.bank.toUpperCase() !== 'BCA'}
+                        type="text"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="PIN Internet Banking"
+                        name="ibPin"
+                        value={productForm.ibPin}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, ibPin: e.target.value }))}
+                        margin="normal"
                         type="text"
                       />
                     </Grid>
@@ -1360,105 +1376,53 @@ const WorkflowManagement = () => {
                 )}
                 {productForm.bank && productForm.bank.toUpperCase() !== 'BCA' && (
                   <>
-                    {productForm.bank && productForm.bank.toUpperCase() === 'OCBC NISP' && (
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          label="User Nyala"
-                          name="ocbcNyalaUser"
-                          value={productForm.ocbcNyalaUser}
-                          onChange={(e) => setProductForm(prev => ({ ...prev, ocbcNyalaUser: e.target.value }))}
-                          margin="normal"
-                          required
-                        />
-                      </Grid>
-                    )}
-                    {productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BNI' && (
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          label={productForm.bank && productForm.bank.toUpperCase() === 'BRI' ? 'User BRIMO' : 'User Mobile'}
-                          name="mobileUser"
-                          value={productForm.mobileUser}
-                          onChange={(e) => setProductForm(prev => ({ ...prev, mobileUser: e.target.value }))}
-                          margin="normal"
-                          required
-                        />
-                      </Grid>
-                    )}
+
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label={
+                          productForm.bank && productForm.bank.toUpperCase() === 'OCBC NISP' ? 'User Nyala' :
+                            productForm.bank && productForm.bank.toUpperCase() === 'BRI' ? 'User BRIMO' :
+                              'User Mobile'
+                        }
+                        name="mobileUser"
+                        value={productForm.mobileUser}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, mobileUser: e.target.value }))}
+                        margin="normal"
+                      />
+                    </Grid>
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
                         label={
                           productForm.bank && productForm.bank.toUpperCase() === 'MANDIRI' ? 'Password Livin' :
-                          productForm.bank && productForm.bank.toUpperCase() === 'BRI' ? 'Password BRIMO' :
-                          productForm.bank && productForm.bank.toUpperCase() === 'BNI' ? 'Password Wondr' :
-                          'Password Mobile'
+                            productForm.bank && productForm.bank.toUpperCase() === 'BRI' ? 'Password BRIMO' :
+                              productForm.bank && productForm.bank.toUpperCase() === 'BNI' ? 'Password Wondr' :
+                                'Password Mobile'
                         }
                         name="mobilePassword"
                         value={productForm.mobilePassword}
                         onChange={(e) => setProductForm(prev => ({ ...prev, mobilePassword: e.target.value }))}
                         margin="normal"
-                        required
                         type="text"
                       />
                     </Grid>
-                    {productForm.bank && productForm.bank.toUpperCase() === 'MANDIRI' && (
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          label="Pin Livin"
-                          name="mobilePin"
-                          value={productForm.mobilePin}
-                          onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
-                          margin="normal"
-                          required
-                          type="text"
-                        />
-                      </Grid>
-                    )}
-                    {productForm.bank && productForm.bank.toUpperCase() === 'BRI' && (
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          label="Pin BRIMO"
-                          name="mobilePin"
-                          value={productForm.mobilePin}
-                          onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
-                          margin="normal"
-                          required
-                          type="text"
-                        />
-                      </Grid>
-                    )}
-                    {productForm.bank && productForm.bank.toUpperCase() === 'BNI' && (
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          label="Pin Wondr"
-                          name="mobilePin"
-                          value={productForm.mobilePin}
-                          onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
-                          margin="normal"
-                          required
-                          type="text"
-                        />
-                      </Grid>
-                    )}
-                    {productForm.bank && productForm.bank.toUpperCase() === 'OCBC NISP' && (
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          fullWidth
-                          label="Pin"
-                          name="mobilePin"
-                          value={productForm.mobilePin}
-                          onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
-                          margin="normal"
-                          required
-                          type="text"
-                        />
-                      </Grid>
-                    )}
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label={
+                          productForm.bank && productForm.bank.toUpperCase() === 'MANDIRI' ? 'Pin Livin' :
+                            productForm.bank && productForm.bank.toUpperCase() === 'BRI' ? 'Pin BRIMO' :
+                              productForm.bank && productForm.bank.toUpperCase() === 'BNI' ? 'Pin Wondr' :
+                                'Pin Mobile'
+                        }
+                        name="mobilePin"
+                        value={productForm.mobilePin}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
+                        margin="normal"
+                        type="text"
+                      />
+                    </Grid>
                     <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
@@ -1467,7 +1431,6 @@ const WorkflowManagement = () => {
                         value={productForm.ibUser}
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibUser: e.target.value }))}
                         margin="normal"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI' && productForm.bank.toUpperCase() !== 'BNI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1479,7 +1442,6 @@ const WorkflowManagement = () => {
                         onChange={(e) => setProductForm(prev => ({ ...prev, ibPassword: e.target.value }))}
                         margin="normal"
                         type="text"
-                        required={productForm.bank && productForm.bank.toUpperCase() !== 'MANDIRI' && productForm.bank.toUpperCase() !== 'BRI' && productForm.bank.toUpperCase() !== 'BNI'}
                       />
                     </Grid>
                     <Grid item xs={12} sm={6}>
@@ -1513,18 +1475,16 @@ const WorkflowManagement = () => {
                     value={productForm.grade}
                     onChange={(e) => setProductForm(prev => ({ ...prev, grade: e.target.value }))}
                     margin="normal"
-                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="KCP"
+                    label="Kantor Cabang"
                     name="kcp"
                     value={productForm.kcp}
                     onChange={(e) => setProductForm(prev => ({ ...prev, kcp: e.target.value }))}
                     margin="normal"
-                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -1540,20 +1500,8 @@ const WorkflowManagement = () => {
                       }
                     }}
                     margin="normal"
-                    required
                     placeholder="1234 5678 9012 3456"
                     helperText="Format otomatis dengan spasi setiap 4 digit"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="NIK"
-                    name="nik"
-                    value={productForm.nik}
-                    onChange={(e) => setProductForm(prev => ({ ...prev, nik: e.target.value }))}
-                    margin="normal"
-                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -1564,7 +1512,6 @@ const WorkflowManagement = () => {
                     value={productForm.nama}
                     onChange={(e) => setProductForm(prev => ({ ...prev, nama: e.target.value }))}
                     margin="normal"
-                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -1575,7 +1522,6 @@ const WorkflowManagement = () => {
                     value={productForm.namaIbuKandung}
                     onChange={(e) => setProductForm(prev => ({ ...prev, namaIbuKandung: e.target.value }))}
                     margin="normal"
-                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -1586,7 +1532,6 @@ const WorkflowManagement = () => {
                     value={productForm.tempatTanggalLahir}
                     onChange={(e) => setProductForm(prev => ({ ...prev, tempatTanggalLahir: e.target.value }))}
                     margin="normal"
-                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -1597,7 +1542,6 @@ const WorkflowManagement = () => {
                     value={productForm.noRek}
                     onChange={(e) => setProductForm(prev => ({ ...prev, noRek: e.target.value }))}
                     margin="normal"
-                    required
                     inputProps={{ maxLength: 18 }}
                   />
                 </Grid>
@@ -1614,7 +1558,6 @@ const WorkflowManagement = () => {
                       }
                     }}
                     margin="normal"
-                    required
                     placeholder="1234 5678 9012 3456"
                     helperText="Format otomatis dengan spasi setiap 4 digit"
                   />
@@ -1622,7 +1565,7 @@ const WorkflowManagement = () => {
                 <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
-                    label="Valid Thru"
+                    label="Valid Kartu"
                     name="validThru"
                     value={productForm.validThru}
                     onChange={(e) => {
@@ -1635,7 +1578,6 @@ const WorkflowManagement = () => {
                       }
                     }}
                     margin="normal"
-                    required
                     placeholder="MM/YY"
                     helperText="Format: MM/YY (contoh: 12/25)"
                     inputProps={{ maxLength: 5 }}
@@ -1649,7 +1591,6 @@ const WorkflowManagement = () => {
                     value={productForm.noHp}
                     onChange={(e) => setProductForm(prev => ({ ...prev, noHp: e.target.value }))}
                     margin="normal"
-                    required
                     placeholder="081234567890"
                   />
                 </Grid>
@@ -1662,7 +1603,6 @@ const WorkflowManagement = () => {
                     value={productForm.pinAtm}
                     onChange={(e) => setProductForm(prev => ({ ...prev, pinAtm: e.target.value }))}
                     margin="normal"
-                    required
                     inputProps={{ maxLength: 6 }}
                   />
                 </Grid>
@@ -1675,7 +1615,6 @@ const WorkflowManagement = () => {
                     value={productForm.pinWondr}
                     onChange={(e) => setProductForm(prev => ({ ...prev, pinWondr: e.target.value }))}
                     margin="normal"
-                    required
                     inputProps={{ maxLength: 6 }}
                   />
                 </Grid>
@@ -1688,7 +1627,6 @@ const WorkflowManagement = () => {
                     value={productForm.passWondr}
                     onChange={(e) => setProductForm(prev => ({ ...prev, passWondr: e.target.value }))}
                     margin="normal"
-                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -1700,7 +1638,6 @@ const WorkflowManagement = () => {
                     value={productForm.email}
                     onChange={(e) => setProductForm(prev => ({ ...prev, email: e.target.value }))}
                     margin="normal"
-                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -1712,7 +1649,6 @@ const WorkflowManagement = () => {
                     value={productForm.passEmail}
                     onChange={(e) => setProductForm(prev => ({ ...prev, passEmail: e.target.value }))}
                     margin="normal"
-                    required
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -1724,7 +1660,6 @@ const WorkflowManagement = () => {
                     value={productForm.expired}
                     onChange={(e) => setProductForm(prev => ({ ...prev, expired: e.target.value }))}
                     margin="normal"
-                    required
                     InputLabelProps={{
                       shrink: true,
                     }}
@@ -1788,6 +1723,11 @@ const WorkflowManagement = () => {
           </form>
         </Dialog>
       </Container>
+      <DocumentImport
+        open={docImportOpen}
+        onClose={() => setDocImportOpen(false)}
+        onImportSuccess={() => showSuccess('Data berhasil diimport!')}
+      />
     </SidebarLayout>
   );
 };
