@@ -5,11 +5,10 @@ import {
     Typography, Box, Alert, LinearProgress, Paper, Table,
     TableBody, TableCell, TableContainer, TableHead, TableRow,
     Chip, Accordion, AccordionSummary, AccordionDetails,
-    Menu, MenuItem, IconButton, TextField, CircularProgress
+    Menu, MenuItem
 } from '@mui/material';
 import {
-    CloudUpload, ExpandMore, CheckCircle, Error, Info, Download, Description,
-    Menu as MenuIcon
+    CloudUpload, ExpandMore, CheckCircle, Error, Info, Download, Description
 } from '@mui/icons-material';
 
 const DocumentImport = ({ open, onClose, onImportSuccess }) => {
