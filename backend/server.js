@@ -1,5 +1,11 @@
 console.log('Server.js file executed.');
 
+// Polyfill for File class if not available (fixes "File is not defined" error in Node 18)
+if (typeof global.File === 'undefined') {
+  const { File } = require('buffer');
+  global.File = File;
+}
+
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
