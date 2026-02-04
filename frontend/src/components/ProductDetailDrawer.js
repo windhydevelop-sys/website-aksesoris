@@ -29,13 +29,14 @@ import {
   Badge,
   VpnKey,
   Email,
-  AccountCircle
+  AccountCircle,
+  PictureAsPdf
 } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 import { getStatusChip } from '../utils/statusHelpers';
 import axios from 'axios';
 
-const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
+const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportPdf }) => {
   const { showSuccess, showError } = useNotification();
   const [loading, setLoading] = useState(false);
 
@@ -125,21 +126,21 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
       open={open}
       onClose={onClose}
       PaperProps={{
-        sx: { width: { xs: '100%', md: '75%', lg: '60%' } }
+        sx: { width: { xs: '100%', md: '85%', lg: '70%' } }
       }}
     >
-      <Box sx={{ p: 3, height: '100%', overflow: 'auto' }}>
+      <Box sx={{ p: 4, height: '100%', overflow: 'auto' }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', flex: 1 }}>
+          <Typography variant="h4" sx={{ fontWeight: 'bold', flex: 1 }}>
             Detail Produk
           </Typography>
           <IconButton onClick={onClose} size="large">
-            <Close />
+            <Close sx={{ fontSize: 32 }} />
           </IconButton>
         </Box>
 
-        <Divider sx={{ mb: 3 }} />
+        <Divider sx={{ mb: 4 }} />
 
         {/* Action Buttons */}
         <Box sx={{ display: 'flex', gap: 1, mb: 3, flexWrap: 'wrap' }}>
@@ -151,6 +152,16 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
             color="primary"
           >
             Print Invoice
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<PictureAsPdf />}
+            onClick={() => onExportPdf && onExportPdf(product)}
+            disabled={loading}
+            color="success"
+            sx={{ color: 'white' }}
+          >
+            Export PDF
           </Button>
           <Button
             variant="outlined"
@@ -214,12 +225,12 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
         )}
 
         {/* Product Information */}
-        <Card>
-          <CardContent>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
+        <Card sx={{ boxShadow: 3 }}>
+          <CardContent sx={{ p: 3 }}>
+            <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
               Informasi Produk
             </Typography>
-            <Table size="small">
+            <Table size="medium">
               <TableBody>
                 {Object.entries(fieldConfig).map(([key, config]) => {
                   let value = product[key];
@@ -239,7 +250,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
                   }
 
                   return (
-                    <TableRow key={key}>
+                    <TableRow key={key} hover>
                       <TableCell
                         component="th"
                         scope="row"
@@ -248,22 +259,24 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
                           width: '35%',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 1
+                          gap: 2,
+                          fontSize: '1.1rem',
+                          py: 2
                         }}
                       >
-                        {config.icon}
+                        {React.cloneElement(config.icon, { sx: { fontSize: 28 } })}
                         {key === 'mobileUser' && product.bank?.toLowerCase().includes('ocbc') ? 'User Nyala' :
                           config.label}
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ fontSize: '1.2rem', py: 2 }}>
                         {key === 'status' ? (
-                          getStatusChip(value, 'small', { fontSize: '0.75rem' })
+                          getStatusChip(value, 'medium', { fontSize: '1rem', px: 2 })
                         ) : key === 'nik' ? (
                           <Chip
                             label={value}
                             variant="outlined"
                             color="primary"
-                            sx={{ fontWeight: 'bold' }}
+                            sx={{ fontWeight: 'bold', fontSize: '1.1rem', height: 32 }}
                           />
                         ) : (
                           String(value)
@@ -276,6 +289,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
             </Table>
           </CardContent>
         </Card>
+
 
         {/* Additional Info */}
         <Card sx={{ mt: 2 }}>

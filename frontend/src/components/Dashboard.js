@@ -9,7 +9,7 @@ import {
   DialogTitle, IconButton, Alert, Autocomplete,
   Chip, InputAdornment,
   Grid, Card, CardContent,
-  MenuItem
+  MenuItem, TablePagination
 } from '@mui/material';
 import { Search, Event, TrendingUp, People, Smartphone, Inventory } from '@mui/icons-material';
 import { Edit, Delete, Add, CloudUpload, CloudDownload, PictureAsPdf } from '@mui/icons-material';
@@ -336,9 +336,9 @@ const ProductExportPdfDocument = ({ products }) => (
               {/* Foto KTP */}
               <View style={{ flex: 1, marginRight: 5 }}>
                 <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto KTP</Text>
-                {product.uploadFotoIdBase64 && product.uploadFotoIdBase64.startsWith('data:image/') ? (
+                {(product.uploadFotoIdBase64 || product.uploadFotoId) ? (
                   <Image
-                    src={product.uploadFotoIdBase64}
+                    src={product.uploadFotoIdBase64 || (product.uploadFotoId.startsWith('http') ? product.uploadFotoId : `${axios.defaults.baseURL}/uploads/${product.uploadFotoId}`)}
                     style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
                   />
                 ) : (
@@ -351,9 +351,9 @@ const ProductExportPdfDocument = ({ products }) => (
               {/* Foto Selfie */}
               <View style={{ flex: 1, marginLeft: 5 }}>
                 <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto Selfie</Text>
-                {product.uploadFotoSelfieBase64 && product.uploadFotoSelfieBase64.startsWith('data:image/') ? (
+                {(product.uploadFotoSelfieBase64 || product.uploadFotoSelfie) ? (
                   <Image
-                    src={product.uploadFotoSelfieBase64}
+                    src={product.uploadFotoSelfieBase64 || (product.uploadFotoSelfie.startsWith('http') ? product.uploadFotoSelfie : `${axios.defaults.baseURL}/uploads/${product.uploadFotoSelfie}`)}
                     style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
                   />
                 ) : (
@@ -438,6 +438,11 @@ const Dashboard = ({ setToken }) => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [filterExpired, setFilterExpired] = useState('');
+
+
+  // Pagination State
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(initialFormState);
@@ -947,6 +952,45 @@ const Dashboard = ({ setToken }) => {
   };
 
 
+  const handleExportSinglePdf = async (product) => {
+    try {
+      showSuccess('Menyiapkan PDF produk...');
+      // Use existing export endpoint or create a specific one
+      // For now, reuse the bulk export logic but filter for single ID or new endpoint
+      // Actually best to reuse the logic but passing just one product in array
+
+      const response = await axios.get(`/api/products/export/${product._id}`, {
+        headers: { 'x-auth-token': token }
+      });
+
+      if (response.data.success) {
+        const fullProductData = response.data.data;
+        const blob = await pdf(<ProductExportPdfDocument products={[fullProductData]} />).toBlob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Detail_${product.nama}_${new Date().toLocaleDateString('id-ID')}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showSuccess('PDF berhasil diunduh!');
+      }
+    } catch (error) {
+      console.error('Error exporting single PDF:', error);
+      showError('Gagal melakukan export PDF: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   return (
     <SidebarLayout onLogout={handleLogout}>
       <Container maxWidth="lg">
@@ -1254,80 +1298,91 @@ const Dashboard = ({ setToken }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {filteredProducts.map((product, index) => (
-                  <TableRow
-                    key={product._id}
-                    hover
-                    sx={{
-                      cursor: 'pointer',
-                      bgcolor: index % 2 === 0 ? 'grey.50' : 'white',
-                      '&:hover': { bgcolor: 'action.hover' }
-                    }}
-                    onClick={() => handleOpenDrawer(product)}
-                  >
-                    <TableCell>{product.noOrder}</TableCell>
-                    <TableCell>{product.nama}</TableCell>
-                    <TableCell>{product.nik || '-'}</TableCell>
-                    <TableCell>{product.noRek || '-'}</TableCell>
-                    <TableCell>{product.bank || '-'}</TableCell>
-                    <TableCell>
-                      {product.handphoneId && typeof product.handphoneId === 'object'
-                        ? `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim() || 'Handphone Assigned'
-                        : product.handphoneId
-                          ? 'Handphone Assigned'
-                          : '-'
-                      }
-                    </TableCell>
-                    <TableCell>
-                      {(() => {
-                        const expiredDate = new Date(product.expired);
-                        const today = new Date();
-                        const diffTime = expiredDate - today;
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                        let chipColor = 'success';
-                        let chipVariant = 'filled';
-
-                        if (diffDays <= 0) {
-                          chipColor = 'error';
-                        } else if (diffDays <= 7) {
-                          chipColor = 'warning';
+                {filteredProducts
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((product, index) => (
+                    <TableRow
+                      key={product._id}
+                      hover
+                      sx={{
+                        cursor: 'pointer',
+                        bgcolor: index % 2 === 0 ? 'grey.50' : 'white',
+                        '&:hover': { bgcolor: 'action.hover' }
+                      }}
+                      onClick={() => handleOpenDrawer(product)}
+                    >
+                      <TableCell>{product.noOrder}</TableCell>
+                      <TableCell>{product.nama}</TableCell>
+                      <TableCell>{product.nik || '-'}</TableCell>
+                      <TableCell>{product.noRek || '-'}</TableCell>
+                      <TableCell>{product.bank || '-'}</TableCell>
+                      <TableCell>
+                        {product.handphoneId && typeof product.handphoneId === 'object'
+                          ? `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim() || 'Handphone Assigned'
+                          : product.handphoneId
+                            ? 'Handphone Assigned'
+                            : '-'
                         }
+                      </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const expiredDate = new Date(product.expired);
+                          const today = new Date();
+                          const diffTime = expiredDate - today;
+                          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                        return (
-                          <Chip
-                            label={expiredDate.toLocaleDateString('id-ID')}
-                            color={chipColor}
-                            size="small"
-                            variant={chipVariant}
-                            sx={{ fontWeight: 'bold' }}
-                          />
-                        );
-                      })()}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getStatusLabel(product.status)}
-                        color={getStatusColor(product.status)}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>{product.complaint}</TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <IconButton onClick={(ev) => { ev.stopPropagation(); handleOpen(product); }} color="primary"><Edit /></IconButton>
-                      <IconButton onClick={(ev) => { ev.stopPropagation(); handleOpenDeleteConfirm(product._id); }} color="error"><Delete /></IconButton>
-                      {product.status === 'completed' && (
-                        <IconButton onClick={(ev) => { ev.stopPropagation(); handlePrintInvoice(product); }} color="success">
-                          <PictureAsPdf />
-                        </IconButton>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          let chipColor = 'success';
+                          let chipVariant = 'filled';
+
+                          if (diffDays <= 0) {
+                            chipColor = 'error';
+                          } else if (diffDays <= 7) {
+                            chipColor = 'warning';
+                          }
+
+                          return (
+                            <Chip
+                              label={expiredDate.toLocaleDateString('id-ID')}
+                              color={chipColor}
+                              size="small"
+                              variant={chipVariant}
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={getStatusLabel(product.status)}
+                          color={getStatusColor(product.status)}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </TableCell>
+                      <TableCell>{product.complaint}</TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <IconButton onClick={(ev) => { ev.stopPropagation(); handleOpen(product); }} color="primary"><Edit /></IconButton>
+                        <IconButton onClick={(ev) => { ev.stopPropagation(); handleOpenDeleteConfirm(product._id); }} color="error"><Delete /></IconButton>
+                        {product.status === 'completed' && (
+                          <IconButton onClick={(ev) => { ev.stopPropagation(); handlePrintInvoice(product); }} color="success">
+                            <PictureAsPdf />
+                          </IconButton>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[10, 15, 25, 50, 100]}
+            component="div"
+            count={filteredProducts.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
         </Card>
         <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}>
           <DialogTitle sx={{ bgcolor: 'primary.main', color: 'white', fontWeight: 'bold' }}>{editing ? 'Edit Product' : 'Add Product'}</DialogTitle>
@@ -1673,6 +1728,7 @@ const Dashboard = ({ setToken }) => {
         onClose={handleCloseDrawer}
         product={selectedProduct}
         onPrintInvoice={handlePrintInvoiceFromDrawer}
+        onExportPdf={handleExportSinglePdf}
       />
       <DocumentImport
         open={docImportOpen}

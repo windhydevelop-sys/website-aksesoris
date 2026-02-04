@@ -724,6 +724,36 @@ const getProductsExport = async (req, res) => {
   }
 };
 
+// Get single product for export
+const getProductExportById = async (req, res) => {
+  console.log('[/api/products/export/:id] Route hit.', req.params.id);
+  try {
+    const { id } = req.params;
+
+    // Find decrypt handles decryption automatically based on schema plugin or helper
+    // Using findDecrypted helper as seen in other controllers
+    let products = await Product.findDecrypted({ _id: new mongoose.Types.ObjectId(id) });
+
+    if (!products || products.length === 0) {
+      return res.status(404).json({ success: false, error: 'Product not found' });
+    }
+
+    const exportData = products[0];
+
+    // Log the export
+    auditLog('EXPORT_SINGLE', req.userId, 'Product', 'pdf_export_single', {
+      productId: id,
+      noOrder: exportData.noOrder
+    }, req);
+
+    res.json({ success: true, data: exportData });
+
+  } catch (err) {
+    console.error('[/api/products/export/:id] Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to export product' });
+  }
+};
+
 module.exports = {
   getCustomers,
   getComplaints,
@@ -732,5 +762,6 @@ module.exports = {
   getProductById,
   updateProduct,
   deleteProduct,
-  getProductsExport
+  getProductsExport,
+  getProductExportById
 };

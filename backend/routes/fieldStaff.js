@@ -1,6 +1,7 @@
 const express = require('express');
 const FieldStaff = require('../models/FieldStaff');
 const Handphone = require('../models/Handphone');
+const Product = require('../models/Product');
 const { requireRole } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 
@@ -391,6 +392,97 @@ router.get('/available-handphones', async (req, res) => {
         handphoneModel: typeof Handphone,
         modelName: Handphone?.modelName
       }
+    });
+  }
+});
+
+// GET /api/field-staff/stats - Get field staff statistics (Total Rekening, Bank details, etc.)
+router.get('/stats', async (req, res) => {
+  try {
+    // 1. Aggregate Product data grouped by codeAgen
+    const productStats = await Product.aggregate([
+      {
+        $group: {
+          _id: '$codeAgen', // Group by codeAgen (which matches kodeOrlap)
+          totalRekening: { $sum: 1 },
+          complaints: {
+            $sum: {
+              $cond: [{ $ifNull: ["$complaint", false] }, 1, 0]
+            }
+          },
+          // Collect banks to calculate distribution later
+          banks: { $push: '$bank' },
+          // Count status
+          active: {
+            $sum: {
+              $cond: [{ $in: ["$status", ["active", "process", "pending", "Ready"]] }, 1, 0]
+            }
+          },
+          completed: {
+            $sum: {
+              $cond: [{ $in: ["$status", ["completed", "done", "finish", "Selesai"]] }, 1, 0]
+            }
+          }
+        }
+      }
+    ]);
+
+    // 2. Fetch all Field Staff
+    const allStaff = await FieldStaff.find({}).sort({ namaOrlap: 1 });
+
+    // 3. Merge stats into staff list
+    const staffWithStats = allStaff.map(staff => {
+      const stats = productStats.find(s => s._id === staff.kodeOrlap) || {
+        totalRekening: 0,
+        complaints: 0,
+        banks: [],
+        active: 0,
+        completed: 0
+      };
+
+      // Calculate bank distribution
+      const bankDist = stats.banks.reduce((acc, bank) => {
+        const b = bank || 'Unknown';
+        acc[b] = (acc[b] || 0) + 1;
+        return acc;
+      }, {});
+
+      return {
+        _id: staff._id,
+        kodeOrlap: staff.kodeOrlap,
+        namaOrlap: staff.namaOrlap,
+        noHandphone: staff.noHandphone,
+        stats: {
+          totalRekening: stats.totalRekening,
+          complaints: stats.complaints,
+          activeCount: stats.active,
+          completedCount: stats.completed,
+          bankDistribution: bankDist
+        }
+      };
+    });
+
+    // 4. Calculate Global Summary
+    const globalSummary = {
+      totalFieldStaff: allStaff.length,
+      totalRekening: staffWithStats.reduce((sum, s) => sum + s.stats.totalRekening, 0),
+      totalComplaints: staffWithStats.reduce((sum, s) => sum + s.stats.complaints, 0),
+      topPerformer: staffWithStats.reduce((prev, current) =>
+        (prev.stats.totalRekening > current.stats.totalRekening) ? prev : current
+        , { namaOrlap: '-', stats: { totalRekening: 0 } })
+    };
+
+    res.json({
+      success: true,
+      data: staffWithStats,
+      summary: globalSummary
+    });
+
+  } catch (error) {
+    console.error('Error fetching field staff stats:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch statistics'
     });
   }
 });

@@ -8,7 +8,7 @@ const auth = require('../middleware/auth');
 const { validateProduct, validateProductUpdate } = require('../utils/validation');
 const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
-const { createProduct, getProducts, getProductById, getProductsExport } = require('../controllers/products');
+const { createProduct, getProducts, getProductById, getProductsExport, getProductExportById } = require('../controllers/products');
 const { generateWordTemplate, generateBankSpecificTemplate, generateCorrectedWord } = require('../utils/wordTemplateGenerator');
 const { cloudinary } = require('../utils/cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -277,6 +277,9 @@ router.get('/', addUserInfo, getProducts);
 
 // Export all products with decrypted data for PDF generation
 router.get('/export', auth, addUserInfo, getProductsExport);
+
+// Export single product
+router.get('/export/:id', auth, addUserInfo, getProductExportById);
 
 // Test route
 router.get('/test', (req, res) => {
