@@ -233,9 +233,16 @@ const pdfFileFilter = (req, file, cb) => {
 // These files need to be read locally by the parser, so we can't use Cloudinary storage
 const tempStorage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const tempDir = path.join(__dirname, '../uploads/temp');
+    // Use absolute path relative to project root
+    // __dirname is backend/routes, so go up one level to backend, then to uploads/temp
+    const tempDir = path.resolve(__dirname, '..', 'uploads', 'temp');
     if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
+      try {
+        fs.mkdirSync(tempDir, { recursive: true });
+      } catch (err) {
+        console.error('Failed to create temp directory:', err);
+        return cb(err);
+      }
     }
     cb(null, tempDir);
   },
