@@ -229,8 +229,25 @@ const pdfFileFilter = (req, file, cb) => {
   }
 };
 
+// Temporary disk storage for document processing (Word/Excel/PDF parsing)
+// These files need to be read locally by the parser, so we can't use Cloudinary storage
+const tempStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const tempDir = path.join(__dirname, '../uploads/temp');
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    cb(null, tempDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `import_${uniqueSuffix}${ext}`);
+  }
+});
+
 const documentUpload = multer({
-  storage,
+  storage: tempStorage, // Use local temp storage for documents to be parsed
   fileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB for documents
