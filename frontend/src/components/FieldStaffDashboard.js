@@ -3,7 +3,7 @@ import {
   Container, Typography, Box, Card, CardContent, Grid, Chip, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, CircularProgress, Alert
 } from '@mui/material';
-import { Smartphone, Inventory, Assignment, CheckCircle, Schedule } from '@mui/icons-material';
+import { Inventory, Assignment, CheckCircle } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
@@ -20,7 +20,6 @@ const FieldStaffDashboard = () => {
   // Get current user info
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = currentUser.role === 'admin';
-  const fieldStaffCode = currentUser.fieldStaff || currentUser.kodeOrlap;
 
   const fetchStats = useCallback(async () => {
     try {
