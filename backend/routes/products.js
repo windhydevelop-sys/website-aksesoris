@@ -10,6 +10,8 @@ const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
 const { createProduct, getProducts, getProductById, getProductsExport } = require('../controllers/products');
 const { generateWordTemplate, generateBankSpecificTemplate, generateCorrectedWord } = require('../utils/wordTemplateGenerator');
+const { cloudinary } = require('../utils/cloudinary');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const router = express.Router();
 
@@ -171,15 +173,17 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsDir);
-  },
-  filename: (req, file, cb) => {
-    // Generate secure filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `secure_${uniqueSuffix}${ext}`);
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'website-aksesoris',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ width: 1200, height: 1200, crop: 'limit' }],
+    public_id: (req, file) => {
+      const timestamp = Date.now();
+      const random = Math.floor(Math.random() * 1000000000);
+      return `secure_${timestamp}_${random}`;
+    }
   }
 });
 
@@ -425,12 +429,12 @@ router.put('/:id',
       console.log('Files received:', req.files); // Debug log
       const data = { ...req.body };
 
-      // Handle file uploads
+      // Handle file uploads - Cloudinary returns URL in 'path'
       if (req.files && req.files.uploadFotoId) {
-        data.uploadFotoId = req.files.uploadFotoId[0].filename;
+        data.uploadFotoId = req.files.uploadFotoId[0].path;
       }
       if (req.files && req.files.uploadFotoSelfie) {
-        data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].filename;
+        data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].path;
       }
 
       // Add complaint field if present
