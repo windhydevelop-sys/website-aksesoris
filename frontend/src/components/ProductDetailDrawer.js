@@ -125,7 +125,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice }) => {
       open={open}
       onClose={onClose}
       PaperProps={{
-        sx: { width: { xs: '100%', md: '50%', lg: '40%' } }
+        sx: { width: { xs: '100%', md: '75%', lg: '60%' } }
       }}
     >
       <Box sx={{ p: 3, height: '100%', overflow: 'auto' }}>
