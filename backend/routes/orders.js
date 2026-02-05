@@ -142,6 +142,7 @@ router.post('/', auth, async (req, res) => {
 // Update order
 router.put('/:id', auth, async (req, res) => {
   try {
+    const { noOrder, customer, fieldStaff, status, notes, harga } = req.body;
     // 1. Get current order to check for changes
     const currentOrder = await Order.findById(req.params.id);
     if (!currentOrder) {
