@@ -306,46 +306,69 @@ router.post('/validate-import-data', auth, async (req, res) => {
       missingOrders: []
     };
 
-    // Get unique values to check (Normalize before matching)
-    const uniqueCustomers = [...new Set(products.map(p => normalizeCustomer(p.customer)))];
-    const uniqueOrlaps = [...new Set(products.map(p => p.codeAgen))];
-    const uniqueOrders = [...new Set(products.map(p => normalizeNoOrder(p.noOrder)))];
+    // 1. Check Customers
+    const allCustomers = await Customer.find({}, 'kodeCustomer namaCustomer');
+    const customerMap = new Map();
+    allCustomers.forEach(c => {
+      customerMap.set(normalizeCustomer(c.kodeCustomer), c.kodeCustomer);
+    });
 
-    // Check Customers
-    for (const name of uniqueCustomers) {
-      if (!name || name.trim() === '') {
-        results.missingCustomers.push('(Kosong)');
-        continue;
+    // 2. Check Orders
+    const allOrders = await Order.find({}, 'noOrder');
+    const orderMap = new Map();
+    allOrders.forEach(o => {
+      orderMap.set(normalizeNoOrder(o.noOrder), o.noOrder);
+    });
+
+    // 3. Match and Correct products
+    for (const product of products) {
+      // Normalize input for matching
+      const normalizedInputCust = normalizeCustomer(product.customer);
+      const normalizedInputOrder = normalizeNoOrder(product.noOrder);
+
+      // Match Customer
+      if (customerMap.has(normalizedInputCust)) {
+        // Replace with "Truth" from DB
+        product.customer = customerMap.get(normalizedInputCust);
+      } else {
+        if (product.customer && product.customer.trim() !== '') {
+          if (!results.missingCustomers.includes(product.customer)) {
+            results.missingCustomers.push(product.customer);
+          }
+        } else if (!results.missingCustomers.includes('(Kosong)')) {
+          results.missingCustomers.push('(Kosong)');
+        }
       }
-      const exists = await Customer.findOne({
-        $or: [{ namaCustomer: name }, { kodeCustomer: name }]
-      });
-      if (!exists) results.missingCustomers.push(name);
-    }
 
-    // Check FieldStaff
-    for (const code of uniqueOrlaps) {
-      if (!code || code.trim() === '') {
+      // Match Order
+      if (orderMap.has(normalizedInputOrder)) {
+        // Replace with "Truth" from DB
+        product.noOrder = orderMap.get(normalizedInputOrder);
+      } else {
+        if (product.noOrder && product.noOrder.trim() !== '') {
+          if (!results.missingOrders.includes(product.noOrder)) {
+            results.missingOrders.push(product.noOrder);
+          }
+        } else if (!results.missingOrders.includes('(Kosong)')) {
+          results.missingOrders.push('(Kosong)');
+        }
+      }
+
+      // Check FieldStaff (Exact match for now as per previous logic)
+      if (product.codeAgen) {
+        const exists = await FieldStaff.findOne({ kodeOrlap: product.codeAgen });
+        if (!exists && !results.missingFieldStaff.includes(product.codeAgen)) {
+          results.missingFieldStaff.push(product.codeAgen);
+        }
+      } else if (!results.missingFieldStaff.includes('(Kosong)')) {
         results.missingFieldStaff.push('(Kosong)');
-        continue;
       }
-      const exists = await FieldStaff.findOne({ kodeOrlap: code });
-      if (!exists) results.missingFieldStaff.push(code);
-    }
-
-    // Check Orders
-    for (const no of uniqueOrders) {
-      if (!no || no.trim() === '') {
-        results.missingOrders.push('(Kosong)');
-        continue;
-      }
-      const exists = await Order.findOne({ noOrder: no });
-      if (!exists) results.missingOrders.push(no);
     }
 
     res.json({
       success: true,
       data: results,
+      correctedProducts: products, // Return corrected products to frontend
       isAllValid: results.missingCustomers.length === 0 &&
         results.missingFieldStaff.length === 0 &&
         results.missingOrders.length === 0
