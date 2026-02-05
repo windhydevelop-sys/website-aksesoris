@@ -993,16 +993,19 @@ const Dashboard = ({ setToken }) => {
 
   return (
     <SidebarLayout onLogout={handleLogout}>
-      <Container maxWidth="lg">
-        <Box sx={{ mt: 8 }}>
-          <Typography variant="h4" component="h1" gutterBottom className="page-title">
-            Input Product
-          </Typography>
-          {notifications.length > 0 && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              {notifications.length} produk akan expired dalam 7 hari!
-            </Alert>
-          )}
+      <Container maxWidth={false} sx={{ mt: 4, mb: 4 }}>
+        {/* Header Section */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <div>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 'bold', color: '#1a237e' }}>
+              Dashboard Produk
+            </Typography>
+            {notifications.length > 0 && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                {notifications.length} produk akan expired dalam 7 hari!
+              </Alert>
+            )}
+          </div>
         </Box>
       </Container>
 

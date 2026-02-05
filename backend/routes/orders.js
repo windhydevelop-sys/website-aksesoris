@@ -142,7 +142,17 @@ router.post('/', auth, async (req, res) => {
 // Update order
 router.put('/:id', auth, async (req, res) => {
   try {
-    const { noOrder, customer, fieldStaff, status, notes, harga } = req.body;
+    // 1. Get current order to check for changes
+    const currentOrder = await Order.findById(req.params.id);
+    if (!currentOrder) {
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+
+    const oldNoOrder = currentOrder.noOrder;
+    const oldCustomerInOrder = currentOrder.customer;
 
     const updateData = {
       lastModifiedBy: req.user.id
@@ -155,18 +165,45 @@ router.put('/:id', auth, async (req, res) => {
     if (notes !== undefined) updateData.notes = notes?.trim();
     if (harga !== undefined) updateData.harga = harga;
 
+    // 2. Update the order
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id,
       updateData,
       { new: true, runValidators: true }
     ).populate('createdBy', 'username')
-     .populate('lastModifiedBy', 'username');
+      .populate('lastModifiedBy', 'username');
 
     if (!updatedOrder) {
       return res.status(404).json({
         success: false,
         error: 'Order not found'
       });
+    }
+
+    // 3. Propagate changes to Products
+    const newNoOrder = updatedOrder.noOrder;
+    const newCustomerInOrder = updatedOrder.customer;
+
+    // Case A: noOrder changed
+    if (newNoOrder && newNoOrder !== oldNoOrder) {
+      console.log(`[Cascading Update] Changing Order No from ${oldNoOrder} to ${newNoOrder}`);
+      const productUpdateResult = await Product.updateMany(
+        { noOrder: oldNoOrder },
+        { noOrder: newNoOrder }
+      );
+      console.log(`[Cascading Update] Updated ${productUpdateResult.modifiedCount} Products (No Order change)`);
+    }
+
+    // Case B: customer in order changed
+    // Note: If noOrder also changed, we search by newNoOrder (or use the one we just updated)
+    // To be safe, we use the current noOrder of the products
+    if (newCustomerInOrder && newCustomerInOrder !== oldCustomerInOrder) {
+      console.log(`[Cascading Update] Changing Customer in Order ${newNoOrder} from ${oldCustomerInOrder} to ${newCustomerInOrder}`);
+      const productUpdateResult = await Product.updateMany(
+        { noOrder: newNoOrder },
+        { customer: newCustomerInOrder }
+      );
+      console.log(`[Cascading Update] Updated ${productUpdateResult.modifiedCount} Products (Customer change)`);
     }
 
     // Log activity
@@ -299,12 +336,12 @@ router.get('/:id/invoice', auth, async (req, res) => {
 
     // Replace placeholders
     html = html.replace(/{{noOrder}}/g, order.noOrder)
-               .replace(/{{createdAt}}/g, formatDate(order.createdAt))
-               .replace(/{{status}}/g, order.status)
-               .replace(/{{customer}}/g, order.customer)
-               .replace(/{{fieldStaff}}/g, order.fieldStaff)
-               .replace(/{{totalHarga}}/g, formatNumber(order.harga))
-               .replace(/{{currentDate}}/g, formatDate(new Date()));
+      .replace(/{{createdAt}}/g, formatDate(order.createdAt))
+      .replace(/{{status}}/g, order.status)
+      .replace(/{{customer}}/g, order.customer)
+      .replace(/{{fieldStaff}}/g, order.fieldStaff)
+      .replace(/{{totalHarga}}/g, formatNumber(order.harga))
+      .replace(/{{currentDate}}/g, formatDate(new Date()));
 
     // Handle products loop with JavaScript insertion
     const getViaBank = (product) => {
@@ -381,7 +418,7 @@ router.get('/:id/invoice', auth, async (req, res) => {
 router.get('/by-noorder/:noOrder/invoice', auth, async (req, res) => {
   try {
     const { noOrder } = req.params;
-    
+
     // Find order by noOrder
     const order = await Order.findOne({ noOrder });
     if (!order) {
@@ -422,12 +459,12 @@ router.get('/by-noorder/:noOrder/invoice', auth, async (req, res) => {
 
     // Replace placeholders
     html = html.replace(/{{noOrder}}/g, order.noOrder)
-               .replace(/{{createdAt}}/g, formatDate(order.createdAt))
-               .replace(/{{status}}/g, order.status)
-               .replace(/{{customer}}/g, order.customer)
-               .replace(/{{fieldStaff}}/g, order.fieldStaff)
-               .replace(/{{totalHarga}}/g, formatNumber(order.harga))
-               .replace(/{{currentDate}}/g, formatDate(new Date()));
+      .replace(/{{createdAt}}/g, formatDate(order.createdAt))
+      .replace(/{{status}}/g, order.status)
+      .replace(/{{customer}}/g, order.customer)
+      .replace(/{{fieldStaff}}/g, order.fieldStaff)
+      .replace(/{{totalHarga}}/g, formatNumber(order.harga))
+      .replace(/{{currentDate}}/g, formatDate(new Date()));
 
     // Handle products loop with JavaScript insertion
     const getViaBank2 = (product) => {

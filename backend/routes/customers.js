@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Customer = require('../models/Customer');
+const Product = require('../models/Product');
+const Order = require('../models/Order');
 const auth = require('../middleware/auth');
 const requireAdmin = require('../middleware/auth').requireAdmin;
 
@@ -114,18 +116,32 @@ router.put('/:id', auth, requireAdmin, async (req, res) => {
   try {
     const { kodeCustomer, namaCustomer, noHandphone } = req.body;
 
-    // Check if kodeCustomer already exists for another customer
-    const existingCustomer = await Customer.findOne({
-      kodeCustomer,
-      _id: { $ne: req.params.id }
-    });
-    if (existingCustomer) {
-      return res.status(400).json({
+    // 1. Get current customer to check for code changes
+    const currentCustomer = await Customer.findById(req.params.id);
+    if (!currentCustomer) {
+      return res.status(404).json({
         success: false,
-        error: 'Kode customer already exists'
+        error: 'Customer not found'
       });
     }
 
+    const oldKodeCustomer = currentCustomer.kodeCustomer;
+
+    // 2. Check if new kodeCustomer already exists for another customer
+    if (kodeCustomer && kodeCustomer !== oldKodeCustomer) {
+      const existingCustomer = await Customer.findOne({
+        kodeCustomer,
+        _id: { $ne: req.params.id }
+      });
+      if (existingCustomer) {
+        return res.status(400).json({
+          success: false,
+          error: 'Kode customer already exists'
+        });
+      }
+    }
+
+    // 3. Update the customer
     const customer = await Customer.findByIdAndUpdate(
       req.params.id,
       {
@@ -137,11 +153,23 @@ router.put('/:id', auth, requireAdmin, async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    if (!customer) {
-      return res.status(404).json({
-        success: false,
-        error: 'Customer not found'
-      });
+    // 4. If kodeCustomer changed, propagate to Products and Orders
+    if (kodeCustomer && kodeCustomer !== oldKodeCustomer) {
+      console.log(`[Cascading Update] Changing Customer Code from ${oldKodeCustomer} to ${kodeCustomer}`);
+
+      // Update Products
+      const productUpdateResult = await Product.updateMany(
+        { customer: oldKodeCustomer },
+        { customer: kodeCustomer }
+      );
+      console.log(`[Cascading Update] Updated ${productUpdateResult.modifiedCount} Products`);
+
+      // Update Orders
+      const orderUpdateResult = await Order.updateMany(
+        { customer: oldKodeCustomer },
+        { customer: kodeCustomer }
+      );
+      console.log(`[Cascading Update] Updated ${orderUpdateResult.modifiedCount} Orders`);
     }
 
     res.json({
