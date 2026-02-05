@@ -14,6 +14,8 @@ const extractImagesFromHtml = (html) => {
 
     // State for detection
     let expecting = null; // 'uploadFotoId' or 'uploadFotoSelfie'
+    let foundKTP = false;
+    let foundSelfie = false;
 
     // Iterate over all elements in body
     // Mammoth usually outputs <p>, <table>, <img>, etc.
@@ -23,37 +25,59 @@ const extractImagesFromHtml = (html) => {
         const hasImg = $img.length > 0;
 
         // 1. Detect Product Boundary
-        // Use regex flexible enough to catch "No.ORDER"
         if (text.match(/No\s*\.?\s*ORDER/i)) {
             currentProductIndex++;
-            expecting = null; // Reset expectation on new product
+            expecting = null;
+            foundKTP = false;
+            foundSelfie = false;
             // logger.info(`ImageExtractor: Found product boundary ${currentProductIndex}`);
         }
 
         if (currentProductIndex < 0) return; // Skip content before first product
 
-        // 2. Detect Image Markers
-        if (text.match(/Foto\s*KTP/i)) {
+        // 2. Detect Image Markers (Flexible)
+        // Checks for "Foto KTP", "KTP", "Identitas", "ID Card", etc.
+        if (text.match(/(?:Foto\s*)?KTP|Identitas|ID\s*Card/i)) {
             expecting = 'uploadFotoId';
-        } else if (text.match(/Foto\s*Selfie/i)) {
+        }
+        // Checks for "Foto Selfie", "Selfie", "Wajah", "Face", etc.
+        else if (text.match(/(?:Foto\s*)?Selfie|Wajah|Face/i)) {
             expecting = 'uploadFotoSelfie';
         }
 
         // 3. Capture Image
-        if (hasImg && expecting) {
+        if (hasImg) {
             // Mammoth embeds default as base64 in src
             const src = $img.attr('src');
 
             if (src && src.startsWith('data:image')) {
-                images.push({
-                    productIndex: currentProductIndex,
-                    type: expecting,
-                    base64: src
-                });
+                let targetType = null;
 
-                // Reset expectation after finding image
-                // (Assuming 1 image per label)
-                expecting = null;
+                if (expecting) {
+                    // Explicit label match
+                    targetType = expecting;
+                } else {
+                    // FALLBACK: If no explicit label, first image is KTP, second is Selfie
+                    if (!foundKTP) {
+                        targetType = 'uploadFotoId';
+                    } else if (!foundSelfie) {
+                        targetType = 'uploadFotoSelfie';
+                    }
+                }
+
+                if (targetType) {
+                    images.push({
+                        productIndex: currentProductIndex,
+                        type: targetType,
+                        base64: src
+                    });
+
+                    if (targetType === 'uploadFotoId') foundKTP = true;
+                    if (targetType === 'uploadFotoSelfie') foundSelfie = true;
+
+                    // Reset expectation after finding image
+                    expecting = null;
+                }
             }
         }
     });
