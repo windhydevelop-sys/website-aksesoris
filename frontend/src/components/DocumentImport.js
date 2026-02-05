@@ -981,7 +981,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                     options={fieldStaffs}
                                     getOptionLabel={(option) => `[${option.kodeOrlap}] ${option.namaOrlap}`}
                                     onChange={(e, newValue) => setQuickAddData({ ...quickAddData, fieldStaff: newValue?._id })}
-                                    renderInput={(params) => <TextField {...params} label="Pilih Field Staff" />}
+                                    renderInput={(params) => <TextField {...params} label="Pilih Field Staff (Opsional)" />}
                                 />
                             </>
                         ) : (

@@ -66,10 +66,10 @@ router.post('/', auth, async (req, res) => {
     const { noOrder, customer, fieldStaff, status, notes, harga } = req.body;
 
     // Validate required fields
-    if (!customer || !fieldStaff) {
+    if (!customer) {
       return res.status(400).json({
         success: false,
-        error: 'Customer and Field Staff are required'
+        error: 'Customer is required'
       });
     }
 

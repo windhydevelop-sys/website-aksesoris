@@ -15,7 +15,7 @@ const orderSchema = new mongoose.Schema({
   fieldStaff: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'FieldStaff',
-    required: true
+    required: false
   },
   status: {
     type: String,
