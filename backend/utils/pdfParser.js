@@ -49,14 +49,14 @@ const parseProductData = (rawText) => {
       namaIbuKandung: /(?:Nama\s*)?Ibu\s*Kandung[\s:]*([A-Za-z\s]+?)(?:\s+Tempat|\s+No\.|\n|$)/i,
       tempatTanggalLahir: /(?:Tempat|Tpat)?.*(?:Tanggal|Tgl)?.*Lahir[\s:]*([A-Za-z\s,0-9\-]+?)(?:\s+No\.|\n|$)/i,
       noRek: /No.*?Rek(?:ening)?[\s:]*([0-9\s\-]{8,25})/i,
-      noAtm: /No.*ATM[\s:]*([0-9\s\-]{16,25})/i,
+      noAtm: /(?:No\.?\s*ATM|Nomor\s*ATM|No\.?\s*Kartu\s*Debit)[\s:]*([0-9\s\-]{16,25})(?:\s*\(([0-9\/\s\-]+?)\))?/i,
       validThru: /(?:Valid.*Thru|Valid.*Kartu)\s*[\s:]+\s*([0-9\/\-]+)/i,
       noHp: /No.*HP[\s:]*([0-9+\-\s]+)/i,
       pinAtm: /Pin.*ATM[\s:]*([0-9\s\-]{4,10})/i,
       email: /Email[\s:]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
-      bank: /Bank[\s:]*([A-Za-z\s]+?)(?:\s+Grade|\s+KCP|\s+Kantor\s+Cabang|\n|$)/i,
-      grade: /Grade[\s:]*([A-Za-z0-9\s\(\)]+?)(?:\s+KCP|\s+Kantor\s+Cabang|\s+NIK|\n|$)/i,
-      kcp: /(?:KCP|Kantor\s+Cabang)\s*[\s:]+\s*([A-Za-z0-9\s\-\.]+?)(?:\s+NIK|\n|$)/i,
+      bank: /(?:^|\s)(?<!cabang\s)(?:Bank|Nama\s?Bank)[\s:]*([A-Za-z\s]+?)(?:\s*\((?:Grade\s+)?([^)]+?)\))?(?:\s+Grade|\s+KCP|\s+Kantor\s+Cabang|\n|$)/i,
+      grade: /(?:^|\s)Grade[\s:]*([A-Za-z0-9\s]+?)(?:\s*\)|$|\s+KCP|\s+Kantor\s+Cabang|\s+NIK|\n)/i,
+      kcp: /(?:KCP|Kantor\s+Cabang|Cabang\s+Bank)\s*[\s:]+\s*([A-Za-z0-9\s\-\.]+?)(?:\s+NIK|\n|$)/i,
       noOrder: /No\s*\.?\s*ORDER[\s:]*[(\[]?([A-Za-z0-9\-]+)[)\]]?/i,
       codeAgen: /(?:Code\s*Agen|Kode\s*Orlap)[\s:]*[(\[]?([A-Za-z0-9\-]+)[)\]]?/i,
       customer: /(?:Customer|Pelanggan)[\s:]*[(\[]?([A-Za-z0-9\s]+?)[)\]]?(?:\s+NIK|\s+Nama|\n|$)/i,
@@ -84,6 +84,14 @@ const parseProductData = (rawText) => {
       const match = blockText.match(patterns[key]);
       if (match && match[1]) {
         extractedData[key] = match[1].trim();
+
+        // Secondary capture groups for combined fields
+        if (key === 'bank' && match[2] && !extractedData.grade) {
+          extractedData.grade = match[2].trim();
+        }
+        if (key === 'noAtm' && match[2] && !extractedData.validThru) {
+          extractedData.validThru = match[2].trim();
+        }
       }
     });
 
@@ -165,7 +173,7 @@ const parseTableData = (tableData) => {
     'no. order': 'noOrder', 'no order': 'noOrder', 'nomor order': 'noOrder', 'order no': 'noOrder',
     'kode agen': 'codeAgen', 'code agen': 'codeAgen', 'kode orlap': 'codeAgen', 'code orlap': 'codeAgen',
     'bank': 'bank', 'nama bank': 'bank', 'jenis bank': 'bank',
-    'grade': 'grade', 'kcp': 'kcp', 'kantor cabang': 'kcp',
+    'grade': 'grade', 'kcp': 'kcp', 'kantor cabang': 'kcp', 'cabang bank': 'kcp',
     'nik': 'nik', 'nomor induk kependudukan': 'nik',
     'nama': 'nama', 'nama lengkap': 'nama', 'nama sesuai ktp': 'nama',
     'nama ibu kandung': 'namaIbuKandung', 'ibu kandung': 'namaIbuKandung',
