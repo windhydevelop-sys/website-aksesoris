@@ -12,6 +12,7 @@ const { createProduct, getProducts, getProductById, getProductsExport, getProduc
 const { generateWordTemplate, generateBankSpecificTemplate, generateCorrectedWord } = require('../utils/wordTemplateGenerator');
 const { cloudinary } = require('../utils/cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const { normalizeNoOrder, normalizeCustomer } = require('../utils/normalization');
 
 const router = express.Router();
 
@@ -305,10 +306,10 @@ router.post('/validate-import-data', auth, async (req, res) => {
       missingOrders: []
     };
 
-    // Get unique values to check
-    const uniqueCustomers = [...new Set(products.map(p => p.customer))];
+    // Get unique values to check (Normalize before matching)
+    const uniqueCustomers = [...new Set(products.map(p => normalizeCustomer(p.customer)))];
     const uniqueOrlaps = [...new Set(products.map(p => p.codeAgen))];
-    const uniqueOrders = [...new Set(products.map(p => p.noOrder))];
+    const uniqueOrders = [...new Set(products.map(p => normalizeNoOrder(p.noOrder)))];
 
     // Check Customers
     for (const name of uniqueCustomers) {

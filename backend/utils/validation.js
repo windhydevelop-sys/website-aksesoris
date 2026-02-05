@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { normalizeNoOrder, normalizeCustomer } = require('./normalization');
 
 // Product validation schema for CREATE (all required fields)
 const productSchema = Joi.object({
@@ -347,6 +348,10 @@ const validateProduct = (req, res, next) => {
     req.body.codeAgen = req.body.codeAgen[0] || '';
   }
 
+  // Apply Normalization
+  if (req.body.noOrder) req.body.noOrder = normalizeNoOrder(req.body.noOrder);
+  if (req.body.customer) req.body.customer = normalizeCustomer(req.body.customer);
+
   console.log('CREATE - Request body after array conversion:', req.body);
 
   const { error, value } = productSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
@@ -375,6 +380,10 @@ const validateProductUpdate = (req, res, next) => {
     console.log('Converting codeAgen array in validation middleware:', req.body.codeAgen, '->', req.body.codeAgen[0] || '');
     req.body.codeAgen = req.body.codeAgen[0] || '';
   }
+
+  // Apply Normalization
+  if (req.body.noOrder) req.body.noOrder = normalizeNoOrder(req.body.noOrder);
+  if (req.body.customer) req.body.customer = normalizeCustomer(req.body.customer);
 
   console.log('UPDATE - Request body after array conversion:', req.body);
 

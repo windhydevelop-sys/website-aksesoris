@@ -3,6 +3,7 @@ const path = require('path');
 const { logger, securityLog } = require('./audit');
 const { extractImagesFromHtml, saveImageToDisk } = require('./imageExtractor');
 const { parseDocument } = require('./documentParser');
+const { normalizeNoOrder, normalizeCustomer } = require('./normalization');
 
 let pdfParse = null;
 try {
@@ -82,7 +83,15 @@ const parseProductData = (rawText) => {
     const extractedData = {};
     Object.keys(patterns).forEach(key => {
       const match = blockText.match(patterns[key]);
-      if (match && match[1]) extractedData[key] = match[1].trim();
+      if (match && match[1]) {
+        let value = match[1].trim();
+
+        // Apply Normalization
+        if (key === 'noOrder') value = normalizeNoOrder(value);
+        if (key === 'customer') value = normalizeCustomer(value);
+
+        extractedData[key] = value;
+      }
     });
 
     const cleanNumeric = (str) => str ? str.replace(/[\s\-]/g, '') : '';
@@ -211,7 +220,15 @@ const parseTableData = (tableData) => {
     if (!row) continue;
     row.forEach((cell, idx) => {
       const field = headerMap[idx];
-      if (field) p[field] = String(cell).trim();
+      if (field) {
+        let value = String(cell).trim();
+
+        // Apply Normalization
+        if (field === 'noOrder') value = normalizeNoOrder(value);
+        if (field === 'customer') value = normalizeCustomer(value);
+
+        p[field] = value;
+      }
     });
     if (p.noHp) p.noHp = p.noHp.replace(/[\s\-]/g, '');
     if (p.noRek) p.noRek = p.noRek.replace(/[\s\-]/g, '');
