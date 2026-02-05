@@ -35,17 +35,21 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
     const [fieldStaffs, setFieldStaffs] = useState([]);
     const [globalCustomer, setGlobalCustomer] = useState(null);
     const [globalNoOrder, setGlobalNoOrder] = useState(null);
+    const [globalFieldStaff, setGlobalFieldStaff] = useState(null);
     const [isLoadingRefs, setIsLoadingRefs] = useState(false);
 
     // Quick Add Dialog States
-    const [quickAddType, setQuickAddType] = useState(null); // 'customer' or 'order'
+    const [quickAddType, setQuickAddType] = useState(null); // 'customer', 'order', or 'field-staff'
     const [quickAddData, setQuickAddData] = useState({
         kodeCustomer: '',
         namaCustomer: '',
         noHandphone: '-',
         noOrder: '',
         fieldStaff: '',
-        orderCustomerName: ''
+        orderCustomerName: '',
+        kodeOrlap: '',
+        namaOrlap: '',
+        noHandphoneOrlap: ''
     });
     const [isSavingQuickAdd, setIsSavingQuickAdd] = useState(false);
 
@@ -100,7 +104,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 const newCustomer = response.data.data;
                 setCustomers([newCustomer, ...customers]);
                 setGlobalCustomer(newCustomer);
-            } else {
+            } else if (quickAddType === 'order') {
                 const response = await axios.post('/api/orders', {
                     noOrder: quickAddData.noOrder,
                     fieldStaff: quickAddData.fieldStaff,
@@ -110,6 +114,16 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 const newOrder = response.data.data;
                 setOrders([newOrder, ...orders]);
                 setGlobalNoOrder(newOrder);
+            } else if (quickAddType === 'field-staff') {
+                const response = await axios.post('/api/field-staff', {
+                    kodeOrlap: quickAddData.kodeOrlap,
+                    namaOrlap: quickAddData.namaOrlap,
+                    noHandphone: quickAddData.noHandphoneOrlap || '-'
+                }, { headers: { 'x-auth-token': token } });
+
+                const newStaff = response.data.data;
+                setFieldStaffs([newStaff, ...fieldStaffs]);
+                setGlobalFieldStaff(newStaff);
             }
             setQuickAddType(null);
             setQuickAddData({
@@ -118,9 +132,12 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 noHandphone: '-',
                 noOrder: '',
                 fieldStaff: '',
-                orderCustomerName: ''
+                orderCustomerName: '',
+                kodeOrlap: '',
+                namaOrlap: '',
+                noHandphoneOrlap: ''
             });
-            setSuccess(`Berhasil menambah ${quickAddType === 'customer' ? 'Customer' : 'Order'} baru!`);
+            setSuccess(`Berhasil menambah ${quickAddType === 'customer' ? 'Customer' : quickAddType === 'order' ? 'Order' : 'Orlap'} baru!`);
         } catch (err) {
             setError(err.response?.data?.error || `Gagal menambah ${quickAddType}`);
         } finally {
@@ -309,6 +326,9 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
         }
         if (globalNoOrder) {
             formData.append('globalNoOrder', globalNoOrder.noOrder);
+        }
+        if (globalFieldStaff) {
+            formData.append('globalFieldStaff', globalFieldStaff.kodeOrlap);
         }
 
         try {
@@ -733,6 +753,46 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                         </Box>
                                     </Grid>
 
+                                    <Grid item xs={12} md={6}>
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                            <Autocomplete
+                                                fullWidth
+                                                size="small"
+                                                loading={isLoadingRefs}
+                                                options={fieldStaffs}
+                                                getOptionLabel={(option) => `[${option.kodeOrlap}] ${option.namaOrlap}`}
+                                                value={globalFieldStaff}
+                                                onChange={(e, newValue) => setGlobalFieldStaff(newValue)}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="Pilih Orlap"
+                                                        variant="outlined"
+                                                        InputProps={{
+                                                            ...params.InputProps,
+                                                            endAdornment: (
+                                                                <React.Fragment>
+                                                                    {isLoadingRefs ? <CircularProgress color="inherit" size={20} /> : null}
+                                                                    {params.InputProps.endAdornment}
+                                                                </React.Fragment>
+                                                            ),
+                                                        }}
+                                                    />
+                                                )}
+                                            />
+                                            <Tooltip title="Tambah Orlap Baru">
+                                                <IconButton
+                                                    color="primary"
+                                                    size="small"
+                                                    onClick={() => setQuickAddType('field-staff')}
+                                                    sx={{ mt: 0.5, border: '1px solid currentColor' }}
+                                                >
+                                                    <AddIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
+                                    </Grid>
+
                                     <Grid item xs={12}>
                                         <Divider sx={{ my: 1 }} />
                                     </Grid>
@@ -876,7 +936,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             </DialogActions>
             {/* Quick Add Dialog */}
             <Dialog open={!!quickAddType} onClose={() => setQuickAddType(null)} maxWidth="xs" fullWidth>
-                <DialogTitle>Tambah {quickAddType === 'customer' ? 'Customer' : 'Order'} Baru</DialogTitle>
+                <DialogTitle>Tambah {quickAddType === 'customer' ? 'Customer' : quickAddType === 'order' ? 'Order' : 'Orlap'} Baru</DialogTitle>
                 <DialogContent>
                     <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
                         {quickAddType === 'customer' ? (
@@ -901,7 +961,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                     onChange={(e) => setQuickAddData({ ...quickAddData, noHandphone: e.target.value })}
                                 />
                             </>
-                        ) : (
+                        ) : quickAddType === 'order' ? (
                             <>
                                 <TextField
                                     label="Nomor Order"
@@ -924,6 +984,28 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                     renderInput={(params) => <TextField {...params} label="Pilih Field Staff" />}
                                 />
                             </>
+                        ) : (
+                            <>
+                                <TextField
+                                    label="Kode Orlap"
+                                    fullWidth
+                                    value={quickAddData.kodeOrlap}
+                                    onChange={(e) => setQuickAddData({ ...quickAddData, kodeOrlap: e.target.value.toUpperCase() })}
+                                />
+                                <TextField
+                                    label="Nama Orlap"
+                                    fullWidth
+                                    value={quickAddData.namaOrlap}
+                                    onChange={(e) => setQuickAddData({ ...quickAddData, namaOrlap: e.target.value })}
+                                />
+                                <TextField
+                                    label="No. Handphone Orlap"
+                                    fullWidth
+                                    placeholder="0812..."
+                                    value={quickAddData.noHandphoneOrlap}
+                                    onChange={(e) => setQuickAddData({ ...quickAddData, noHandphoneOrlap: e.target.value })}
+                                />
+                            </>
                         )}
                     </Box>
                 </DialogContent>
@@ -932,7 +1014,11 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                     <Button
                         onClick={handleQuickAddSave}
                         variant="contained"
-                        disabled={isSavingQuickAdd || (quickAddType === 'customer' ? !quickAddData.kodeCustomer : !quickAddData.noOrder)}
+                        disabled={isSavingQuickAdd || (
+                            quickAddType === 'customer' ? !quickAddData.kodeCustomer :
+                                quickAddType === 'field-staff' ? !quickAddData.kodeOrlap :
+                                    !quickAddData.noOrder
+                        )}
                     >
                         {isSavingQuickAdd ? <CircularProgress size={24} /> : 'Simpan'}
                     </Button>

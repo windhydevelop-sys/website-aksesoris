@@ -805,6 +805,7 @@ router.post('/import-document-save',
       const manualStatus = req.body.status || 'pending';
       const globalCustomer = req.body.globalCustomer;
       const globalNoOrder = req.body.globalNoOrder;
+      const globalFieldStaff = req.body.globalFieldStaff;
 
       // Clean up uploaded file
       if (fs.existsSync(pdfFilePath)) {
@@ -827,6 +828,10 @@ router.post('/import-document-save',
           }
           if (globalNoOrder) {
             productData.noOrder = globalNoOrder.trim();
+          }
+          if (globalFieldStaff) {
+            productData.codeAgen = globalFieldStaff.trim();
+            productData.fieldStaff = globalFieldStaff.trim();
           }
 
           // Apply manual expired date if provided and product doesn't have one
