@@ -9,7 +9,7 @@ const { validateProduct, validateProductUpdate } = require('../utils/validation'
 const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
 const { createProduct, getProducts, getProductById, getProductsExport, getProductExportById } = require('../controllers/products');
-const { generateWordTemplate, generateBankSpecificTemplate, generateCorrectedWord } = require('../utils/wordTemplateGenerator');
+const { generateWordTemplate, generateBankSpecificTemplate, generateCorrectedWord, generateCorrectedWordList } = require('../utils/wordTemplateGenerator');
 const { cloudinary } = require('../utils/cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const { normalizeNoOrder, normalizeCustomer } = require('../utils/normalization');
@@ -383,12 +383,13 @@ router.post('/validate-import-data', auth, async (req, res) => {
 // Export corrected data as Word
 router.post('/export-corrected-word', auth, async (req, res) => {
   try {
-    const { products } = req.body;
+    const { products, format } = req.body;
     if (!products || !Array.isArray(products)) {
       return res.status(400).json({ success: false, error: 'Invalid products data' });
     }
 
-    const { success, buffer, filename, error } = await generateCorrectedWord(products);
+    const exportFunc = format === 'list' ? generateCorrectedWordList : generateCorrectedWord;
+    const { success, buffer, filename, error } = await exportFunc(products);
 
     if (!success) {
       return res.status(500).json({ success: false, error });
@@ -397,7 +398,6 @@ router.post('/export-corrected-word', auth, async (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
     res.send(buffer);
-
   } catch (error) {
     console.error('Error exporting corrected word:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
@@ -803,6 +803,8 @@ router.post('/import-document-save',
 
       const manualExpiredDate = req.body.expiredDate;
       const manualStatus = req.body.status || 'pending';
+      const globalCustomer = req.body.globalCustomer;
+      const globalNoOrder = req.body.globalNoOrder;
 
       // Clean up uploaded file
       if (fs.existsSync(pdfFilePath)) {
@@ -818,6 +820,14 @@ router.post('/import-document-save',
           // Add audit fields
           productData.createdBy = req.userId;
           productData.lastModifiedBy = req.userId;
+
+          // Apply Global Overrides (Priority)
+          if (globalCustomer) {
+            productData.customer = globalCustomer.trim();
+          }
+          if (globalNoOrder) {
+            productData.noOrder = globalNoOrder.trim();
+          }
 
           // Apply manual expired date if provided and product doesn't have one
           if (manualExpiredDate && (!productData.expired || productData.expired === '')) {

@@ -13,9 +13,9 @@ const orderSchema = new mongoose.Schema({
     trim: true
   },
   fieldStaff: {
-    type: String,
-    required: true,
-    trim: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'FieldStaff',
+    required: true
   },
   status: {
     type: String,
@@ -52,7 +52,7 @@ orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 
 // Pre-save middleware to ensure noOrder uniqueness
-orderSchema.pre('save', async function(next) {
+orderSchema.pre('save', async function (next) {
   if (this.isNew) {
     try {
       const existingOrder = await mongoose.model('Order').findOne({

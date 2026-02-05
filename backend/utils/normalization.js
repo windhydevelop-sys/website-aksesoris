@@ -10,7 +10,8 @@
  */
 const normalizeNoOrder = (str) => {
     if (!str) return '';
-    return String(str).trim().toUpperCase();
+    // Normalize by Removing: ( ) [ ] - : and Uppercase
+    return String(str).trim().replace(/[()\[\]\-:]/g, '').toUpperCase();
 };
 
 /**

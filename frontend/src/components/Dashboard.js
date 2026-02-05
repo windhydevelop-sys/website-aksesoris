@@ -428,6 +428,7 @@ const initialFormState = {
   pinAtm: '',
   email: '',
   passEmail: '',
+  status: 'pending',
 };
 
 const Dashboard = ({ setToken }) => {
@@ -710,6 +711,7 @@ const Dashboard = ({ setToken }) => {
         pinAtm: product.pinAtm || '',
         email: product.email || '',
         passEmail: product.passEmail || '',
+        status: product.status || 'pending',
       });
       setImeiError(validateIMEI(product.imeiHandphone || '', products, product._id));
 
@@ -1682,6 +1684,22 @@ const Dashboard = ({ setToken }) => {
                     min: new Date().toISOString().split('T')[0], // Prevent past dates
                   }}
                 />
+
+                <TextField
+                  fullWidth
+                  select
+                  label="Status"
+                  name="status"
+                  value={form.status || 'pending'}
+                  onChange={handleChange}
+                  margin="normal"
+                  required
+                >
+                  <MenuItem value="pending">Tertunda</MenuItem>
+                  <MenuItem value="in_progress">Dalam Proses</MenuItem>
+                  <MenuItem value="completed">Selesai</MenuItem>
+                  <MenuItem value="cancelled">Dibatalkan</MenuItem>
+                </TextField>
 
                 {form.status === 'in_progress' && (
                   <TextField fullWidth label="Complaint" name="complaint" placeholder="Deskripsi keluhan atau masalah" value={form.complaint || ''} onChange={handleChange} margin="normal" multiline rows={4} />

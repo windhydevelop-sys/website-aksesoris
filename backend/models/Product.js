@@ -53,7 +53,11 @@ const productSchema = new mongoose.Schema({
   ibPin: { type: String }, // Internet Banking PIN (New Field)
   merchantUser: { type: String },
   merchantPassword: { type: String },
-  status: { type: String, default: 'Ready' }, // New field for product status
+  status: {
+    type: String,
+    enum: ['pending', 'in_progress', 'completed', 'cancelled'],
+    default: 'pending'
+  }, // New field for product status
 }, { timestamps: true });
 
 // Pre-save middleware to encrypt sensitive data

@@ -14,6 +14,7 @@ const path = require('path');
 router.get('/', auth, async (req, res) => {
   try {
     const orders = await Order.find()
+      .populate('fieldStaff', 'kodeOrlap namaOrlap')
       .populate('createdBy', 'username')
       .populate('lastModifiedBy', 'username')
       .sort({ createdAt: -1 });
@@ -35,6 +36,7 @@ router.get('/', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
+      .populate('fieldStaff', 'kodeOrlap namaOrlap')
       .populate('createdBy', 'username')
       .populate('lastModifiedBy', 'username');
 
@@ -108,6 +110,7 @@ router.post('/', auth, async (req, res) => {
     );
 
     const populatedOrder = await Order.findById(savedOrder._id)
+      .populate('fieldStaff', 'kodeOrlap namaOrlap')
       .populate('createdBy', 'username');
 
     res.status(201).json({
@@ -171,7 +174,8 @@ router.put('/:id', auth, async (req, res) => {
       req.params.id,
       updateData,
       { new: true, runValidators: true }
-    ).populate('createdBy', 'username')
+    ).populate('fieldStaff', 'kodeOrlap namaOrlap')
+      .populate('createdBy', 'username')
       .populate('lastModifiedBy', 'username');
 
     if (!updatedOrder) {
@@ -205,6 +209,17 @@ router.put('/:id', auth, async (req, res) => {
         { customer: newCustomerInOrder }
       );
       console.log(`[Cascading Update] Updated ${productUpdateResult.modifiedCount} Products (Customer change)`);
+    }
+
+    // Case C: status changed
+    if (status !== undefined && status.toLowerCase() !== currentOrder.status) {
+      const newStatus = status.toLowerCase();
+      console.log(`[Cascading Update] Changing Status of Products for Order ${newNoOrder} to ${newStatus}`);
+      const productUpdateResult = await Product.updateMany(
+        { noOrder: newNoOrder },
+        { status: newStatus }
+      );
+      console.log(`[Cascading Update] Updated ${productUpdateResult.modifiedCount} Products (Status change)`);
     }
 
     // Log activity

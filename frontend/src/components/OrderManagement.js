@@ -91,7 +91,9 @@ const OrderManagement = () => {
       setFormData({
         noOrder: order.noOrder,
         customer: order.customer,
-        fieldStaff: order.fieldStaff,
+        fieldStaff: order.fieldStaff?._id
+          ? `${order.fieldStaff.kodeOrlap} - ${order.fieldStaff.namaOrlap}`
+          : order.fieldStaff,
         status: order.status,
         notes: order.notes || '',
         totalAmount: order.harga ? formatNumberWithDots(order.harga) : ''
@@ -151,8 +153,12 @@ const OrderManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Find the fieldStaff ID from the selected display string
+      const selectedStaff = fieldStaff.find(fs => `${fs.kodeOrlap} - ${fs.namaOrlap}` === formData.fieldStaff);
+
       const submitData = {
         ...formData,
+        fieldStaff: selectedStaff ? selectedStaff._id : formData.fieldStaff,
         harga: formData.totalAmount ? parseFloat(cleanFormattedNumber(formData.totalAmount)) : 0
       };
 
@@ -300,7 +306,9 @@ const OrderManagement = () => {
                   <TableRow key={order._id} hover sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
                     <TableCell sx={{ fontSize: '1.2rem', py: 4 }}>{order.noOrder}</TableCell>
                     <TableCell sx={{ fontSize: '1.2rem', py: 4 }}>{order.customer}</TableCell>
-                    <TableCell sx={{ fontSize: '1.2rem', py: 4 }}>{order.fieldStaff}</TableCell>
+                    <TableCell sx={{ fontSize: '1.2rem', py: 4 }}>
+                      {order.fieldStaff?.kodeOrlap || order.fieldStaff || '-'}
+                    </TableCell>
                     <TableCell sx={{ py: 4 }}>
                       <Chip
                         label={getStatusLabel(order.status)}

@@ -384,8 +384,102 @@ const generateCorrectedWord = async (products) => {
     }
 };
 
+/**
+ * Generate Word document from corrected/extracted product data (List Format)
+ * @param {Array} products Array of product objects
+ */
+const generateCorrectedWordList = async (products) => {
+    try {
+        logger.info('Generating Corrected Word List document', { count: products.length });
+
+        const fields = [
+            { key: 'noOrder', label: 'No. Order' },
+            { key: 'codeAgen', label: 'Code Agen' },
+            { key: 'customer', label: 'Customer' },
+            { key: 'bank', label: 'Bank' },
+            { key: 'grade', label: 'Grade' },
+            { key: 'kcp', label: 'Kantor Cabang' },
+            { key: 'nik', label: 'NIK' },
+            { key: 'nama', label: 'Nama' },
+            { key: 'namaIbuKandung', label: 'Nama Ibu Kandung' },
+            { key: 'tempatTanggalLahir', label: 'Tempat/Tanggal Lahir' },
+            { key: 'noRek', label: 'No. Rekening' },
+            { key: 'noAtm', label: 'No. ATM' },
+            { key: 'validThru', label: 'Valid Kartu' },
+            { key: 'noHp', label: 'No. HP' },
+            { key: 'pinAtm', label: 'PIN ATM' },
+            { key: 'email', label: 'Email' },
+            { key: 'passEmail', label: 'Password Email' },
+            { key: 'mobileUser', label: 'User Mobile' },
+            { key: 'mobilePassword', label: 'Password Mobile' },
+            { key: 'mobilePin', label: 'PIN Mobile' },
+            { key: 'ibUser', label: 'I-Banking' },
+            { key: 'ibPassword', label: 'Password IB' },
+            { key: 'ibPin', label: 'PIN IB' },
+            { key: 'myBCAUser', label: 'BCA-ID' },
+            { key: 'myBCAPassword', label: 'Pass BCA-ID' },
+            { key: 'myBCAPin', label: 'Pin Transaksi' }
+        ];
+
+        const sections = products.map((p, idx) => {
+            return {
+                properties: {
+                    type: idx === 0 ? undefined : 'nextPage'
+                },
+                children: [
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: `HASIL KOREKSI DATA - PRODUK ${idx + 1}`,
+                                bold: true,
+                                size: 28,
+                                color: '2E75B6'
+                            }),
+                        ],
+                        alignment: AlignmentType.CENTER,
+                        spacing: { after: 400 },
+                    }),
+                    ...fields.map(field => {
+                        const val = p[field.key] || '-';
+                        return new Paragraph({
+                            children: [
+                                new TextRun({ text: `${field.label}: `, bold: true, size: 22 }),
+                                new TextRun({ text: String(val), size: 22 }),
+                            ],
+                            spacing: { after: 120 },
+                        });
+                    }),
+                    new Paragraph({
+                        children: [
+                            new TextRun({
+                                text: "\nCatatan: Dokumen ini telah distandardisasi oleh sistem.",
+                                size: 16,
+                                italic: true,
+                                color: '808080'
+                            }),
+                        ],
+                        spacing: { before: 400 },
+                    }),
+                ]
+            };
+        });
+
+        const doc = new Document({
+            sections: sections
+        });
+
+        const buffer = await Packer.toBuffer(doc);
+        return { success: true, buffer, filename: `corrected-list-${Date.now()}.docx` };
+
+    } catch (error) {
+        logger.error('Failed to generate Corrected Word List', { error: error.message });
+        return { success: false, error: error.message };
+    }
+};
+
 module.exports = {
     generateWordTemplate,
     generateBankSpecificTemplate,
-    generateCorrectedWord
+    generateCorrectedWord,
+    generateCorrectedWordList
 };

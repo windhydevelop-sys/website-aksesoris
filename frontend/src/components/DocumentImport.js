@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions, Button,
     Typography, Box, Alert, LinearProgress, Paper, Table,
     TableBody, TableCell, TableContainer, TableHead, TableRow,
     Chip, Accordion, AccordionSummary, AccordionDetails,
-    Menu, MenuItem
+    Menu, MenuItem, Autocomplete, TextField, CircularProgress,
+    IconButton, Tooltip, Grid, Divider
 } from '@mui/material';
 import {
-    CloudUpload, ExpandMore, CheckCircle, Error, Info, Download, Description
+    CloudUpload, ExpandMore, CheckCircle, Error, Info, Download, Description,
+    Add as AddIcon
 } from '@mui/icons-material';
 
 const DocumentImport = ({ open, onClose, onImportSuccess }) => {
@@ -24,6 +26,28 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
     const [importResults, setImportResults] = useState(null);
     const [validationData, setValidationData] = useState(null);
     const [isValidating, setIsValidating] = useState(false);
+    const [exportAnchorEl, setExportAnchorEl] = useState(null);
+    const openExportMenu = Boolean(exportAnchorEl);
+
+    // Batch Overrides & Quick Add States
+    const [customers, setCustomers] = useState([]);
+    const [orders, setOrders] = useState([]);
+    const [fieldStaffs, setFieldStaffs] = useState([]);
+    const [globalCustomer, setGlobalCustomer] = useState(null);
+    const [globalNoOrder, setGlobalNoOrder] = useState(null);
+    const [isLoadingRefs, setIsLoadingRefs] = useState(false);
+
+    // Quick Add Dialog States
+    const [quickAddType, setQuickAddType] = useState(null); // 'customer' or 'order'
+    const [quickAddData, setQuickAddData] = useState({
+        kodeCustomer: '',
+        namaCustomer: '',
+        noHandphone: '-',
+        noOrder: '',
+        fieldStaff: '',
+        orderCustomerName: ''
+    });
+    const [isSavingQuickAdd, setIsSavingQuickAdd] = useState(false);
 
     const token = localStorage.getItem('token');
 
@@ -37,6 +61,72 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
     ];
 
     const acceptedTypes = supportedFormats.map(format => format.type).join(',');
+
+    const fetchReferences = useCallback(async () => {
+        setIsLoadingRefs(true);
+        try {
+            const [custRes, orderRes, staffRes] = await Promise.all([
+                axios.get('/api/customers', { headers: { 'x-auth-token': token } }),
+                axios.get('/api/orders', { headers: { 'x-auth-token': token } }),
+                axios.get('/api/field-staff', { headers: { 'x-auth-token': token } })
+            ]);
+            setCustomers(custRes.data.data || []);
+            setOrders(orderRes.data.data || []);
+            setFieldStaffs(staffRes.data.data || []);
+        } catch (err) {
+            console.error('Error fetching references:', err);
+        } finally {
+            setIsLoadingRefs(false);
+        }
+    }, [token]);
+
+    useEffect(() => {
+        if (open) {
+            fetchReferences();
+        }
+    }, [open, fetchReferences]);
+
+    const handleQuickAddSave = async () => {
+        setIsSavingQuickAdd(true);
+        setError('');
+        try {
+            if (quickAddType === 'customer') {
+                const response = await axios.post('/api/customers', {
+                    kodeCustomer: quickAddData.kodeCustomer,
+                    namaCustomer: quickAddData.namaCustomer,
+                    noHandphone: quickAddData.noHandphone || '-'
+                }, { headers: { 'x-auth-token': token } });
+
+                const newCustomer = response.data.data;
+                setCustomers([newCustomer, ...customers]);
+                setGlobalCustomer(newCustomer);
+            } else {
+                const response = await axios.post('/api/orders', {
+                    noOrder: quickAddData.noOrder,
+                    fieldStaff: quickAddData.fieldStaff,
+                    customer: quickAddData.orderCustomerName || globalCustomer?.namaCustomer || '-'
+                }, { headers: { 'x-auth-token': token } });
+
+                const newOrder = response.data.data;
+                setOrders([newOrder, ...orders]);
+                setGlobalNoOrder(newOrder);
+            }
+            setQuickAddType(null);
+            setQuickAddData({
+                kodeCustomer: '',
+                namaCustomer: '',
+                noHandphone: '-',
+                noOrder: '',
+                fieldStaff: '',
+                orderCustomerName: ''
+            });
+            setSuccess(`Berhasil menambah ${quickAddType === 'customer' ? 'Customer' : 'Order'} baru!`);
+        } catch (err) {
+            setError(err.response?.data?.error || `Gagal menambah ${quickAddType}`);
+        } finally {
+            setIsSavingQuickAdd(false);
+        }
+    };
 
     const handleFileSelect = (event) => {
         const file = event.target.files[0];
@@ -168,12 +258,16 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
         }
     };
 
-    const handleDownloadCorrected = async () => {
+    const handleDownloadCorrected = async (format = 'table') => {
         if (!previewData?.extractedData) return;
+        setExportAnchorEl(null);
         try {
             setUploading(true);
             const response = await axios.post('/api/products/export-corrected-word',
-                { products: previewData.extractedData },
+                {
+                    products: previewData.extractedData,
+                    format: format
+                },
                 {
                     headers: { 'x-auth-token': token },
                     responseType: 'blob'
@@ -209,6 +303,12 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
         }
         if (manualStatus) {
             formData.append('status', manualStatus);
+        }
+        if (globalCustomer) {
+            formData.append('globalCustomer', globalCustomer.kodeCustomer);
+        }
+        if (globalNoOrder) {
+            formData.append('globalNoOrder', globalNoOrder.noOrder);
         }
 
         try {
@@ -423,7 +523,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
     return (
         <Dialog open={open} onClose={handleClose} maxWidth="xl" fullWidth>
             <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                Import Bulk Data
+                Import Bulk Data (v2)
                 <Box>
                     <Button
                         variant="outlined"
@@ -516,16 +616,26 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                             severity="info"
                             sx={{ mb: 2 }}
                             action={
-                                <Button
-                                    color="inherit"
-                                    size="small"
-                                    variant="outlined"
-                                    startIcon={<Download />}
-                                    onClick={handleDownloadCorrected}
-                                    disabled={uploading}
-                                >
-                                    Download Hasil Koreksi (.docx)
-                                </Button>
+                                <Box>
+                                    <Button
+                                        color="inherit"
+                                        size="small"
+                                        variant="outlined"
+                                        startIcon={<Download />}
+                                        onClick={(e) => setExportAnchorEl(e.currentTarget)}
+                                        disabled={uploading}
+                                    >
+                                        Download Hasil Koreksi
+                                    </Button>
+                                    <Menu
+                                        anchorEl={exportAnchorEl}
+                                        open={openExportMenu}
+                                        onClose={() => setExportAnchorEl(null)}
+                                    >
+                                        <MenuItem onClick={() => handleDownloadCorrected('table')}>Format Tabel (.docx)</MenuItem>
+                                        <MenuItem onClick={() => handleDownloadCorrected('list')}>Format List / Per Halaman (.docx)</MenuItem>
+                                    </Menu>
+                                </Box>
                             }
                         >
                             <strong>Preview Data:</strong> Berikut adalah data yang berhasil diekstrak dengan <i>Auto-Correction</i>.
@@ -536,48 +646,133 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
 
                         {previewData.validation.valid > 0 && (
                             <Box sx={{ mt: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1, border: '1px solid #e0e0e0' }}>
-                                <Typography variant="subtitle2" gutterBottom color="primary">
-                                    Set Tanggal Expired (Opsional)
+                                <Typography variant="subtitle2" gutterBottom color="primary" sx={{ fontWeight: 'bold' }}>
+                                    Batch Override (Terapkan ke Semua Data)
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-                                    Pilih tanggal expired yang akan diterapkan ke semua produk valid dalam batch ini (jika tidak ada di file).
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                                    Pilih Customer atau No. Order untuk menimpa data yang kosong di dokumen.
                                 </Typography>
-                                <input
-                                    type="date"
-                                    value={manualExpiredDate}
-                                    onChange={(e) => setManualExpiredDate(e.target.value)}
-                                    style={{
-                                        padding: '8px',
-                                        borderRadius: '4px',
-                                        border: '1px solid #ccc',
-                                        width: '100%',
-                                        maxWidth: '300px'
-                                    }}
-                                />
-                            </Box>
-                        )}
 
-                        {previewData.validation.valid > 0 && (
-                            <Box sx={{ mt: 2, p: 2, bgcolor: '#f0f7ff', borderRadius: 1, border: '1px solid #cce3ff' }}>
-                                <Typography variant="subtitle2" gutterBottom color="primary">
-                                    Set Status Produk (Opsional)
-                                </Typography>
-                                <select
-                                    value={manualStatus}
-                                    onChange={(e) => setManualStatus(e.target.value)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '8px',
-                                        borderRadius: '4px',
-                                        border: '1px solid #ccc',
-                                        fontSize: '14px'
-                                    }}
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} md={6}>
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                            <Autocomplete
+                                                fullWidth
+                                                size="small"
+                                                loading={isLoadingRefs}
+                                                options={customers}
+                                                getOptionLabel={(option) => `[${option.kodeCustomer}] ${option.namaCustomer}`}
+                                                value={globalCustomer}
+                                                onChange={(e, newValue) => setGlobalCustomer(newValue)}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="Pilih Customer"
+                                                        variant="outlined"
+                                                        InputProps={{
+                                                            ...params.InputProps,
+                                                            endAdornment: (
+                                                                <React.Fragment>
+                                                                    {isLoadingRefs ? <CircularProgress color="inherit" size={20} /> : null}
+                                                                    {params.InputProps.endAdornment}
+                                                                </React.Fragment>
+                                                            ),
+                                                        }}
+                                                    />
+                                                )}
+                                            />
+                                            <Tooltip title="Tambah Customer Baru">
+                                                <IconButton
+                                                    color="primary"
+                                                    size="small"
+                                                    onClick={() => setQuickAddType('customer')}
+                                                    sx={{ mt: 0.5, border: '1px solid currentColor' }}
+                                                >
+                                                    <AddIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                            <Autocomplete
+                                                fullWidth
+                                                size="small"
+                                                loading={isLoadingRefs}
+                                                options={orders}
+                                                getOptionLabel={(option) => option.noOrder}
+                                                value={globalNoOrder}
+                                                onChange={(e, newValue) => setGlobalNoOrder(newValue)}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        label="Pilih No. Order"
+                                                        variant="outlined"
+                                                        InputProps={{
+                                                            ...params.InputProps,
+                                                            endAdornment: (
+                                                                <React.Fragment>
+                                                                    {isLoadingRefs ? <CircularProgress color="inherit" size={20} /> : null}
+                                                                    {params.InputProps.endAdornment}
+                                                                </React.Fragment>
+                                                            ),
+                                                        }}
+                                                    />
+                                                )}
+                                            />
+                                            <Tooltip title="Tambah Order Baru">
+                                                <IconButton
+                                                    color="primary"
+                                                    size="small"
+                                                    onClick={() => setQuickAddType('order')}
+                                                    sx={{ mt: 0.5, border: '1px solid currentColor' }}
+                                                >
+                                                    <AddIcon fontSize="small" />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <Divider sx={{ my: 1 }} />
+                                    </Grid>
+
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>Tanggal Expired (Opsional)</Typography>
+                                        <input
+                                            type="date"
+                                            value={manualExpiredDate}
+                                            onChange={(e) => setManualExpiredDate(e.target.value)}
+                                            style={{
+                                                padding: '8.5px',
+                                                borderRadius: '4px',
+                                                border: '1px solid #ccc',
+                                                width: '100%',
+                                                marginTop: '4px'
+                                            }}
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={6}>
+                                        <Typography variant="caption" sx={{ fontWeight: 'bold' }}>Status Produk (Wajib/Opsional)</Typography>
+                                        <select
+                                            value={manualStatus}
+                                            onChange={(e) => setManualStatus(e.target.value)}
+                                            style={{
+                                                width: '100%',
+                                                padding: '9.5px',
+                                                borderRadius: '4px',
+                                                border: '1px solid #ccc',
+                                                fontSize: '14px',
+                                                marginTop: '4px'
+                                            }}
+                                        >
+                                            <option value="pending">Pending</option>
+                                            <option value="in_progress">In Progress</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="cancelled">Cancelled</option>
+                                        </select>
+                                    </Grid>
+                                </Grid>
                             </Box>
                         )}
 
@@ -679,6 +874,70 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                     </Button>
                 )}
             </DialogActions>
+            {/* Quick Add Dialog */}
+            <Dialog open={!!quickAddType} onClose={() => setQuickAddType(null)} maxWidth="xs" fullWidth>
+                <DialogTitle>Tambah {quickAddType === 'customer' ? 'Customer' : 'Order'} Baru</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {quickAddType === 'customer' ? (
+                            <>
+                                <TextField
+                                    label="Kode Customer"
+                                    fullWidth
+                                    value={quickAddData.kodeCustomer}
+                                    onChange={(e) => setQuickAddData({ ...quickAddData, kodeCustomer: e.target.value.toUpperCase() })}
+                                />
+                                <TextField
+                                    label="Nama Customer"
+                                    fullWidth
+                                    value={quickAddData.namaCustomer}
+                                    onChange={(e) => setQuickAddData({ ...quickAddData, namaCustomer: e.target.value })}
+                                />
+                                <TextField
+                                    label="No. Handphone"
+                                    fullWidth
+                                    placeholder="0812..."
+                                    value={quickAddData.noHandphone}
+                                    onChange={(e) => setQuickAddData({ ...quickAddData, noHandphone: e.target.value })}
+                                />
+                            </>
+                        ) : (
+                            <>
+                                <TextField
+                                    label="Nomor Order"
+                                    fullWidth
+                                    placeholder="HMT-..."
+                                    value={quickAddData.noOrder}
+                                    onChange={(e) => setQuickAddData({ ...quickAddData, noOrder: e.target.value.toUpperCase() })}
+                                />
+                                <TextField
+                                    label="Nama Customer (Untuk Order)"
+                                    fullWidth
+                                    placeholder="Input nama customer"
+                                    value={quickAddData.orderCustomerName || globalCustomer?.namaCustomer || ''}
+                                    onChange={(e) => setQuickAddData({ ...quickAddData, orderCustomerName: e.target.value })}
+                                />
+                                <Autocomplete
+                                    options={fieldStaffs}
+                                    getOptionLabel={(option) => `[${option.kodeOrlap}] ${option.namaOrlap}`}
+                                    onChange={(e, newValue) => setQuickAddData({ ...quickAddData, fieldStaff: newValue?._id })}
+                                    renderInput={(params) => <TextField {...params} label="Pilih Field Staff" />}
+                                />
+                            </>
+                        )}
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setQuickAddType(null)}>Batal</Button>
+                    <Button
+                        onClick={handleQuickAddSave}
+                        variant="contained"
+                        disabled={isSavingQuickAdd || (quickAddType === 'customer' ? !quickAddData.kodeCustomer : !quickAddData.noOrder)}
+                    >
+                        {isSavingQuickAdd ? <CircularProgress size={24} /> : 'Simpan'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Dialog>
     );
 };

@@ -57,9 +57,9 @@ const parseProductData = (rawText) => {
       bank: /Bank[\s:]*([A-Za-z\s]+?)(?:\s+Grade|\s+KCP|\s+Kantor\s+Cabang|\n|$)/i,
       grade: /Grade[\s:]*([A-Za-z0-9\s\(\)]+?)(?:\s+KCP|\s+Kantor\s+Cabang|\s+NIK|\n|$)/i,
       kcp: /(?:KCP|Kantor\s+Cabang)\s*[\s:]+\s*([A-Za-z0-9\s\-\.]+?)(?:\s+NIK|\n|$)/i,
-      noOrder: /No\s*\.?\s*ORDER[\s:]+([A-Za-z0-9\-]+)/i,
-      codeAgen: /(?:Code\s*Agen|Kode\s*Orlap)[\s:]+([A-Za-z0-9\-]+)/i,
-      customer: /(?:Customer|Pelanggan)[\s:]*([A-Za-z0-9\s]+?)(?:\s+NIK|\s+Nama|\n|$)/i,
+      noOrder: /No\s*\.?\s*ORDER[\s:]*[(\[]?([A-Za-z0-9\-]+)[)\]]?/i,
+      codeAgen: /(?:Code\s*Agen|Kode\s*Orlap)[\s:]*[(\[]?([A-Za-z0-9\-]+)[)\]]?/i,
+      customer: /(?:Customer|Pelanggan)[\s:]*[(\[]?([A-Za-z0-9\s]+?)[)\]]?(?:\s+NIK|\s+Nama|\n|$)/i,
 
       // IB Credentials (Priority)
       ibUser: /(?:User\s*I-Banking|I-Banking|User\s*IB|Internet\s*Banking|IB\s*User|IB)[\s:]+([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
