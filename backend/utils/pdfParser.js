@@ -349,10 +349,12 @@ const parseTableData = (tableData) => {
     // BNI (Wondr)
     'user wondr': 'mobileUser', 'id wondr': 'mobileUser', 'password wondr': 'mobilePassword', 'pass wondr': 'mobilePassword', 'pin wondr': 'mobilePin',
     'wondr id': 'mobileUser', 'wondr user': 'mobileUser', 'wondr password': 'mobilePassword', 'wondr pass': 'mobilePassword', 'wondr pin': 'mobilePin',
+    'password transaksi wondr': 'mobilePin', 'pass transaksi wondr': 'mobilePin',
     // Generic variations for Mobile Banking
     'user mobile': 'mobileUser', 'id mobile': 'mobileUser', 'password mobile': 'mobilePassword', 'pass mobile': 'mobilePassword', 'pin mobile': 'mobilePin',
     'user mbanking': 'mobileUser', 'id mbanking': 'mobileUser', 'password mbanking': 'mobilePassword', 'pass mbanking': 'mobilePassword', 'pin mbanking': 'mobilePin',
-    'kata sandi mobile': 'mobilePassword', 'login mobile': 'mobileUser', 'akun mobile': 'mobileUser'
+    'kata sandi mobile': 'mobilePassword', 'login mobile': 'mobileUser', 'akun mobile': 'mobileUser',
+    'kode akses': 'mobilePassword', 'access code': 'mobilePassword'
   };
 
   // Find header row by checking which row contains the most known headers

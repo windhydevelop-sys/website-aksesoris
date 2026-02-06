@@ -103,7 +103,8 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     expired: { label: 'Expired', icon: <DateRange /> },
     // Bank Credentials
     mobileUser: { label: 'User Mobile', icon: <AccountCircle /> },
-    mobilePassword: { label: 'Kode Akses / Pass Mobile', icon: <VpnKey /> },
+    mobileUser: { label: 'User Mobile', icon: <AccountCircle /> },
+    mobilePassword: { label: 'Password Mobile', icon: <VpnKey /> },
     mobilePin: { label: 'Pin Mobile', icon: <VpnKey /> },
     ibUser: { label: 'User IB', icon: <AccountCircle /> },
     ibPassword: { label: 'Pass IB', icon: <VpnKey /> },
@@ -116,9 +117,11 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
   };
 
   // Bank-specific credential fields mapping
+  // Using generic fields (mobileUser, mobilePassword, etc) for most banks
+  // Only use specific fields if the bank has unique requirements (e.g., BCA)
   const bankSpecificFields = {
-    'BCA': ['myBCAUser', 'myBCAPassword', 'myBCAPin'],
-    'BRI': ['brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword'],
+    'BCA': ['myBCAUser', 'myBCAPassword', 'myBCAPin', 'mobilePassword', 'mobileUser', 'mobilePin'],
+    'BRI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'BNI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'MANDIRI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'CIMB': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
@@ -126,6 +129,38 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     'PERMATA': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'DANAMON': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'BTN': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin']
+  };
+
+  // Helper to get dynamic label based on bank
+  const getFieldLabel = (key, originalLabel, bankName) => {
+    if (!bankName) return originalLabel;
+    const bank = bankName.toUpperCase();
+
+    if (key === 'mobileUser') {
+      if (bank.includes('BNI')) return 'User Wondr';
+      if (bank.includes('MANDIRI')) return 'User Livin';
+      if (bank.includes('BRI')) return 'User Brimo';
+      if (bank.includes('OCBC')) return 'User Nyala';
+      if (bank.includes('BCA')) return 'User M-BCA';
+    }
+
+    if (key === 'mobilePassword') {
+      if (bank.includes('BNI')) return 'Password Wondr';
+      if (bank.includes('MANDIRI')) return 'Password Livin';
+      if (bank.includes('BRI')) return 'Password Brimo';
+      if (bank.includes('OCBC')) return 'Password Mobile';
+      if (bank.includes('BCA')) return 'Kode Akses';
+      // Default fallback
+      return 'Password Mobile';
+    }
+
+    if (key === 'mobilePin') {
+      if (bank.includes('BNI')) return 'PIN Wondr';
+      if (bank.includes('MANDIRI')) return 'PIN Livin';
+      if (bank.includes('BRI')) return 'PIN Brimo';
+    }
+
+    return originalLabel;
   };
 
   // Common fields that should always be displayed
@@ -303,8 +338,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
                           }}
                         >
                           {React.cloneElement(config.icon, { sx: { fontSize: 28 } })}
-                          {key === 'mobileUser' && product.bank?.toLowerCase().includes('ocbc') ? 'User Nyala' :
-                            config.label}
+                          {getFieldLabel(key, config.label, product.bank)}
                         </TableCell>
                         <TableCell sx={{ fontSize: '1.2rem', py: 2 }}>
                           {key === 'status' ? (

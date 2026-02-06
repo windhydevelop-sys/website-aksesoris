@@ -596,6 +596,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                         <MenuItem onClick={() => handleDownloadBankTemplate('BRI')}>Template BRI</MenuItem>
                         <MenuItem onClick={() => handleDownloadBankTemplate('Mandiri')}>Template Mandiri</MenuItem>
                         <MenuItem onClick={() => handleDownloadBankTemplate('BNI')}>Template BNI</MenuItem>
+                        <MenuItem onClick={() => handleDownloadBankTemplate('Permata')}>Template Permata</MenuItem>
                         <MenuItem onClick={() => handleDownloadBankTemplate('OCBC')}>Template OCBC</MenuItem>
                     </Menu>
                 </Box>

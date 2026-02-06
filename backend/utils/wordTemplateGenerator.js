@@ -233,7 +233,7 @@ const generateBankSpecificTemplate = async (bankName) => {
                 { label: 'Password IB', sample: 'PassIB123' }
             );
         } else {
-            // BRI, BNI, Mandiri
+            // BRI, BNI, Mandiri, Permata
             fields.push(
                 { label: 'User Mobile', sample: `USER${bank}01` },
                 { label: 'Password Mobile', sample: 'Pass123!' },
