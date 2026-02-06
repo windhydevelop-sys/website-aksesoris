@@ -10,157 +10,124 @@ const productSchema = Joi.object({
     'string.empty': 'Kode Orlap tidak boleh kosong'
   }),
 
-  customer: Joi.string().trim().min(1).required().messages({
-    'string.empty': 'Customer tidak boleh kosong',
-    'any.required': 'Customer wajib diisi'
+  customer: Joi.string().trim().min(0).optional().allow('', '-').messages({
+    'string.empty': 'Customer tidak boleh kosong'
   }),
 
-  bank: Joi.string().trim().min(1).required().messages({
-    'string.empty': 'Bank tidak boleh kosong',
-    'any.required': 'Bank wajib diisi'
+  bank: Joi.string().trim().min(0).optional().allow('', '-').messages({
+    'string.empty': 'Bank tidak boleh kosong'
   }),
 
-  grade: Joi.string().trim().min(1).required().messages({
-    'string.empty': 'Grade tidak boleh kosong',
-    'any.required': 'Grade wajib diisi'
+  grade: Joi.string().trim().min(0).optional().allow('', '-').messages({
+    'string.empty': 'Grade tidak boleh kosong'
   }),
 
-  kcp: Joi.string().trim().min(1).required().messages({
-    'string.empty': 'KCP tidak boleh kosong',
-    'any.required': 'KCP wajib diisi'
+  kcp: Joi.string().trim().min(0).optional().allow('', '-').messages({
+    'string.empty': 'KCP tidak boleh kosong'
   }),
 
-  nik: Joi.string().pattern(/^\d{16}$/).required().messages({
-    'string.pattern.base': 'NIK harus 16 digit angka (contoh: 3201010101010001)',
-    'any.required': 'NIK wajib diisi'
+  nik: Joi.string().pattern(/^\d{16}$/).optional().allow('', '-').messages({
+    'string.pattern.base': 'NIK harus 16 digit angka (contoh: 3201010101010001)'
   }),
 
-  nama: Joi.string().trim().min(1).required().messages({
-    'string.empty': 'Nama tidak boleh kosong',
-    'any.required': 'Nama wajib diisi'
+  nama: Joi.string().trim().min(0).optional().allow('', '-').messages({
+    'string.empty': 'Nama tidak boleh kosong'
   }),
 
-  namaIbuKandung: Joi.string().trim().min(1).required().messages({
-    'string.empty': 'Nama Ibu Kandung tidak boleh kosong',
-    'any.required': 'Nama Ibu Kandung wajib diisi'
+  namaIbuKandung: Joi.string().trim().min(0).optional().allow('', '-').messages({
+    'string.empty': 'Nama Ibu Kandung tidak boleh kosong'
   }),
 
-  tempatTanggalLahir: Joi.string().trim().min(1).required().messages({
-    'string.empty': 'Tempat/Tanggal Lahir tidak boleh kosong',
-    'any.required': 'Tempat/Tanggal Lahir wajib diisi'
+  tempatTanggalLahir: Joi.string().trim().min(0).optional().allow('', '-').messages({
+    'string.empty': 'Tempat/Tanggal Lahir tidak boleh kosong'
   }),
 
-  noRek: Joi.string().pattern(/^\d{10,18}$/).required().messages({
-    'string.pattern.base': 'No. Rekening harus 10-18 digit angka',
-    'any.required': 'No. Rekening wajib diisi'
+  noRek: Joi.string().allow('', '-').optional().messages({
+    'string.pattern.base': 'No. Rekening harus 10-18 digit angka'
   }),
 
-  sisaSaldo: Joi.string().optional().messages({
+  sisaSaldo: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Sisa Saldo harus berupa string'
   }),
 
-  noAtm: Joi.string().pattern(/^\d{16}$/).required().messages({
-    'string.pattern.base': 'No. ATM harus 16 digit angka',
-    'any.required': 'No. ATM wajib diisi'
+  noAtm: Joi.string().allow('', '-').optional().messages({
+    'string.pattern.base': 'No. ATM harus 16 digit angka'
   }),
 
-  validThru: Joi.string().trim().min(1).required().messages({
-    'string.empty': 'Valid Thru tidak boleh kosong',
-    'any.required': 'Valid Thru wajib diisi'
+  validThru: Joi.string().trim().min(0).optional().allow('', '-').messages({
+    'string.empty': 'Valid Thru tidak boleh kosong'
   }),
 
-  noHp: Joi.string().pattern(/^(\+62|62|0)8[1-9][0-9]{6,9}$/).required().messages({
-    'string.pattern.base': 'Format nomor HP tidak valid (contoh: 081234567890)',
-    'any.required': 'No. HP wajib diisi'
+  noHp: Joi.string().allow('', '-').optional().messages({
+    'string.pattern.base': 'Format nomor HP tidak valid (contoh: 081234567890)'
   }),
 
-  handphone: Joi.string().trim().allow('').optional().messages({
+  handphone: Joi.string().trim().allow('', '-').optional().messages({
     'string.base': 'Handphone harus berupa string'
   }),
 
-  handphoneId: Joi.string().optional().messages({
+  handphoneId: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Handphone ID harus berupa string'
   }),
 
-  imeiHandphone: Joi.string().trim().allow('').optional().messages({
+  imeiHandphone: Joi.string().trim().allow('', '-').optional().messages({
     'string.base': 'IMEI Handphone harus berupa string'
   }),
 
-  pinAtm: Joi.string().pattern(/^\d{4,6}$/).required().messages({
-    'string.pattern.base': 'PIN ATM harus 4-6 digit angka',
-    'any.required': 'PIN ATM wajib diisi'
+  pinAtm: Joi.string().allow('', '-').optional().messages({
+    'string.pattern.base': 'PIN ATM harus 4-6 digit angka'
   }),
 
-  pinWondr: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+  pinWondr: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'PIN Wondr harus 4-6 digit angka'
   }),
 
-  passWondr: Joi.string().min(6).optional().messages({
+  passWondr: Joi.string().min(0).optional().allow('', '-').messages({
     'string.min': 'Password Wondr minimal 6 karakter'
   }),
 
-  email: Joi.string().email().required().messages({
-    'string.email': 'Format email tidak valid (contoh: user@example.com)',
-    'any.required': 'Email wajib diisi'
+  email: Joi.string().allow('', '-').optional().messages({
+    'string.email': 'Format email tidak valid (contoh: user@example.com)'
   }),
 
-  passEmail: Joi.string().min(6).required().messages({
-    'string.min': 'Password Email minimal 6 karakter',
-    'any.required': 'Password Email wajib diisi'
+  passEmail: Joi.string().min(0).optional().allow('', '-').messages({
+    'string.min': 'Password Email minimal 6 karakter'
   }),
   // Bank-specific and generic credential fields
-  myBCAUser: Joi.string().when('bank', { is: Joi.string().regex(/^BCA$/i), then: Joi.required() }).messages({
+  myBCAUser: Joi.string().optional().allow('', '-').messages({
     'any.required': 'User myBCA wajib diisi untuk bank BCA'
   }),
-  myBCAPassword: Joi.string().min(6).when('bank', { is: Joi.string().regex(/^BCA$/i), then: Joi.required() }).messages({
+  myBCAPassword: Joi.string().min(0).optional().allow('', '-').messages({
     'string.min': 'Password myBCA minimal 6 karakter',
     'any.required': 'Password myBCA wajib diisi untuk bank BCA'
   }),
-  myBCAPin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+  myBCAPin: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'Pin MyBCA harus 4-6 digit angka'
   }),
-  mobileUser: Joi.string().when('bank', {
-    switch: [
-      { is: Joi.string().regex(/^(MANDIRI|BCA|BNI)$/i), then: Joi.optional().allow('') },
-      { is: Joi.string().regex(/^(BRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
-    ],
-    otherwise: Joi.optional().allow('')
-  }).messages({
+  mobileUser: Joi.string().optional().allow('', '-').messages({
     'any.required': 'User Mobile wajib diisi untuk bank yang dipilih'
   }),
-  mobilePassword: Joi.string().min(6).when('bank', { is: Joi.string().regex(/^(BCA|BRI|BNI|MANDIRI|BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }).messages({
+  mobilePassword: Joi.string().min(0).optional().allow('', '-').messages({
     'string.min': 'Password Mobile minimal 6 karakter',
     'any.required': 'Password Mobile wajib diisi untuk bank yang dipilih'
   }),
-  mobilePin: Joi.string().pattern(/^\d{4,6}$/).allow('').optional().messages({
+  mobilePin: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'Pin Mobile harus 4-6 digit angka'
   }),
-  ibUser: Joi.string().when('bank', {
-    switch: [
-      { is: Joi.string().regex(/^(MANDIRI|BRI|BCA|BNI)$/i), then: Joi.optional().allow('') },
-      { is: Joi.string().regex(/^(BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
-    ],
-    otherwise: Joi.optional().allow('')
-  }).messages({
+  ibUser: Joi.string().optional().allow('', '-').messages({
     'any.required': 'User Internet Banking wajib diisi untuk bank yang dipilih'
   }),
-  ibPassword: Joi.string().min(6).when('bank', {
-    switch: [
-      { is: Joi.string().regex(/^(MANDIRI|BRI|BCA|BNI)$/i), then: Joi.optional().allow('') },
-      { is: Joi.string().regex(/^(BSI|OCBC|CIMB NIAGA|JAGO|SEBANK|PERMATA|DANAMON|MYBANK|SINARMAS)$/i), then: Joi.required() }
-    ],
-    otherwise: Joi.optional().allow('')
-  }).messages({
+  ibPassword: Joi.string().min(0).optional().allow('', '-').messages({
     'string.min': 'Password Internet Banking minimal 6 karakter',
     'any.required': 'Password Internet Banking wajib diisi untuk bank yang dipilih'
   }),
-  ibPin: Joi.string().pattern(/^\d{4,8}$/).optional().allow('').messages({
+  ibPin: Joi.string().allow('', '-').optional().allow('').messages({
     'string.pattern.base': 'PIN Internet Banking harus 4-8 digit angka'
   }),
-  merchantUser: Joi.string().optional(),
-  merchantPassword: Joi.string().min(6).optional(),
+  merchantUser: Joi.string().optional().allow('', '-'),
+  merchantPassword: Joi.string().min(0).optional().allow('', '-'),
 
-  expired: Joi.date().required().messages({
+  expired: Joi.date().optional().allow('', '-').messages({
     'date.base': 'Format tanggal expired tidak valid (gunakan format YYYY-MM-DD)',
     'any.required': 'Expired date wajib diisi'
   }),
@@ -192,115 +159,115 @@ const productUpdateSchema = Joi.object({
     'string.empty': 'Kode Orlap tidak boleh kosong'
   }),
 
-  customer: Joi.string().trim().min(1).optional().messages({
+  customer: Joi.string().trim().min(0).optional().allow('', '-').messages({
     'string.empty': 'Customer tidak boleh kosong'
   }),
 
-  bank: Joi.string().trim().min(1).optional().messages({
+  bank: Joi.string().trim().min(0).optional().allow('', '-').messages({
     'string.empty': 'Bank tidak boleh kosong'
   }),
 
-  grade: Joi.string().trim().min(1).optional().messages({
+  grade: Joi.string().trim().min(0).optional().allow('', '-').messages({
     'string.empty': 'Grade tidak boleh kosong'
   }),
 
-  kcp: Joi.string().trim().min(1).optional().messages({
+  kcp: Joi.string().trim().min(0).optional().allow('', '-').messages({
     'string.empty': 'KCP tidak boleh kosong'
   }),
 
-  nik: Joi.string().pattern(/^\d{16}$/).optional().messages({
+  nik: Joi.string().pattern(/^\d{16}$/).optional().allow('', '-').messages({
     'string.pattern.base': 'NIK harus 16 digit angka (contoh: 3201010101010001)'
   }),
 
-  nama: Joi.string().trim().min(1).optional().messages({
+  nama: Joi.string().trim().min(0).optional().allow('', '-').messages({
     'string.empty': 'Nama tidak boleh kosong'
   }),
 
-  namaIbuKandung: Joi.string().trim().min(1).optional().messages({
+  namaIbuKandung: Joi.string().trim().min(0).optional().allow('', '-').messages({
     'string.empty': 'Nama Ibu Kandung tidak boleh kosong'
   }),
 
-  tempatTanggalLahir: Joi.string().trim().min(1).optional().messages({
+  tempatTanggalLahir: Joi.string().trim().min(0).optional().allow('', '-').messages({
     'string.empty': 'Tempat/Tanggal Lahir tidak boleh kosong'
   }),
 
-  noRek: Joi.string().pattern(/^\d{10,18}$/).optional().messages({
+  noRek: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'No. Rekening harus 10-18 digit angka'
   }),
 
-  sisaSaldo: Joi.string().optional().messages({
+  sisaSaldo: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Sisa Saldo harus berupa string'
   }),
 
-  noAtm: Joi.string().pattern(/^\d{16}$/).optional().messages({
+  noAtm: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'No. ATM harus 16 digit angka'
   }),
 
-  validThru: Joi.string().trim().min(1).optional().messages({
+  validThru: Joi.string().trim().min(0).optional().allow('', '-').messages({
     'string.empty': 'Valid Thru tidak boleh kosong'
   }),
 
-  noHp: Joi.string().pattern(/^(\+62|62|0)8[1-9][0-9]{6,9}$/).optional().messages({
+  noHp: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'Format nomor HP tidak valid (contoh: 081234567890)'
   }),
 
-  handphone: Joi.string().trim().allow('').optional().messages({
+  handphone: Joi.string().trim().allow('', '-').optional().messages({
     'string.base': 'Handphone harus berupa string'
   }),
 
-  handphoneId: Joi.string().optional().messages({
+  handphoneId: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Handphone ID harus berupa string'
   }),
 
-  imeiHandphone: Joi.string().trim().allow('').optional().messages({
+  imeiHandphone: Joi.string().trim().allow('', '-').optional().messages({
     'string.base': 'IMEI Handphone harus berupa string'
   }),
 
-  pinAtm: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+  pinAtm: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'PIN ATM harus 4-6 digit angka'
   }),
 
-  pinWondr: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+  pinWondr: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'PIN Wondr harus 4-6 digit angka'
   }),
 
-  passWondr: Joi.string().min(6).optional().messages({
+  passWondr: Joi.string().min(0).optional().allow('', '-').messages({
     'string.min': 'Password Wondr minimal 6 karakter'
   }),
 
-  email: Joi.string().email().optional().messages({
+  email: Joi.string().allow('', '-').optional().messages({
     'string.email': 'Format email tidak valid (contoh: user@example.com)'
   }),
 
-  passEmail: Joi.string().min(6).optional().messages({
+  passEmail: Joi.string().min(0).optional().allow('', '-').messages({
     'string.min': 'Password Email minimal 6 karakter'
   }),
-  myBCAUser: Joi.string().optional(),
-  myBCAPassword: Joi.string().min(6).optional(),
-  myBCAPin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+  myBCAUser: Joi.string().optional().allow('', '-'),
+  myBCAPassword: Joi.string().min(0).optional().allow('', '-'),
+  myBCAPin: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'Pin MyBCA harus 4-6 digit angka'
   }),
-  brimoUser: Joi.string().optional(),
-  brimoPassword: Joi.string().min(6).optional(),
-  briMerchantUser: Joi.string().optional(),
-  briMerchantPassword: Joi.string().min(6).optional(),
-  mobileUser: Joi.string().optional(),
-  mobilePassword: Joi.string().min(6).optional(),
-  mobilePin: Joi.string().pattern(/^\d{4,6}$/).optional().messages({
+  brimoUser: Joi.string().optional().allow('', '-'),
+  brimoPassword: Joi.string().min(0).optional().allow('', '-'),
+  briMerchantUser: Joi.string().optional().allow('', '-'),
+  briMerchantPassword: Joi.string().min(0).optional().allow('', '-'),
+  mobileUser: Joi.string().optional().allow('', '-'),
+  mobilePassword: Joi.string().min(0).optional().allow('', '-'),
+  mobilePin: Joi.string().allow('', '-').optional().messages({
     'string.pattern.base': 'Pin Mobile harus 4-6 digit angka'
   }),
-  ibUser: Joi.string().optional(),
-  ibPassword: Joi.string().min(6).optional(),
+  ibUser: Joi.string().optional().allow('', '-'),
+  ibPassword: Joi.string().min(0).optional().allow('', '-'),
 
-  expired: Joi.date().optional().messages({
+  expired: Joi.date().optional().allow('', '-').messages({
     'date.base': 'Format tanggal expired tidak valid (gunakan format YYYY-MM-DD)'
   }),
 
-  uploadFotoId: Joi.string().optional().messages({
+  uploadFotoId: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Foto KTP harus berupa string'
   }),
 
-  uploadFotoSelfie: Joi.string().optional().messages({
+  uploadFotoSelfie: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Foto Selfie harus berupa string'
   }),
 
@@ -308,7 +275,7 @@ const productUpdateSchema = Joi.object({
     'any.only': 'Status produk tidak valid',
     'string.base': 'Status produk harus berupa string'
   }),
-  complaint: Joi.string().optional().messages({
+  complaint: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Complaint harus berupa string'
   })
 });

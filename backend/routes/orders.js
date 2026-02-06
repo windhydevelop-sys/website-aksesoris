@@ -87,15 +87,20 @@ router.post('/', auth, async (req, res) => {
       assignedNoOrder = String(nextInt).padStart(3, '0');
     }
 
-    const newOrder = new Order({
+    const newOrderData = {
       noOrder: assignedNoOrder,
       customer: String(customer).trim(),
-      fieldStaff: String(fieldStaff).trim(),
       status: (status || 'pending').toLowerCase(),
       notes: notes?.trim(),
       harga: harga || 0,
       createdBy: req.user.id
-    });
+    };
+
+    if (fieldStaff && String(fieldStaff).trim() !== '') {
+      newOrderData.fieldStaff = fieldStaff;
+    }
+
+    const newOrder = new Order(newOrderData);
 
     const savedOrder = await newOrder.save();
 

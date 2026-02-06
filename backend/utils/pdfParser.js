@@ -1,33 +1,85 @@
 const fs = require('fs');
 const path = require('path');
 const { logger, securityLog } = require('./audit');
-const { extractImagesFromHtml, saveImageToDisk } = require('./imageExtractor');
+const { extractImagesFromHtml, saveImageToDisk, extractImagesFromPDF } = require('./imageExtractor');
 const { parseDocument } = require('./documentParser');
+const { uploadToCloudinary } = require('./cloudinary');
 
-let pdfParse = null;
+let PDFParse = null;
 try {
-  pdfParse = require('pdf-parse');
+  const pdfModule = require('pdf-parse');
+  // Check if it's the Mehmet Kozan version (class-based)
+  if (pdfModule.PDFParse) {
+    PDFParse = pdfModule.PDFParse;
+  } else if (typeof pdfModule === 'function') {
+    // Fallback for standard pdf-parse
+    PDFParse = pdfModule;
+  }
 } catch (error) {
-  logger.warn('pdf-parse library not available in this environment');
+  logger.warn('pdf-parse library error or not available');
 }
 
-// Extract PDF text
+// Extract PDF text using the available library
 const extractTextFromPDF = async (pdfBuffer) => {
   try {
-    if (pdfParse) {
-      const data = await pdfParse(pdfBuffer);
-      if (data && data.text && data.text.trim().length > 0) return data.text;
+    if (!PDFParse) return 'PDF parser not available';
+
+    // If it's a class (Mehmet Kozan version)
+    if (typeof PDFParse === 'function' && PDFParse.prototype && PDFParse.prototype.load) {
+      const pdf = new PDFParse(new Uint8Array(pdfBuffer));
+      await pdf.load();
+      const result = await pdf.getText();
+      return (result && typeof result === 'object' ? result.text : result) || '';
     }
-    // Fallback for extreme cases
-    const bufferString = pdfBuffer.toString('utf8', 0, Math.min(10000, pdfBuffer.length));
-    const textMatches = bufferString.match(/BT[\s\S]*?ET/g) || [];
-    let extractedText = '';
-    for (const match of textMatches) extractedText += match.replace(/BT|ET/g, '').trim() + ' ';
-    return extractedText.length > 10 ? extractedText : 'PDF text extraction failed';
+
+    // If it's the standard function parser
+    if (typeof PDFParse === 'function') {
+      const data = await PDFParse(pdfBuffer);
+      return data.text || '';
+    }
+
+    return 'Unsupported PDF parser format';
   } catch (error) {
-    logger.error('PDF text extraction failed:', error);
-    return 'PDF processing error';
+    logger.error('PDF text extraction failed:', {
+      error: error.message,
+      stack: error.stack,
+      bufferSize: pdfBuffer ? pdfBuffer.length : 0
+    });
+    return 'PDF processing error: ' + error.message;
   }
+};
+
+// Extract tables directly if using the advanced parser
+const extractTablesFromPDF = async (pdfBuffer) => {
+  try {
+    if (typeof PDFParse === 'function' && PDFParse.prototype && PDFParse.prototype.getPageTables) {
+      const pdf = new PDFParse(new Uint8Array(pdfBuffer));
+      await pdf.load();
+
+      const allTables = [];
+      // Try to extract from first 5 pages
+      const pagesToTry = Math.min(pdf.pagesCount || 1, 5);
+      for (let i = 0; i < pagesToTry; i++) {
+        try {
+          const pageTables = await pdf.getPageTables(i);
+          if (pageTables && pageTables.length > 0) {
+            pageTables.forEach(table => {
+              if (table.rows && table.rows.length > 1) {
+                // Convert table rows to 2D array of strings
+                allTables.push(table.rows.map(row =>
+                  row.map(cell => (cell && typeof cell === 'object') ? (cell.text || '') : String(cell))
+                ));
+              }
+            });
+          }
+        } catch (e) { /* skip page */ }
+      }
+      return allTables.length > 0 ? allTables[0] : null; // Return first found table
+    }
+  } catch (error) {
+    logger.warn('Advanced PDF table extraction failed, falling back to text parsing', { error: error.message });
+  }
+  return null;
 };
 
 const parseProductData = (rawText) => {
@@ -93,6 +145,9 @@ const parseProductData = (rawText) => {
         if (key === 'noAtm' && match[2] && !extractedData.validThru) {
           extractedData.validThru = match[2].trim();
         }
+      } else {
+        // Default value for missing fields to ensure they exist in the object
+        extractedData[key] = '-';
       }
     });
 
@@ -123,37 +178,43 @@ const processDocumentFile = async (filePath) => {
 
     if (extension === '.pdf') {
       const pdfBuffer = fs.readFileSync(filePath);
+
+      // Try built-in table extraction first
+      const extractedTable = await extractTablesFromPDF(pdfBuffer);
+      if (extractedTable && extractedTable.length > 0) {
+        logger.info('Extracted structured table from PDF using advanced parser');
+        products = parseTableData(extractedTable);
+        if (products.length > 0) {
+          const validationResult = validateExtractedData(products);
+          return { success: true, ...validationResult };
+        }
+      }
+
+      // Fallback to text parsing
       text = await extractTextFromPDF(pdfBuffer);
 
       // DEBUG: Log first 1000 chars to help debug layout
-      logger.info('PDF Extracted Text (Detailed):', { text: text.substring(0, 1000) });
+      logger.info('PDF Extracted Text (Detailed):', {
+        textLength: text.length,
+        sample: text.substring(0, 500)
+      });
 
       // In PDF, columns are often separated by multiple spaces or single space
-      // We'll try to split lines by 2+ spaces first
       const lines = text.split('\n').filter(l => l.trim().length > 0);
       const rows = lines.map(line => {
         // Try to split by 2+ spaces or tabs
         let cells = line.split(/\s{2,}|\t/).map(c => c.trim()).filter(c => c.length > 0);
-        // If only 1 cell found, maybe it's space-separated with single spaces?
-        // (Dangerous, but let's check for headers)
+        // If only 1 cell found, check for headers
         if (cells.length < 3 && line.toLowerCase().includes('nik') && line.toLowerCase().includes('nama')) {
           cells = line.split(/\s+/).map(c => c.trim()).filter(c => c.length > 0);
         }
         return cells;
       });
 
-      // DEBUG: Log row statistics
-      const rowStats = rows.map(r => r.length);
-      logger.info('PDF Row Analysis:', {
-        totalRows: rows.length,
-        maxCols: Math.max(...rowStats, 0),
-        rowsMoreThan3Cols: rowStats.filter(len => len > 3).length
-      });
-
-      // Check if it looks like a table (multiple columns in several rows)
+      // Check if it looks like a table
       const potentialTableRows = rows.filter(r => r.length > 3);
-      if (potentialTableRows.length >= 2) {
-        logger.info('Detected potential table/grid structure in PDF');
+      if (potentialTableRows.length >= 1) {
+        logger.info('Detected potential table/grid structure in PDF text');
         products = parseTableData(rows);
         if (products.length === 0) {
           logger.info('PDF table parsing returned 0 products, falling back to regex');
@@ -162,6 +223,48 @@ const processDocumentFile = async (filePath) => {
       } else {
         logger.info('PDF looks like list/blocks or unstructured text, using regex');
         products = parseProductData(text);
+      }
+
+      // Extract images from PDF and upload to Cloudinary
+      if (products.length > 0) {
+        try {
+          logger.info('Attempting to extract images from PDF...');
+          const images = await extractImagesFromPDF(buffer);
+
+          if (images.length > 0) {
+            logger.info(`Found ${images.length} images in PDF, uploading to Cloudinary...`);
+
+            // First image = KTP, Second image = Selfie
+            for (let i = 0; i < Math.min(images.length, 2); i++) {
+              const img = images[i];
+              const fieldName = i === 0 ? 'uploadFotoId' : 'uploadFotoSelfie';
+              const label = i === 0 ? 'KTP' : 'Selfie';
+
+              try {
+                // Upload to Cloudinary
+                const uploadResult = await uploadToCloudinary(img.buffer, {
+                  folder: 'products',
+                  resource_type: 'image',
+                  format: img.format === 'jpeg' ? 'jpg' : img.format
+                });
+
+                if (uploadResult && uploadResult.secure_url) {
+                  // Assign to first product (assuming single product per PDF)
+                  if (products[0]) {
+                    products[0][fieldName] = uploadResult.secure_url;
+                    logger.info(`Successfully uploaded ${label} to Cloudinary: ${uploadResult.secure_url}`);
+                  }
+                }
+              } catch (uploadErr) {
+                logger.warn(`Failed to upload ${label} image to Cloudinary:`, uploadErr.message);
+              }
+            }
+          } else {
+            logger.info('No images found in PDF');
+          }
+        } catch (imgErr) {
+          logger.warn('PDF image extraction warning:', imgErr.message);
+        }
       }
     } else {
       const parseResult = await parseDocument(filePath);

@@ -115,7 +115,47 @@ const saveImageToDisk = (base64Str, uploadsDir) => {
     }
 };
 
+/**
+ * Extract images from PDF buffer using pdf-extract-image
+ * Returns array of image buffers with metadata
+ */
+const extractImagesFromPDF = async (pdfBuffer) => {
+    try {
+        logger.info('Starting PDF image extraction...');
+
+        const pdfExtract = require('pdf-extract-image');
+
+        // Extract images from PDF buffer
+        const images = await pdfExtract(pdfBuffer);
+
+        if (!images || images.length === 0) {
+            logger.info('No images found in PDF');
+            return [];
+        }
+
+        logger.info(`Extracted ${images.length} images from PDF`);
+
+        // Convert to our expected format
+        const formattedImages = images.map((img, index) => ({
+            buffer: img,  // Already a Buffer
+            format: 'png',  // pdf-extract-image returns PNG buffers
+            width: 0,  // Metadata not available from this library
+            height: 0,
+            pageIndex: 0,  // Page info not available
+            size: img.length,
+            index
+        }));
+
+        return formattedImages;
+
+    } catch (error) {
+        logger.error('PDF image extraction failed:', { error: error.message, stack: error.stack });
+        return [];
+    }
+};
+
 module.exports = {
     extractImagesFromHtml,
-    saveImageToDisk
+    saveImageToDisk,
+    extractImagesFromPDF
 };

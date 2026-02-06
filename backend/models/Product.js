@@ -2,31 +2,31 @@ const mongoose = require('mongoose');
 const { encrypt, decrypt, hashSensitive } = require('../utils/encryption');
 
 const productSchema = new mongoose.Schema({
-  noOrder: { type: String, required: true },
-  codeAgen: { type: String, required: true },
-  bank: { type: String, required: true },
-  grade: { type: String, required: true },
-  kcp: { type: String, required: true },
-  nik: { type: String, required: true },
-  nama: { type: String, required: true },
-  namaIbuKandung: { type: String, required: true },
-  tempatTanggalLahir: { type: String, required: true },
-  noRek: { type: String, required: true },
+  noOrder: { type: String, required: false },
+  codeAgen: { type: String, required: false },
+  bank: { type: String, required: false },
+  grade: { type: String, required: false },
+  kcp: { type: String, required: false },
+  nik: { type: String, required: false },
+  nama: { type: String, required: false },
+  namaIbuKandung: { type: String, required: false },
+  tempatTanggalLahir: { type: String, required: false },
+  noRek: { type: String, required: false },
   sisaSaldo: { type: String }, // New optional field for remaining balance
-  noAtm: { type: String, required: true },
-  validThru: { type: String, required: true },
-  noHp: { type: String, required: true },
+  noAtm: { type: String, required: false },
+  validThru: { type: String, required: false },
+  noHp: { type: String, required: false },
   handphone: { type: String }, // New field for handphone
   imeiHandphone: { type: String }, // New field for IMEI handphone
   handphoneId: { type: mongoose.Schema.Types.ObjectId, ref: 'Handphone' }, // Optional reference to Handphone
   handphoneAssignmentDate: { type: Date, default: Date.now }, // When handphone was assigned
   handphoneReturnDate: { type: Date }, // When handphone was returned
   // Encrypted sensitive fields
-  pinAtm: { type: String, required: true },
+  pinAtm: { type: String, required: false },
   pinWondr: { type: String },
   passWondr: { type: String },
-  email: { type: String, required: true },
-  passEmail: { type: String, required: true },
+  email: { type: String, required: false },
+  passEmail: { type: String, required: false },
   expired: { type: Date }, // Optional
   uploadFotoId: { type: String }, // path to file
   uploadFotoSelfie: { type: String }, // path to file

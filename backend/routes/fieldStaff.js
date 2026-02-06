@@ -22,11 +22,15 @@ const validateFieldStaff = [
     .isLength({ min: 2, max: 100 })
     .withMessage('Nama Orlap must be between 2-100 characters'),
   body('noHandphone')
-    .trim()
-    .notEmpty()
-    .withMessage('No Handphone is required')
-    .matches(/^(\+62|62|0)8[1-9][0-9]{6,9}$/)
-    .withMessage('No Handphone must be a valid Indonesian mobile number')
+    .optional({ checkFalsy: true })
+    .custom((value) => {
+      if (!value || value === '-') return true;
+      const regex = /^(\+62|62|0)8[1-9][0-9]{6,9}$/;
+      if (!regex.test(value)) {
+        throw new Error('No Handphone must be a valid Indonesian mobile number');
+      }
+      return true;
+    })
 ];
 
 

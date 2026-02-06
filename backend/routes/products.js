@@ -853,7 +853,7 @@ router.post('/import-document-save',
           if (globalNoOrder) {
             productData.noOrder = globalNoOrder.trim();
           }
-          if (globalFieldStaff) {
+          if (globalFieldStaff && globalFieldStaff.trim() !== '') {
             productData.codeAgen = globalFieldStaff.trim();
             productData.fieldStaff = globalFieldStaff.trim();
           }

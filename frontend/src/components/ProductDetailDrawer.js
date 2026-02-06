@@ -233,11 +233,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
             <Table size="medium">
               <TableBody>
                 {Object.entries(fieldConfig).map(([key, config]) => {
-                  let value = product[key];
-
-                  if (value === undefined || value === null || value === '') {
-                    return null;
-                  }
+                  let value = product[key] || '-';
 
                   // Format specific fields
                   if (key === 'expired') {
