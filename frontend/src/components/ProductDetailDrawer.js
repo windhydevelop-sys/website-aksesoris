@@ -121,7 +121,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
   const bankSpecificFields = {
     'BCA': ['myBCAUser', 'myBCAPassword', 'myBCAPin', 'mobilePassword', 'mobileUser', 'mobilePin'],
     'BRI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
-    'BNI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
+    'BNI': ['mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'MANDIRI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'CIMB': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'OCBC': ['mobileUser', 'mobilePassword', 'mobilePin'],

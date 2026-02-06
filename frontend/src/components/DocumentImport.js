@@ -432,7 +432,6 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             { id: 'mobilePassword', label: 'Pass Livin', bank: 'mandiri' },
             { id: 'mobilePin', label: 'Pin Livin', bank: 'mandiri' },
             // BNI Specific
-            { id: 'mobileUser', label: 'User Wondr', bank: 'bni' },
             { id: 'mobilePassword', label: 'Password Wondr', bank: 'bni' },
             { id: 'mobilePin', label: 'Pin Wondr', bank: 'bni' },
             // OCBC Specific
