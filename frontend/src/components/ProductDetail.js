@@ -128,7 +128,7 @@ const ProductDetail = () => {
     passEmail: 'Password Email',
     expired: 'Expired',
     mobileUser: 'User Mobile',
-    mobilePassword: 'Kode Akses / Pass Mobile',
+    mobilePassword: 'Password Mobile',
     mobilePin: 'Pin Mobile',
     ibUser: 'User IB',
     ibPin: 'Pin IB',
@@ -242,7 +242,29 @@ const ProductDetail = () => {
                       }
 
                       if (value === undefined || value === null || value === '') return null;
-                      const label = fieldLabels[key] || key;
+
+                      let label = fieldLabels[key] || key;
+
+                      // Dynamic Labeling for Bank Credentials
+                      if (product.bank) {
+                        const bank = product.bank.toUpperCase();
+                        if (key === 'mobileUser') {
+                          if (bank.includes('BNI')) label = 'User Wondr';
+                          if (bank.includes('MANDIRI')) label = 'User Livin';
+                          if (bank.includes('BRI')) label = 'User Brimo';
+                          if (bank.includes('OCBC')) label = 'User Nyala';
+                        } else if (key === 'mobilePassword') {
+                          if (bank.includes('BNI')) label = 'Password Wondr';
+                          if (bank.includes('MANDIRI')) label = 'Password Livin';
+                          if (bank.includes('BRI')) label = 'Password Brimo';
+                          if (bank.includes('BCA')) label = 'Kode Akses';
+                        } else if (key === 'mobilePin') {
+                          if (bank.includes('BNI')) label = 'Pin Wondr';
+                          if (bank.includes('MANDIRI')) label = 'Pin Livin';
+                          if (bank.includes('BRI')) label = 'Pin Brimo';
+                        }
+                      }
+
                       return (
                         <TableRow key={key}>
                           <TableCell component="th" scope="row" sx={{ fontWeight: 'bold', width: '35%' }}>{label}</TableCell>
