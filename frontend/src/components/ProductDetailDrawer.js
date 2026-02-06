@@ -115,6 +115,46 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     passEmail: { label: 'Pass Email', icon: <VpnKey /> }
   };
 
+  // Bank-specific credential fields mapping
+  const bankSpecificFields = {
+    'BCA': ['myBCAUser', 'myBCAPassword', 'myBCAPin'],
+    'BRI': ['brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword'],
+    'BNI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
+    'MANDIRI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
+    'CIMB': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
+    'OCBC': ['mobileUser', 'mobilePassword', 'mobilePin'],
+    'PERMATA': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
+    'DANAMON': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
+    'BTN': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin']
+  };
+
+  // Common fields that should always be displayed
+  const commonFields = [
+    'status', 'noOrder', 'codeAgen', 'customer', 'bank', 'grade', 'kcp',
+    'nik', 'nama', 'namaIbuKandung', 'tempatTanggalLahir', 'noRek', 'noAtm',
+    'validThru', 'noHp', 'pinAtm', 'fieldStaff', 'expired', 'email', 'passEmail'
+  ];
+
+  // Function to determine if a field should be shown based on bank
+  const shouldShowField = (fieldKey, bankName) => {
+    // Always show common fields
+    if (commonFields.includes(fieldKey)) return true;
+
+    // If no bank specified, hide bank-specific fields
+    if (!bankName || bankName === '-') return false;
+
+    // Check if field is bank-specific
+    const bankUpper = bankName.toUpperCase();
+    for (const [bank, fields] of Object.entries(bankSpecificFields)) {
+      if (bankUpper.includes(bank)) {
+        return fields.includes(fieldKey);
+      }
+    }
+
+    // If field is not in any bank-specific list, don't show it
+    return false;
+  };
+
   // Sensitive fields to mask
   const sensitiveFields = [
     'pinWondr', 'passWondr'
@@ -232,55 +272,57 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
             </Typography>
             <Table size="medium">
               <TableBody>
-                {Object.entries(fieldConfig).map(([key, config]) => {
-                  let value = product[key] || '-';
+                {Object.entries(fieldConfig)
+                  .filter(([key]) => shouldShowField(key, product.bank))
+                  .map(([key, config]) => {
+                    let value = product[key] || '-';
 
-                  // Format specific fields
-                  if (key === 'expired') {
-                    value = formatDate(value);
-                  }
+                    // Format specific fields
+                    if (key === 'expired') {
+                      value = formatDate(value);
+                    }
 
-                  // Mask sensitive fields
-                  if (sensitiveFields.includes(key) && value) {
-                    value = '••••••••';
-                  }
+                    // Mask sensitive fields
+                    if (sensitiveFields.includes(key) && value) {
+                      value = '••••••••';
+                    }
 
-                  return (
-                    <TableRow key={key} hover>
-                      <TableCell
-                        component="th"
-                        scope="row"
-                        sx={{
-                          fontWeight: 'bold',
-                          width: '35%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                          fontSize: '1.1rem',
-                          py: 2
-                        }}
-                      >
-                        {React.cloneElement(config.icon, { sx: { fontSize: 28 } })}
-                        {key === 'mobileUser' && product.bank?.toLowerCase().includes('ocbc') ? 'User Nyala' :
-                          config.label}
-                      </TableCell>
-                      <TableCell sx={{ fontSize: '1.2rem', py: 2 }}>
-                        {key === 'status' ? (
-                          getStatusChip(value, 'medium', { fontSize: '1rem', px: 2 })
-                        ) : key === 'nik' ? (
-                          <Chip
-                            label={value}
-                            variant="outlined"
-                            color="primary"
-                            sx={{ fontWeight: 'bold', fontSize: '1.1rem', height: 32 }}
-                          />
-                        ) : (
-                          String(value)
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                    return (
+                      <TableRow key={key} hover>
+                        <TableCell
+                          component="th"
+                          scope="row"
+                          sx={{
+                            fontWeight: 'bold',
+                            width: '35%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2,
+                            fontSize: '1.1rem',
+                            py: 2
+                          }}
+                        >
+                          {React.cloneElement(config.icon, { sx: { fontSize: 28 } })}
+                          {key === 'mobileUser' && product.bank?.toLowerCase().includes('ocbc') ? 'User Nyala' :
+                            config.label}
+                        </TableCell>
+                        <TableCell sx={{ fontSize: '1.2rem', py: 2 }}>
+                          {key === 'status' ? (
+                            getStatusChip(value, 'medium', { fontSize: '1rem', px: 2 })
+                          ) : key === 'nik' ? (
+                            <Chip
+                              label={value}
+                              variant="outlined"
+                              color="primary"
+                              sx={{ fontWeight: 'bold', fontSize: '1.1rem', height: 32 }}
+                            />
+                          ) : (
+                            String(value)
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
               </TableBody>
             </Table>
           </CardContent>
