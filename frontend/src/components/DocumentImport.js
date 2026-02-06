@@ -294,7 +294,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             const url = window.URL.createObjectURL(new Blob([response.data]));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `hasil - koreksi - ${Date.now()}.docx`);
+            link.setAttribute('download', `hasil-koreksi-${Date.now()}.docx`);
             document.body.appendChild(link);
             link.click();
             link.parentNode.removeChild(link);
@@ -302,6 +302,38 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
         } catch (err) {
             setError('Gagal mendownload hasil koreksi');
             console.error('Download corrected error:', err);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDownloadCorrectedPdf = async (format = 'table') => {
+        if (!previewData?.extractedData) return;
+        setExportAnchorEl(null);
+        try {
+            setUploading(true);
+            const response = await axios.post('/api/products/export-corrected-pdf',
+                {
+                    products: previewData.extractedData,
+                    format: format
+                },
+                {
+                    headers: { 'x-auth-token': token },
+                    responseType: 'blob'
+                }
+            );
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `hasil-koreksi-${Date.now()}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            setSuccess('File hasil koreksi PDF berhasil didownload!');
+        } catch (err) {
+            setError('Gagal mendownload hasil koreksi PDF');
+            console.error('Download corrected PDF error:', err);
         } finally {
             setUploading(false);
         }
@@ -654,6 +686,9 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                     >
                                         <MenuItem onClick={() => handleDownloadCorrected('table')}>Format Tabel (.docx)</MenuItem>
                                         <MenuItem onClick={() => handleDownloadCorrected('list')}>Format List / Per Halaman (.docx)</MenuItem>
+                                        <Divider />
+                                        <MenuItem onClick={() => handleDownloadCorrectedPdf('table')}>Format Tabel (.pdf)</MenuItem>
+                                        <MenuItem onClick={() => handleDownloadCorrectedPdf('list')}>Format List / Per Halaman (.pdf)</MenuItem>
                                     </Menu>
                                 </Box>
                             }

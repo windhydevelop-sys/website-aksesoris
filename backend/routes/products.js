@@ -10,6 +10,7 @@ const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
 const { createProduct, getProducts, getProductById, getProductsExport, getProductExportById } = require('../controllers/products');
 const { generateWordTemplate, generateBankSpecificTemplate, generateCorrectedWord, generateCorrectedWordList } = require('../utils/wordTemplateGenerator');
+const { generateCorrectedPDF } = require('../utils/pdfTemplateGenerator');
 const { cloudinary } = require('../utils/cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const { normalizeNoOrder, normalizeCustomer } = require('../utils/normalization');
@@ -400,6 +401,29 @@ router.post('/export-corrected-word', auth, async (req, res) => {
     res.send(buffer);
   } catch (error) {
     console.error('Error exporting corrected word:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// Export corrected data as PDF
+router.post('/export-corrected-pdf', auth, async (req, res) => {
+  try {
+    const { products, format } = req.body;
+    if (!products || !Array.isArray(products)) {
+      return res.status(400).json({ success: false, error: 'Invalid products data' });
+    }
+
+    const { success, buffer, filename, error } = await generateCorrectedPDF(products, format);
+
+    if (!success) {
+      return res.status(500).json({ success: false, error });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error exporting corrected pdf:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
