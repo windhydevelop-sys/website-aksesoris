@@ -11,41 +11,19 @@ try {
   logger.warn('pdf-parse library not available in this environment');
 }
 
-// Extract PDF text with coordinate awareness to preserve table structure
+// Extract PDF text
 const extractTextFromPDF = async (pdfBuffer) => {
   try {
-    if (!pdfParse) return 'PDF parser not available';
-
-    let options = {
-      pagerender: async function (pageData) {
-        const textContent = await pageData.getTextContent();
-        let lastY, items = [];
-
-        // Group items by their vertical position (Y)
-        for (let item of textContent.items) {
-          const x = item.transform[4];
-          const y = item.transform[5];
-          const str = item.str;
-
-          if (!lastY || Math.abs(lastY - y) > 5) { // Tolerance for different Y
-            items.push([]);
-          }
-          items[items.length - 1].push({ x, y, str });
-          lastY = y;
-        }
-
-        // Sort items in each row by their horizontal position (X)
-        // And join them with a tab character to represent columns
-        return items.map(row =>
-          row.sort((a, b) => a.x - b.x)
-            .map(item => item.str)
-            .join('\t')
-        ).join('\n');
-      }
-    };
-
-    const data = await pdfParse(pdfBuffer, options);
-    return data.text || '';
+    if (pdfParse) {
+      const data = await pdfParse(pdfBuffer);
+      if (data && data.text && data.text.trim().length > 0) return data.text;
+    }
+    // Fallback for extreme cases
+    const bufferString = pdfBuffer.toString('utf8', 0, Math.min(10000, pdfBuffer.length));
+    const textMatches = bufferString.match(/BT[\s\S]*?ET/g) || [];
+    let extractedText = '';
+    for (const match of textMatches) extractedText += match.replace(/BT|ET/g, '').trim() + ' ';
+    return extractedText.length > 10 ? extractedText : 'PDF text extraction failed';
   } catch (error) {
     logger.error('PDF text extraction failed:', error);
     return 'PDF processing error';
@@ -147,22 +125,42 @@ const processDocumentFile = async (filePath) => {
       const pdfBuffer = fs.readFileSync(filePath);
       text = await extractTextFromPDF(pdfBuffer);
 
-      // Try to parse as table first if contains tabs (our coordinate-aware parser adds tabs)
-      if (text.includes('\t')) {
-        const rows = text.split('\n').map(row => row.split('\t'));
-        // check if it looks like a table (at least 5 columns in several rows)
-        const potentialTableRows = rows.filter(r => r.length > 5);
-        if (potentialTableRows.length > 2) {
-          logger.info('Detected potential table structure in PDF');
-          products = parseTableData(rows);
-          if (products.length === 0) {
-            logger.info('PDF table parsing returned 0 products, falling back to regex');
-            products = parseProductData(text);
-          }
-        } else {
+      // DEBUG: Log first 1000 chars to help debug layout
+      logger.info('PDF Extracted Text (Detailed):', { text: text.substring(0, 1000) });
+
+      // In PDF, columns are often separated by multiple spaces or single space
+      // We'll try to split lines by 2+ spaces first
+      const lines = text.split('\n').filter(l => l.trim().length > 0);
+      const rows = lines.map(line => {
+        // Try to split by 2+ spaces or tabs
+        let cells = line.split(/\s{2,}|\t/).map(c => c.trim()).filter(c => c.length > 0);
+        // If only 1 cell found, maybe it's space-separated with single spaces?
+        // (Dangerous, but let's check for headers)
+        if (cells.length < 3 && line.toLowerCase().includes('nik') && line.toLowerCase().includes('nama')) {
+          cells = line.split(/\s+/).map(c => c.trim()).filter(c => c.length > 0);
+        }
+        return cells;
+      });
+
+      // DEBUG: Log row statistics
+      const rowStats = rows.map(r => r.length);
+      logger.info('PDF Row Analysis:', {
+        totalRows: rows.length,
+        maxCols: Math.max(...rowStats, 0),
+        rowsMoreThan3Cols: rowStats.filter(len => len > 3).length
+      });
+
+      // Check if it looks like a table (multiple columns in several rows)
+      const potentialTableRows = rows.filter(r => r.length > 3);
+      if (potentialTableRows.length >= 2) {
+        logger.info('Detected potential table/grid structure in PDF');
+        products = parseTableData(rows);
+        if (products.length === 0) {
+          logger.info('PDF table parsing returned 0 products, falling back to regex');
           products = parseProductData(text);
         }
       } else {
+        logger.info('PDF looks like list/blocks or unstructured text, using regex');
         products = parseProductData(text);
       }
     } else {
@@ -209,7 +207,7 @@ const processDocumentFile = async (filePath) => {
 const parseTableData = (tableData) => {
   const products = [];
   if (!tableData || tableData.length < 2) return products;
-  const headers = tableData[0].map(h => String(h).trim().toLowerCase());
+
   const fieldMapping = {
     'no. order': 'noOrder', 'no order': 'noOrder', 'nomor order': 'noOrder', 'order no': 'noOrder',
     'kode agen': 'codeAgen', 'code agen': 'codeAgen', 'kode orlap': 'codeAgen', 'code orlap': 'codeAgen',
@@ -254,9 +252,45 @@ const parseTableData = (tableData) => {
     'kata sandi mobile': 'mobilePassword', 'login mobile': 'mobileUser', 'akun mobile': 'mobileUser'
   };
 
+  // Find header row by checking which row contains the most known headers
+  let headerRowIndex = -1;
+  let maxMatchedHeaders = 0;
+  let detectedHeaders = [];
+
+  for (let i = 0; i < Math.min(tableData.length, 10); i++) {
+    const row = tableData[i];
+    if (!row) continue;
+
+    let matches = 0;
+    const currentHeaders = [];
+    row.forEach(cell => {
+      const cleanCell = String(cell).trim().toLowerCase();
+      if (fieldMapping[cleanCell]) {
+        matches++;
+        currentHeaders.push(fieldMapping[cleanCell]);
+      } else {
+        currentHeaders.push(cleanCell);
+      }
+    });
+
+    if (matches > maxMatchedHeaders && matches >= 3) {
+      maxMatchedHeaders = matches;
+      headerRowIndex = i;
+      detectedHeaders = currentHeaders;
+    }
+  }
+
+  if (headerRowIndex === -1) {
+    logger.info('Could not find header row in table data');
+    return products;
+  }
+
+  logger.info('Found header row', { index: headerRowIndex, matchedFields: maxMatchedHeaders });
+
   const headerMap = {};
-  headers.forEach((h, i) => { headerMap[i] = fieldMapping[h] || fieldMapping[h.replace(/[.]/g, '')] || h; });
-  for (let i = 1; i < tableData.length; i++) {
+  detectedHeaders.forEach((field, i) => { headerMap[i] = field; });
+
+  for (let i = headerRowIndex + 1; i < tableData.length; i++) {
     const row = tableData[i];
     const p = {};
     if (!row) continue;
