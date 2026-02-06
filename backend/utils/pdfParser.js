@@ -11,18 +11,41 @@ try {
   logger.warn('pdf-parse library not available in this environment');
 }
 
-// Extract PDF text
+// Extract PDF text with coordinate awareness to preserve table structure
 const extractTextFromPDF = async (pdfBuffer) => {
   try {
-    if (pdfParse) {
-      const data = await pdfParse(pdfBuffer);
-      if (data && data.text && data.text.trim().length > 0) return data.text;
-    }
-    const bufferString = pdfBuffer.toString('utf8', 0, Math.min(10000, pdfBuffer.length));
-    const textMatches = bufferString.match(/BT[\s\S]*?ET/g) || [];
-    let extractedText = '';
-    for (const match of textMatches) extractedText += match.replace(/BT|ET/g, '').trim() + ' ';
-    return extractedText.length > 10 ? extractedText : 'PDF text extraction failed';
+    if (!pdfParse) return 'PDF parser not available';
+
+    let options = {
+      pagerender: async function (pageData) {
+        const textContent = await pageData.getTextContent();
+        let lastY, items = [];
+
+        // Group items by their vertical position (Y)
+        for (let item of textContent.items) {
+          const x = item.transform[4];
+          const y = item.transform[5];
+          const str = item.str;
+
+          if (!lastY || Math.abs(lastY - y) > 5) { // Tolerance for different Y
+            items.push([]);
+          }
+          items[items.length - 1].push({ x, y, str });
+          lastY = y;
+        }
+
+        // Sort items in each row by their horizontal position (X)
+        // And join them with a tab character to represent columns
+        return items.map(row =>
+          row.sort((a, b) => a.x - b.x)
+            .map(item => item.str)
+            .join('\t')
+        ).join('\n');
+      }
+    };
+
+    const data = await pdfParse(pdfBuffer, options);
+    return data.text || '';
   } catch (error) {
     logger.error('PDF text extraction failed:', error);
     return 'PDF processing error';
@@ -123,7 +146,25 @@ const processDocumentFile = async (filePath) => {
     if (extension === '.pdf') {
       const pdfBuffer = fs.readFileSync(filePath);
       text = await extractTextFromPDF(pdfBuffer);
-      products = parseProductData(text);
+
+      // Try to parse as table first if contains tabs (our coordinate-aware parser adds tabs)
+      if (text.includes('\t')) {
+        const rows = text.split('\n').map(row => row.split('\t'));
+        // check if it looks like a table (at least 5 columns in several rows)
+        const potentialTableRows = rows.filter(r => r.length > 5);
+        if (potentialTableRows.length > 2) {
+          logger.info('Detected potential table structure in PDF');
+          products = parseTableData(rows);
+          if (products.length === 0) {
+            logger.info('PDF table parsing returned 0 products, falling back to regex');
+            products = parseProductData(text);
+          }
+        } else {
+          products = parseProductData(text);
+        }
+      } else {
+        products = parseProductData(text);
+      }
     } else {
       const parseResult = await parseDocument(filePath);
       if (!parseResult.success) throw new Error(parseResult.error);
