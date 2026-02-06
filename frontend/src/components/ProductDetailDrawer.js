@@ -103,7 +103,6 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     expired: { label: 'Expired', icon: <DateRange /> },
     // Bank Credentials
     mobileUser: { label: 'User Mobile', icon: <AccountCircle /> },
-    mobileUser: { label: 'User Mobile', icon: <AccountCircle /> },
     mobilePassword: { label: 'Password Mobile', icon: <VpnKey /> },
     mobilePin: { label: 'Pin Mobile', icon: <VpnKey /> },
     ibUser: { label: 'User IB', icon: <AccountCircle /> },
