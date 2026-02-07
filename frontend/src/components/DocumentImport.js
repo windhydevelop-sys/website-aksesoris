@@ -148,6 +148,22 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
     const handleFileSelect = (event) => {
         const file = event.target.files[0];
         if (file) {
+            validateAndSetFiles([file]);
+        }
+    };
+
+    const handleMultiFileSelect = (event) => {
+        const files = Array.from(event.target.files);
+        if (files.length > 0) {
+            validateAndSetFiles(files);
+        }
+    };
+
+    const validateAndSetFiles = (files) => {
+        const validFiles = [];
+        let errorMsg = '';
+
+        for (const file of files) {
             // Check if file type is supported or extension matches
             const fileExt = '.' + file.name.split('.').pop().toLowerCase();
             const isSupported = supportedFormats.some(format =>
@@ -156,20 +172,33 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
 
             if (!isSupported) {
                 const supportedLabels = supportedFormats.map(format => format.label).join(', ');
-                setError(`Format file tidak didukung. Format yang didukung: ${supportedLabels}`);
-                return;
+                errorMsg = `Format file ${file.name} tidak didukung.`;
+                break;
             }
 
             if (file.size > 10 * 1024 * 1024) { // 10MB
-                setError('Ukuran file maksimal 10MB');
-                return;
+                errorMsg = `Ukuran file ${file.name} melebihi 10MB`;
+                break;
             }
-
-            setSelectedFile(file);
-            setError('');
-            setPreviewData(null);
-            setSuccess('');
+            validFiles.push(file);
         }
+
+        if (errorMsg) {
+            setError(errorMsg);
+            return;
+        }
+
+        if (validFiles.length === 1) {
+            setSelectedFile(validFiles[0]);
+            setSelectedFiles([]);
+        } else {
+            setSelectedFile(null);
+            setSelectedFiles(validFiles);
+        }
+
+        setError('');
+        setPreviewData(null);
+        setSuccess('');
     };
 
     const handleDownloadTemplate = async () => {
@@ -507,6 +536,12 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                         </TableCell>
                                     );
                                 })}
+                                <TableCell>
+                                    {/* Source File Column if multiple */}
+                                    {selectedFiles.length > 0 && (
+                                        <Chip label={previewData.errors?.find(e => e.productIndex === index)?.filename || 'Merged'} size="small" variant="outlined" />
+                                    )}
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>

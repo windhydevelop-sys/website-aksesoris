@@ -260,9 +260,9 @@ const documentUpload = multer({
   fileFilter,
   limits: {
     fileSize: 10 * 1024 * 1024, // 10MB for documents
-    files: 1
+    files: 20 // Limit to 20 files per upload
   }
-}).single('documentFile');
+}).array('documentFiles', 20);
 
 const pdfUpload = documentUpload; // Alias for backward compatibility if needed elsewhere
 
@@ -692,54 +692,66 @@ router.post('/import-document',
   documentUpload,
   async (req, res) => {
     try {
-      if (!req.file) {
+      if (!req.files || req.files.length === 0) {
         return res.status(400).json({
           success: false,
-          error: 'No document file uploaded'
+          error: 'No document files uploaded'
         });
       }
 
-      const documentFilePath = req.file.path;
-      const originalFilename = req.file.originalname;
-      const fileExtension = path.extname(originalFilename).toLowerCase();
-
-      // Process document file (supports PDF, Word, Excel, CSV)
-      const result = await processPDFFile(documentFilePath);
-
-      if (!result.success) {
-        // Clean up uploaded file
-        if (fs.existsSync(documentFilePath)) {
-          fs.unlinkSync(documentFilePath);
-        }
-
-        return res.status(400).json({
-          success: false,
-          error: 'Failed to process document file',
-          details: result.error
-        });
-      }
-
-      // Validation is already done by processPDFFile
-      const validation = {
-        validProducts: result.validProducts || [],
-        errors: result.errors || [],
-        summary: result.summary || { total: 0, valid: 0, invalid: 0 }
+      // Initialize aggregate results
+      const aggregateResult = {
+        validProducts: [],
+        errors: [],
+        summary: { total: 0, valid: 0, invalid: 0 },
+        textPreviews: []
       };
 
-      // Clean up uploaded file (DISABLED FOR DEBUGGING)
-      // if (fs.existsSync(documentFilePath)) {
-      //   fs.unlinkSync(documentFilePath);
-      // }
+      // Process each file
+      for (const file of req.files) {
+        const documentFilePath = file.path;
 
-      // Determine document type for logging
-      const docType = fileExtension === '.pdf' ? 'PDF' :
-        fileExtension === '.docx' ? 'Word' :
-          fileExtension === '.xlsx' || fileExtension === '.xls' ? 'Excel' :
-            fileExtension === '.csv' ? 'CSV' : 'Document';
+        try {
+          // Process document file (supports PDF, Word, Excel, CSV)
+          const result = await processPDFFile(documentFilePath);
+
+          // Clean up uploaded file
+          if (fs.existsSync(documentFilePath)) {
+            fs.unlinkSync(documentFilePath);
+          }
+
+          if (result.success) {
+            aggregateResult.validProducts.push(...(result.validProducts || []));
+            aggregateResult.errors.push(...(result.errors || []).map(e => ({ ...e, filename: file.originalname })));
+            aggregateResult.summary.total += (result.summary?.total || 0);
+            aggregateResult.summary.valid += (result.summary?.valid || 0);
+            aggregateResult.summary.invalid += (result.summary?.invalid || 0);
+            if (result.textPreview) {
+              aggregateResult.textPreviews.push(`--- ${file.originalname} ---\n${result.textPreview}`);
+            }
+          }
+        } catch (fileErr) {
+          console.error(`Error processing file ${file.originalname}:`, fileErr);
+          // Try to clean up if error
+          if (fs.existsSync(documentFilePath)) {
+            fs.unlinkSync(documentFilePath);
+          }
+        }
+      }
+
+      const validation = {
+        validProducts: aggregateResult.validProducts,
+        errors: aggregateResult.errors,
+        summary: aggregateResult.summary
+      };
+
+      // Determine document type for logging (mixed if multiple)
+      const docType = req.files.length > 1 ? 'Multiple Documents' :
+        (path.extname(req.files[0].originalname).toLowerCase() === '.pdf' ? 'PDF' : 'Document');
 
       // Audit log
       auditLog('DOCUMENT_IMPORT_PREVIEW', req.userId, 'Product', null, {
-        filename: originalFilename,
+        fileCount: req.files.length,
         documentType: docType,
         extractedProducts: validation.summary.total,
         validProducts: validation.summary.valid,
@@ -748,36 +760,38 @@ router.post('/import-document',
 
       res.json({
         success: true,
-        message: `${docType} processed successfully`,
+        message: `${req.files.length} documents processed successfully`,
         data: {
-          filename: originalFilename,
+          filename: req.files.length > 1 ? `${req.files.length} Files` : req.files[0].originalname,
           documentType: docType,
-          textPreview: result.textPreview || '',
+          textPreview: aggregateResult.textPreviews.join('\n\n'),
           extractedData: validation.validProducts,
           validation: {
             total: validation.summary.total,
             valid: validation.summary.valid,
             invalid: validation.summary.invalid,
             errors: validation.errors
-          }
+          },
+          fileCount: req.files.length
         }
       });
 
     } catch (err) {
-      // Clean up uploaded file on error
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
+      // Clean up uploaded files on error
+      if (req.files) {
+        req.files.forEach(file => {
+          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        });
       }
 
       securityLog('DOCUMENT_IMPORT_FAILED', 'medium', {
         error: err.message,
-        filename: req.file?.originalname,
         userId: req.userId
       }, req);
 
       res.status(500).json({
         success: false,
-        error: 'Failed to import document'
+        error: 'Failed to import documents'
       });
     }
   }
@@ -792,37 +806,47 @@ router.post('/import-document-save',
   documentUpload,
   async (req, res) => {
     try {
-      if (!req.file) {
+      if (!req.files || req.files.length === 0) {
         return res.status(400).json({
           success: false,
-          error: 'No document file uploaded'
+          error: 'No document files uploaded'
         });
       }
 
-      const pdfFilePath = req.file.path;
-      const originalFilename = req.file.originalname;
+      // Initialize aggregate results
+      const aggregateResult = {
+        validProducts: [],
+        errors: [],
+        summary: { total: 0, valid: 0, invalid: 0 }
+      };
 
-      // Process PDF file
-      const result = await processPDFFile(pdfFilePath);
+      // Process each file
+      for (const file of req.files) {
+        const documentFilePath = file.path;
 
-      if (!result.success) {
-        // Clean up uploaded file
-        if (fs.existsSync(pdfFilePath)) {
-          fs.unlinkSync(pdfFilePath);
+        try {
+          const result = await processPDFFile(documentFilePath);
+
+          if (fs.existsSync(documentFilePath)) {
+            fs.unlinkSync(documentFilePath);
+          }
+
+          if (result.success) {
+            aggregateResult.validProducts.push(...(result.validProducts || []));
+            aggregateResult.errors.push(...(result.errors || []).map(e => ({ ...e, filename: file.originalname })));
+            aggregateResult.summary.total += (result.summary?.total || 0);
+            aggregateResult.summary.valid += (result.summary?.valid || 0);
+            aggregateResult.summary.invalid += (result.summary?.invalid || 0);
+          }
+        } catch (fileErr) {
+          if (fs.existsSync(documentFilePath)) fs.unlinkSync(documentFilePath);
         }
-
-        return res.status(400).json({
-          success: false,
-          error: 'Failed to process PDF file',
-          details: result.error
-        });
       }
 
-      // Use validation results from parser directly
       const validation = {
-        validProducts: result.validProducts || [],
-        errors: result.errors || [],
-        summary: result.summary || { total: 0, valid: 0, invalid: 0 }
+        validProducts: aggregateResult.validProducts,
+        errors: aggregateResult.errors,
+        summary: aggregateResult.summary
       };
 
       const manualExpiredDate = req.body.expiredDate;
@@ -830,11 +854,6 @@ router.post('/import-document-save',
       const globalCustomer = req.body.globalCustomer;
       const globalNoOrder = req.body.globalNoOrder;
       const globalFieldStaff = req.body.globalFieldStaff;
-
-      // Clean up uploaded file
-      if (fs.existsSync(pdfFilePath)) {
-        fs.unlinkSync(pdfFilePath);
-      }
 
       // Save valid products to database
       const savedProducts = [];
@@ -880,7 +899,6 @@ router.post('/import-document-save',
           // Audit log for each saved product
           auditLog('CREATE', req.userId, 'Product', product._id, {
             source: 'PDF_IMPORT',
-            filename: originalFilename,
             nama: productData.nama
           }, req);
 
@@ -895,7 +913,7 @@ router.post('/import-document-save',
 
       // Audit log for import operation
       auditLog('PDF_IMPORT_SAVE', req.userId, 'Product', null, {
-        filename: originalFilename,
+        fileCount: req.files.length,
         totalExtracted: validation.summary.total,
         validProducts: validation.summary.valid,
         savedProducts: savedProducts.length,
@@ -908,7 +926,7 @@ router.post('/import-document-save',
         success: true,
         message: `Import completed. ${savedProducts.length} products saved, ${saveErrors.length + validation.errors.length} failed/invalid.`,
         data: {
-          filename: originalFilename,
+          filename: req.files.length > 1 ? `${req.files.length} Files` : req.files[0].originalname,
           savedCount: savedProducts.length,
           failedCount: saveErrors.length + validation.errors.length,
           results: [
@@ -931,14 +949,15 @@ router.post('/import-document-save',
       });
 
     } catch (err) {
-      // Clean up uploaded file on error
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
+      // Clean up uploaded files on error
+      if (req.files) {
+        req.files.forEach(file => {
+          if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+        });
       }
 
       securityLog('PDF_IMPORT_SAVE_FAILED', 'high', {
         error: err.message,
-        filename: req.file?.originalname,
         userId: req.userId
       }, req);
 
@@ -947,6 +966,7 @@ router.post('/import-document-save',
         error: 'Failed to import and save PDF data'
       });
     }
-  });
+  }
+);
 
 module.exports = router;
