@@ -151,8 +151,10 @@ const parseProductData = (rawText) => {
           extractedData.validThru = match[2].trim();
         }
       } else {
-        // Default value for missing fields to ensure they exist in the object
-        extractedData[key] = '-';
+        // Default value for missing fields only if not already set (e.g. by composite fields)
+        if (!extractedData[key]) {
+          extractedData[key] = '-';
+        }
       }
     });
 
