@@ -10,6 +10,10 @@ const productSchema = Joi.object({
     'string.empty': 'Kode Orlap tidak boleh kosong'
   }),
 
+  jenisRekening: Joi.string().trim().optional().allow('', '-').messages({
+    'string.base': 'Jenis Rekening harus berupa string'
+  }),
+
   customer: Joi.string().trim().min(0).optional().allow('', '-').messages({
     'string.empty': 'Customer tidak boleh kosong'
   }),

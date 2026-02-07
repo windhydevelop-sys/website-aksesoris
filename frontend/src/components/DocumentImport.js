@@ -414,6 +414,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             { id: 'nama', label: 'Nama' },
             { id: 'nik', label: 'NIK' },
             { id: 'noRek', label: 'No. Rekening' },
+            { id: 'jenisRekening', label: 'Jenis Rekening', bank: 'bri' }, // Specifically for BRI
             { id: 'noHp', label: 'No. HP' },
             { id: 'bank', label: 'Bank' },
             { id: 'grade', label: 'Grade' },
@@ -428,6 +429,8 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             // BRI Specific (using generic mobilePassword/mobilePin)
             { id: 'mobilePassword', label: 'Pass BRIMO', bank: 'bri' },
             { id: 'mobilePin', label: 'Pin BRIMO', bank: 'bri' },
+            { id: 'merchantUser', label: 'User Merchant', bank: 'bri' },
+            { id: 'merchantPassword', label: 'Pass Merchant', bank: 'bri' },
             // Mandiri Specific
             { id: 'mobilePassword', label: 'Pass Livin', bank: 'mandiri' },
             { id: 'mobilePin', label: 'Pin Livin', bank: 'mandiri' },

@@ -3,6 +3,7 @@ const { encrypt, decrypt, hashSensitive } = require('../utils/encryption');
 
 const productSchema = new mongoose.Schema({
   noOrder: { type: String, required: false },
+  jenisRekening: { type: String, required: false }, // New field for BRI Account Type
   codeAgen: { type: String, required: false },
   bank: { type: String, required: false },
   grade: { type: String, required: false },

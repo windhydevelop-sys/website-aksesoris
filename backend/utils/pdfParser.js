@@ -102,6 +102,7 @@ const parseProductData = (rawText) => {
       namaIbuKandung: /(?:Nama\s*)?Ibu\s*Kandung[\s:]*([A-Za-z\s]+?)(?:\s+Tempat|\s+No\.|\n|$)/i,
       tempatTanggalLahir: /(?:Tempat|Tpat)?.*(?:Tanggal|Tgl)?.*Lahir[\s:]*([A-Za-z\s,0-9\-]+?)(?:\s+No\.|\n|$)/i,
       noRek: /No.*?Rek(?:ening)?[\s:]*([0-9\s\-]{8,25})/i,
+      jenisRekening: /(?:Jenis\s*Rekening|Tipe\s*Rekening|Account\s*Type)[\s:]*([A-Za-z0-9\s]+?)(?:\s+No\.|\s+No\s*ATM|\n|$)/i,
       noAtm: /(?:No\.?\s*ATM|Nomor\s*ATM|No\.?\s*Kartu\s*Debit)[\s:]*([0-9\s\-]{16,25})(?:\s*\(([0-9\/\s\-]+?)\))?/i,
       validThru: /(?:Valid.*Thru|Valid.*Kartu)\s*[\s:]+\s*([0-9\/\-]+)/i,
       noHp: /No.*HP[\s:]*([0-9+\-\s]+)/i,
@@ -118,6 +119,10 @@ const parseProductData = (rawText) => {
       ibUser: /(?:User\s*I-Banking|I-Banking|User\s*IB|Internet\s*Banking|IB\s*User|IB)[\s:]+([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
       ibPassword: /(?:Pass(?:word)?\s*I-Banking|Pass(?:word)?\s*IB|Password\s*Internet\s*Banking)[\s:]+([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
       ibPin: /(?:Pin\s*I-Banking|Pin\s*IB)[\s:]+([0-9]{4,10})/i,
+
+      // Merchant Credentials (BRI Qris)
+      merchantUser: /(?:User|ID|Username)\s*(?:Merchant|Qris)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      merchantPassword: /(?:Pass(?:word)?|Kata\s*Sandi)\s*(?:Merchant|Qris)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
 
 
       pinWondr: /PIN\s*Wondr[\s:]*([0-9]{4,8})/i,
@@ -339,7 +344,11 @@ const parseTableData = (tableData) => {
     'nyala id': 'mobileUser', 'nyala user': 'mobileUser',
     'pin mobile': 'mobilePin', 'pass mobile': 'mobilePassword', 'password mobile': 'mobilePassword',
     // Generic / Other
-    'user m-banking': 'mobileUser', 'user m-bank': 'mobileUser', 'pin login': 'mobilePin', 'pass login': 'mobilePassword', 'password login': 'mobilePassword',
+    'no rek': 'noRek', 'norek': 'noRek', 'nomor rekening': 'noRek', 'rekening': 'noRek',
+    'jenis rekening': 'jenisRekening', 'tipe rekening': 'jenisRekening', 'account type': 'jenisRekening', 'jenis tabungan': 'jenisRekening',
+    'user merchant': 'merchantUser', 'id merchant': 'merchantUser', 'username merchant': 'merchantUser', 'user qris': 'merchantUser',
+    'password merchant': 'merchantPassword', 'pass merchant': 'merchantPassword', 'password qris': 'merchantPassword',
+    'no atm': 'noAtm', 'noatm': 'noAtm', 'nomor atm': 'noAtm', 'nomor kartu': 'noAtm', 'kartu debit': 'noAtm',
     // BRI (BRIMO)
     'user brimo': 'mobileUser', 'id brimo': 'mobileUser', 'password brimo': 'mobilePassword', 'pass brimo': 'mobilePassword', 'pin brimo': 'mobilePin',
     'brimo id': 'mobileUser', 'brimo user': 'mobileUser', 'brimo password': 'mobilePassword', 'brimo pass': 'mobilePassword', 'brimo pin': 'mobilePin',

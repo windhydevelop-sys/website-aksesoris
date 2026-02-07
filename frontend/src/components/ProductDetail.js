@@ -114,6 +114,7 @@ const ProductDetail = () => {
     namaIbuKandung: 'Nama Ibu Kandung',
     tempatTanggalLahir: 'Tempat / Tanggal Lahir',
     noRek: 'No. Rekening',
+    jenisRekening: 'Jenis Rekening',
     noAtm: 'No. ATM',
     validThru: 'Valid Kartu',
     noHp: 'No. HP',
@@ -134,7 +135,9 @@ const ProductDetail = () => {
     ibPin: 'Pin IB',
     myBCAUser: 'BCA-ID',
     myBCAPassword: 'Pass BCA-ID',
-    myBCAPin: 'Pin Transaksi'
+    myBCAPin: 'Pin Transaksi',
+    merchantUser: 'User Merchant',
+    merchantPassword: 'Password Merchant'
   };
 
   const fieldOrder = [
@@ -149,6 +152,7 @@ const ProductDetail = () => {
     'namaIbuKandung',
     'tempatTanggalLahir',
     'noRek',
+    'jenisRekening',
     'noAtm',
     'validThru',
     'noHp',
@@ -169,7 +173,9 @@ const ProductDetail = () => {
     'ibPin',
     'myBCAUser',
     'myBCAPassword',
-    'myBCAPin'
+    'myBCAPin',
+    'merchantUser',
+    'merchantPassword'
   ];
 
   return (
@@ -262,6 +268,15 @@ const ProductDetail = () => {
                           if (bank.includes('BNI')) label = 'Pin Wondr';
                           if (bank.includes('MANDIRI')) label = 'Pin Livin';
                           if (bank.includes('BRI')) label = 'Pin Brimo';
+                        }
+                      }
+
+                      // Conditional display for Merchant fields on BRI
+                      if (product.bank?.toUpperCase().includes('BRI') &&
+                        (key === 'merchantUser' || key === 'merchantPassword')) {
+                        const jenisRekening = product.jenisRekening || '';
+                        if (!jenisRekening.toLowerCase().includes('qris')) {
+                          return null;
                         }
                       }
 

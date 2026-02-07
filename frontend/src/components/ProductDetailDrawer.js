@@ -30,7 +30,10 @@ import {
   VpnKey,
   Email,
   AccountCircle,
-  PictureAsPdf
+  Store,
+  PictureAsPdf,
+  AccountBalanceWallet,
+  Store
 } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 import { getStatusChip } from '../utils/statusHelpers';
@@ -95,6 +98,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     namaIbuKandung: { label: 'Nama Ibu Kandung', icon: <Person /> },
     tempatTanggalLahir: { label: 'Tempat / Tanggal Lahir', icon: <LocationOn /> },
     noRek: { label: 'No. Rekening', icon: <CreditCard /> },
+    jenisRekening: { label: 'Jenis Rekening', icon: <AccountBalanceWallet /> },
     noAtm: { label: 'No. ATM', icon: <CreditCard /> },
     validThru: { label: 'Valid Kartu', icon: <DateRange /> },
     noHp: { label: 'No. HP', icon: <Phone /> },
@@ -112,7 +116,9 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     myBCAPassword: { label: 'Pass BCA-ID', icon: <VpnKey /> },
     myBCAPin: { label: 'Pin Transaksi', icon: <VpnKey /> },
     email: { label: 'Email', icon: <Email /> },
-    passEmail: { label: 'Pass Email', icon: <VpnKey /> }
+    passEmail: { label: 'Pass Email', icon: <VpnKey /> },
+    merchantUser: { label: 'User Merchant', icon: <Store /> },
+    merchantPassword: { label: 'Password Merchant', icon: <VpnKey /> }
   };
 
   // Bank-specific credential fields mapping
@@ -120,7 +126,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
   // Only use specific fields if the bank has unique requirements (e.g., BCA)
   const bankSpecificFields = {
     'BCA': ['myBCAUser', 'myBCAPassword', 'myBCAPin', 'mobilePassword', 'mobileUser', 'mobilePin'],
-    'BRI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
+    'BRI': ['jenisRekening', 'mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin', 'merchantUser', 'merchantPassword'],
     'BNI': ['mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'MANDIRI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'CIMB': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
