@@ -413,7 +413,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             formData.append('globalCustomer', globalCustomer.kodeCustomer);
         }
         if (globalNoOrder) {
-            formData.append('globalNoOrder', globalNoOrder.noOrder);
+            formData.append('globalNoOrder', typeof globalNoOrder === 'string' ? globalNoOrder : globalNoOrder.noOrder);
         }
         if (globalFieldStaff) {
             formData.append('globalFieldStaff', globalFieldStaff.kodeOrlap);
@@ -430,7 +430,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 const overrides = fileOverrides[filename];
                 serializedOverrides[filename] = {
                     customer: overrides.customer?.kodeCustomer || null,
-                    noOrder: overrides.noOrder?.noOrder || null,
+                    noOrder: (typeof overrides.noOrder === 'string' ? overrides.noOrder : overrides.noOrder?.noOrder) || null,
                     fieldStaff: overrides.fieldStaff?.kodeOrlap || null
                 };
             });
@@ -864,15 +864,25 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                                 <Grid item xs={12} md={4}>
                                                     <Autocomplete
                                                         fullWidth
+                                                        freeSolo
                                                         size="small"
                                                         options={orders}
-                                                        getOptionLabel={(option) => option.noOrder}
+                                                        getOptionLabel={(option) => typeof option === 'string' ? option : option.noOrder}
                                                         value={fileOverrides[file.name]?.noOrder || null}
                                                         onChange={(e, newValue) => {
                                                             setFileOverrides(prev => ({
                                                                 ...prev,
                                                                 [file.name]: { ...prev[file.name], noOrder: newValue }
                                                             }));
+                                                        }}
+                                                        onBlur={(e) => {
+                                                            const val = e.target.value;
+                                                            if (val) {
+                                                                setFileOverrides(prev => ({
+                                                                    ...prev,
+                                                                    [file.name]: { ...prev[file.name], noOrder: val }
+                                                                }));
+                                                            }
                                                         }}
                                                         renderInput={(params) => <TextField {...params} label="No. Order" placeholder="Timpa No Order Kosong" />}
                                                     />
@@ -946,12 +956,17 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                                             <Autocomplete
                                                 fullWidth
+                                                freeSolo
                                                 size="small"
                                                 loading={isLoadingRefs}
                                                 options={orders}
-                                                getOptionLabel={(option) => option.noOrder}
+                                                getOptionLabel={(option) => typeof option === 'string' ? option : option.noOrder}
                                                 value={globalNoOrder}
                                                 onChange={(e, newValue) => setGlobalNoOrder(newValue)}
+                                                onBlur={(e) => {
+                                                    const val = e.target.value;
+                                                    if (val) setGlobalNoOrder(val);
+                                                }}
                                                 renderInput={(params) => (
                                                     <TextField
                                                         {...params}
