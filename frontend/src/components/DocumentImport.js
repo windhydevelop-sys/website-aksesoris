@@ -429,31 +429,6 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             Object.keys(fileOverrides).forEach(filename => {
                 const overrides = fileOverrides[filename];
                 serializedOverrides[filename] = {
-                    customer: overrides.customer?.namaCustomer || null, // Backend expects namaCustomer or code? Schema says customer name string usually.
-                    // Wait, existing global logic sends `globalCustomer.kodeCustomer`.
-                    // Let's check backend `productData.customer = globalCustomer.trim()`. 
-                    // Backend uses whatever string is sent. 
-                    // Let's send the specific field that matches existing logic.
-                    // Global logic in handleImport: `formData.append('globalCustomer', globalCustomer.kodeCustomer);`
-                    // Actually, let's look at lines 435-437 of DocumentImport.js:
-                    // if (globalCustomer) formData.append('globalCustomer', globalCustomer.kodeCustomer);
-                    // So it sends Kode Customer?
-                    // Let's check `processPDFFile`. It extracts `customer` (name). 
-                    // If we override, we should probably providing the NAME so it matches the extracted structure, 
-                    // OR the code if that's what's saved?
-                    // The Product model has `customer` field. 
-                    // Let's use `namaCustomer` to be safe as it's likely used for display/saving name.
-                    // Wait, `globalCustomer` sets `productData.customer`. 
-                    // `productData.customer` is usually the Name. 
-                    // But `DocumentImport.js` sends `kodeCustomer`? 
-                    // Let's check the Quick Add logic. It saves `namaCustomer`.
-                    // Use `namaCustomer` for consistency with extraction, or `kodeCustomer` if that is what is intended.
-                    // Let's check `Product.js` model. `customer`: String.
-                    // Existing `DocumentImport.js` sends `kodeCustomer`. 
-                    // Backend `products.js`: `productData.customer = globalCustomer.trim()`.
-                    // So it saves the Kode Customer into the customer name field? That seems wrong but consistent with current code.
-                    // I will stick to what `globalCustomer` sends: `kodeCustomer`.
-
                     customer: overrides.customer?.kodeCustomer || null,
                     noOrder: overrides.noOrder?.noOrder || null,
                     fieldStaff: overrides.fieldStaff?.kodeOrlap || null
