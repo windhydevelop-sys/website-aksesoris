@@ -173,7 +173,6 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             );
 
             if (!isSupported) {
-                const supportedLabels = supportedFormats.map(format => format.label).join(', ');
                 errorMsg = `Format file ${file.name} tidak didukung.`;
                 break;
             }
@@ -455,15 +454,6 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                     // So it saves the Kode Customer into the customer name field? That seems wrong but consistent with current code.
                     // I will stick to what `globalCustomer` sends: `kodeCustomer`.
 
-                    customer: overrides.customer?.namaCustomer || null, // CHANGED TO NAME per user preference usually, but looking at line 436 it sends kode.
-                    // Let's re-read line 436 in the FILE VIEW I have.
-                    // Line 436: formData.append('globalCustomer', globalCustomer.kodeCustomer);
-                    // This suggests the system stores Kode Customer in that field. 
-                    // HOWEVER, if I look at `renderPreviewTable`, `col.id === 'customer'`.
-                    // If the PDF extracts "Budi", it shows "Budi". 
-                    // If we override with "CUST-001", it replaces "Budi" with "CUST-001".
-                    // Maybe the user wants the Name?
-                    // I'll stick to `kodeCustomer` to match existing global logic for now.
                     customer: overrides.customer?.kodeCustomer || null,
                     noOrder: overrides.noOrder?.noOrder || null,
                     fieldStaff: overrides.fieldStaff?.kodeOrlap || null
