@@ -314,6 +314,15 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
               <TableBody>
                 {Object.entries(fieldConfig)
                   .filter(([key]) => shouldShowField(key, product.bank))
+                  .filter(([key]) => {
+                    // Conditional display for Merchant fields on BRI (show only if Qris)
+                    if (product.bank?.toUpperCase().includes('BRI') &&
+                      (key === 'merchantUser' || key === 'merchantPassword')) {
+                      const jenisRekening = product.jenisRekening || '';
+                      return jenisRekening.toLowerCase().includes('qris');
+                    }
+                    return true;
+                  })
                   .map(([key, config]) => {
                     let value = product[key] || '-';
 
