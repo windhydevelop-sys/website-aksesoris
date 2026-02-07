@@ -32,8 +32,7 @@ import {
   AccountCircle,
   Store,
   PictureAsPdf,
-  AccountBalanceWallet,
-  Store
+  AccountBalanceWallet
 } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 import { getStatusChip } from '../utils/statusHelpers';
