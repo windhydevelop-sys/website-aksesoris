@@ -105,10 +105,10 @@ const createProduct = async (req, res) => {
     // Handle file uploads
     const data = { ...req.body };
     if (req.files && req.files.uploadFotoId) {
-      data.uploadFotoId = req.files.uploadFotoId[0].filename;
+      data.uploadFotoId = req.files.uploadFotoId[0].path;
     }
     if (req.files && req.files.uploadFotoSelfie) {
-      data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].filename;
+      data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].path;
     }
 
     // Add security fields
@@ -349,10 +349,10 @@ const updateProduct = async (req, res) => {
 
     // Handle file uploads
     if (req.files && req.files.uploadFotoId) {
-      data.uploadFotoId = req.files.uploadFotoId[0].filename;
+      data.uploadFotoId = req.files.uploadFotoId[0].path;
     }
     if (req.files && req.files.uploadFotoSelfie) {
-      data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].filename;
+      data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].path;
     }
 
     // Add complaint field if present

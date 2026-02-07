@@ -111,7 +111,7 @@ const parseProductData = (rawText) => {
       bank: /(?:^|\s)(?<!cabang\s)(?:Bank|Nama\s?Bank)[\s:]*([A-Za-z\s]+?)(?:\s*\((?:Grade\s+)?([^)]+?)\))?(?:\s+Grade|\s+KCP|\s+Kantor\s+Cabang|\n|$)/i,
       grade: /(?:^|\s)Grade[\s:]*([A-Za-z0-9\s]+?)(?:\s*\)|$|\s+KCP|\s+Kantor\s+Cabang|\s+NIK|\n)/i,
       kcp: /(?:KCP|Kantor\s+Cabang|Cabang\s+Bank)\s*[\s:]+\s*([A-Za-z0-9\s\-\.]+?)(?:\s+NIK|\n|$)/i,
-      noOrder: /No\s*\.?\s*ORDER[\s:]*[(\[]?([A-Za-z0-9\-]+)[)\]]?/i,
+      noOrder: /No\s*\.?\s*ORDER[\s:]*[(\[]?\s*([^\]\)\n]+?)(?:\s+NIK|\s+Nama|\n|$|[)\]])/i,
       codeAgen: /(?:Code\s*Agen|Kode\s*Orlap)[\s:]*[(\[]?([A-Za-z0-9\-]+)[)\]]?/i,
       customer: /(?:Customer|Pelanggan)[\s:]*[(\[]?([A-Za-z0-9\s]+?)[)\]]?(?:\s+NIK|\s+Nama|\n|$)/i,
 
@@ -157,6 +157,14 @@ const parseProductData = (rawText) => {
         }
       }
     });
+
+    // Auto-detect QRIS for BRI if merchant fields are extracted
+    if ((extractedData.merchantUser && extractedData.merchantUser !== '-') ||
+      (extractedData.merchantPassword && extractedData.merchantPassword !== '-')) {
+      if (extractedData.bank?.toUpperCase().includes('BRI')) {
+        extractedData.jenisRekening = 'QRIS';
+      }
+    }
 
     const cleanNumeric = (str) => str ? str.replace(/[\s\-]/g, '') : '';
     extractedData.noHp = cleanNumeric(extractedData.noHp);
@@ -236,7 +244,7 @@ const processDocumentFile = async (filePath) => {
       if (products.length > 0) {
         try {
           logger.info('Attempting to extract images from PDF...');
-          const images = await extractImagesFromPDF(buffer);
+          const images = await extractImagesFromPDF(pdfBuffer);
 
           if (images.length > 0) {
             logger.info(`Found ${images.length} images in PDF, uploading to Cloudinary...`);

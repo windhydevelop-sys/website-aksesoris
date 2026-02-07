@@ -36,7 +36,8 @@ import {
 } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 import { getStatusChip } from '../utils/statusHelpers';
-import axios from 'axios';
+
+import { buildImageUrl } from '../utils/imageHelpers';
 
 const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportPdf }) => {
   const { showSuccess, showError } = useNotification();
@@ -44,14 +45,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
 
   if (!product) return null;
 
-  // Helper to build image URL
-  const buildImageUrl = (filename) => {
-    if (!filename) return '';
-    if (filename.startsWith('http') || filename.startsWith('/')) {
-      return filename;
-    }
-    return `${axios.defaults.baseURL}/uploads/${filename}`;
-  };
+
 
   // Format date
   const formatDate = (dateString) => {

@@ -22,6 +22,7 @@ import SidebarLayout from './SidebarLayout';
 import ProductDetailDrawer from './ProductDetailDrawer';
 import FloatingNIKSearchBar from './FloatingNIKSearchBar';
 import DocumentImport from './DocumentImport';
+import { buildImageUrl } from '../utils/imageHelpers';
 
 // Create styles for the PDF document
 const styles = StyleSheet.create({
@@ -338,7 +339,7 @@ const ProductExportPdfDocument = ({ products }) => (
                 <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto KTP</Text>
                 {(product.uploadFotoIdBase64 || product.uploadFotoId) ? (
                   <Image
-                    src={product.uploadFotoIdBase64 || (product.uploadFotoId.startsWith('http') ? product.uploadFotoId : `${axios.defaults.baseURL}/uploads/${product.uploadFotoId}`)}
+                    src={product.uploadFotoIdBase64 || buildImageUrl(product.uploadFotoId)}
                     style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
                   />
                 ) : (
@@ -353,7 +354,7 @@ const ProductExportPdfDocument = ({ products }) => (
                 <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto Selfie</Text>
                 {(product.uploadFotoSelfieBase64 || product.uploadFotoSelfie) ? (
                   <Image
-                    src={product.uploadFotoSelfieBase64 || (product.uploadFotoSelfie.startsWith('http') ? product.uploadFotoSelfie : `${axios.defaults.baseURL}/uploads/${product.uploadFotoSelfie}`)}
+                    src={product.uploadFotoSelfieBase64 || buildImageUrl(product.uploadFotoSelfie)}
                     style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
                   />
                 ) : (
@@ -1711,7 +1712,7 @@ const Dashboard = ({ setToken }) => {
                   </label>
                   {form.uploadFotoId && (
                     <Box mt={1}>
-                      <img src={typeof form.uploadFotoId === 'string' ? `${axios.defaults.baseURL}/uploads/${form.uploadFotoId}` : URL.createObjectURL(form.uploadFotoId)} alt="Foto KTP" style={{ maxWidth: '100%', maxHeight: '200px' }} />
+                      <img src={typeof form.uploadFotoId === 'string' ? buildImageUrl(form.uploadFotoId) : URL.createObjectURL(form.uploadFotoId)} alt="Foto KTP" style={{ maxWidth: '100%', maxHeight: '200px' }} />
                       <IconButton onClick={() => setForm({ ...form, uploadFotoId: null })} color="error" size="small"><Delete /></IconButton>
                     </Box>
                   )}
@@ -1724,7 +1725,7 @@ const Dashboard = ({ setToken }) => {
                   </label>
                   {form.uploadFotoSelfie && (
                     <Box mt={1}>
-                      <img src={typeof form.uploadFotoSelfie === 'string' ? `${axios.defaults.baseURL}/uploads/${form.uploadFotoSelfie}` : URL.createObjectURL(form.uploadFotoSelfie)} alt="Foto Selfie" style={{ maxWidth: '100%', maxHeight: '200px' }} />
+                      <img src={typeof form.uploadFotoSelfie === 'string' ? buildImageUrl(form.uploadFotoSelfie) : URL.createObjectURL(form.uploadFotoSelfie)} alt="Foto Selfie" style={{ maxWidth: '100%', maxHeight: '200px' }} />
                       <IconButton onClick={() => setForm({ ...form, uploadFotoSelfie: null })} color="error" size="small"><Delete /></IconButton>
                     </Box>
                   )}
