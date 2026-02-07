@@ -128,9 +128,9 @@ const parseProductData = (rawText) => {
       pinWondr: /PIN\s*Wondr[\s:]*([0-9]{4,8})/i,
       passWondr: /Pass(?:word)?\s*Wondr[\s:]*([A-Za-z0-9!@#$%^&*]+)/i,
       passEmail: /Pass(?:word)?\s*Email[\s:]*([A-Za-z0-9!@#$%^&*]+)/i,
-      mobileUser: /(?:User|Id|Login|Account|User\s*Id|User\s*M-Banking|User\s*M-Bank)\s*(?:Mobile|M-BCA|BRIMO|Livin|Wondr|Nyala|M-Bank|Login|Account|Nyala)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      mobilePassword: /(?:Kode\s*Akses|Password|Pass|Login|Pass\s*Login|Pass\s*Mobile|Password\s*Mobile)\s*(?:Mobile|M-BCA|BRIMO|Livin|Wondr|M-Bank|Login)?[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      mobilePin: /(?:Pin|Pin\s*Login|Pin\s*Mobile)\s*(?:M-BCA|Mobile|BRIMO|Livin|Wondr|M-Bank|Login)?[\s:]*([0-9]{4,10})/i,
+      mobileUser: /(?:User|Id|Login|Account|User\s*Id|User\s*M-Banking|User\s*M-Bank)\s*(?:Mobile|M-BCA|MBCA|BRIMO|Livin|Wondr|Nyala|M-Bank|MBANK|M-Banking|Login|Account)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      mobilePassword: /(?:Kode\s*Akses|Password|Pass|Login|Pass\s*Login|Pass\s*Mobile|Password\s*Mobile)\s*(?:Mobile|M-BCA|MBCA|BRIMO|Livin|Wondr|M-Bank|MBANK|M-Banking|Login)?[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      mobilePin: /(?:Pin|Pin\s*Login|Pin\s*Mobile)\s*(?:M-BCA|MBCA|Mobile|BRIMO|Livin|Wondr|M-Bank|MBANK|M-Banking|Login)?[\s:]*([0-9]{4,10})/i,
 
       myBCAUser: /(?:BCA\s*ID|BCA-ID|User\s*myBCA)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
       myBCAPassword: /(?:Pass\s*BCA-ID|Pass\s*BCA\s*ID|Password\s*myBCA)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
