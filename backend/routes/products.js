@@ -832,7 +832,7 @@ router.post('/import-document-save',
           }
 
           if (result.success) {
-            aggregateResult.validProducts.push(...(result.validProducts || []));
+            aggregateResult.validProducts.push(...(result.validProducts || []).map(p => ({ ...p, sourceFile: file.originalname })));
             aggregateResult.errors.push(...(result.errors || []).map(e => ({ ...e, filename: file.originalname })));
             aggregateResult.summary.total += (result.summary?.total || 0);
             aggregateResult.summary.valid += (result.summary?.valid || 0);
@@ -851,9 +851,12 @@ router.post('/import-document-save',
 
       const manualExpiredDate = req.body.expiredDate;
       const manualStatus = req.body.status || 'pending';
-      const globalCustomer = req.body.globalCustomer;
-      const globalNoOrder = req.body.globalNoOrder;
-      const globalFieldStaff = req.body.globalFieldStaff;
+      let fileOverrides = {};
+      try {
+        fileOverrides = JSON.parse(req.body.fileOverrides || '{}');
+      } catch (e) {
+        console.error('Error parsing fileOverrides:', e);
+      }
 
       // Save valid products to database
       const savedProducts = [];
@@ -865,16 +868,24 @@ router.post('/import-document-save',
           productData.createdBy = req.userId;
           productData.lastModifiedBy = req.userId;
 
-          // Apply Global Overrides (Priority)
-          if (globalCustomer) {
-            productData.customer = globalCustomer.trim();
+          // Determine overrides (File-specific takes priority)
+          const sourceFile = productData.sourceFile;
+          const currentOverrides = fileOverrides[sourceFile] || {};
+
+          const overrideCustomer = currentOverrides.customer || req.body.globalCustomer;
+          const overrideNoOrder = currentOverrides.noOrder || req.body.globalNoOrder;
+          const overrideFieldStaff = currentOverrides.fieldStaff || req.body.globalFieldStaff;
+
+          // Apply Overrides
+          if (overrideCustomer && (!productData.customer || productData.customer === '-' || productData.customer === '')) {
+            productData.customer = overrideCustomer.trim();
           }
-          if (globalNoOrder) {
-            productData.noOrder = globalNoOrder.trim();
+          if (overrideNoOrder && (!productData.noOrder || productData.noOrder === '-' || productData.noOrder === '')) {
+            productData.noOrder = overrideNoOrder.trim();
           }
-          if (globalFieldStaff && globalFieldStaff.trim() !== '') {
-            productData.codeAgen = globalFieldStaff.trim();
-            productData.fieldStaff = globalFieldStaff.trim();
+          if (overrideFieldStaff && overrideFieldStaff.trim() !== '' && (!productData.fieldStaff || productData.fieldStaff === '-' || productData.fieldStaff === '')) {
+            productData.codeAgen = overrideFieldStaff.trim();
+            productData.fieldStaff = overrideFieldStaff.trim();
           }
 
           // Apply manual expired date if provided and product doesn't have one

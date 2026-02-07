@@ -15,6 +15,7 @@ import {
 
 const DocumentImport = ({ open, onClose, onImportSuccess }) => {
     const [selectedFile, setSelectedFile] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
     const [previewData, setPreviewData] = useState(null);
     const [error, setError] = useState('');
@@ -36,6 +37,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
     const [globalCustomer, setGlobalCustomer] = useState(null);
     const [globalNoOrder, setGlobalNoOrder] = useState(null);
     const [globalFieldStaff, setGlobalFieldStaff] = useState(null);
+    const [fileOverrides, setFileOverrides] = useState({});
     const [isLoadingRefs, setIsLoadingRefs] = useState(false);
 
     // Quick Add Dialog States
@@ -188,18 +190,32 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             return;
         }
 
+        if (validFiles.length > 4) {
+            setError('Maksimal hanya bisa upload 4 file sekaligus.');
+            return;
+        }
+
         if (validFiles.length === 1) {
             setSelectedFile(validFiles[0]);
             setSelectedFiles([]);
+            setFileOverrides({});
         } else {
             setSelectedFile(null);
             setSelectedFiles(validFiles);
+            // Initialize overrides for each file
+            const initialOverrides = {};
+            validFiles.forEach(f => {
+                initialOverrides[f.name] = { customer: null, noOrder: null, fieldStaff: null };
+            });
+            setFileOverrides(initialOverrides);
         }
 
         setError('');
         setPreviewData(null);
         setSuccess('');
     };
+
+
 
     const handleDownloadTemplate = async () => {
         try {
@@ -256,13 +272,19 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
     };
 
     const handlePreview = async () => {
-        if (!selectedFile) return;
+        if (!selectedFile && selectedFiles.length === 0) return;
 
         setUploading(true);
         setError('');
 
         const formData = new FormData();
-        formData.append('documentFile', selectedFile);
+        if (selectedFiles.length > 0) {
+            selectedFiles.forEach(file => {
+                formData.append('documentFiles', file);
+            });
+        } else if (selectedFile) {
+            formData.append('documentFiles', selectedFile);
+        }
 
         try {
             const response = await axios.post('/api/products/import-document', formData, {
@@ -369,13 +391,19 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
     };
 
     const handleImport = async () => {
-        if (!selectedFile) return;
+        if (!selectedFile && selectedFiles.length === 0) return;
 
         setUploading(true);
         setError('');
 
         const formData = new FormData();
-        formData.append('documentFile', selectedFile);
+        if (selectedFiles.length > 0) {
+            selectedFiles.forEach(file => {
+                formData.append('documentFiles', file);
+            });
+        } else if (selectedFile) {
+            formData.append('documentFiles', selectedFile);
+        }
         if (manualExpiredDate) {
             formData.append('expiredDate', manualExpiredDate);
         }
@@ -390,6 +418,58 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
         }
         if (globalFieldStaff) {
             formData.append('globalFieldStaff', globalFieldStaff.kodeOrlap);
+        }
+
+        // Append File Overrides
+        if (Object.keys(fileOverrides).length > 0) {
+            // Transform overrides to send only values (strings) not full objects if needed, 
+            // but backend expects raw strings for customer/noOrder/fieldStaff.
+            // Our state stores Autocomplete objects (full customer obj, etc).
+            // We need to map them to string values.
+            const serializedOverrides = {};
+            Object.keys(fileOverrides).forEach(filename => {
+                const overrides = fileOverrides[filename];
+                serializedOverrides[filename] = {
+                    customer: overrides.customer?.namaCustomer || null, // Backend expects namaCustomer or code? Schema says customer name string usually.
+                    // Wait, existing global logic sends `globalCustomer.kodeCustomer`.
+                    // Let's check backend `productData.customer = globalCustomer.trim()`. 
+                    // Backend uses whatever string is sent. 
+                    // Let's send the specific field that matches existing logic.
+                    // Global logic in handleImport: `formData.append('globalCustomer', globalCustomer.kodeCustomer);`
+                    // Actually, let's look at lines 435-437 of DocumentImport.js:
+                    // if (globalCustomer) formData.append('globalCustomer', globalCustomer.kodeCustomer);
+                    // So it sends Kode Customer?
+                    // Let's check `processPDFFile`. It extracts `customer` (name). 
+                    // If we override, we should probably providing the NAME so it matches the extracted structure, 
+                    // OR the code if that's what's saved?
+                    // The Product model has `customer` field. 
+                    // Let's use `namaCustomer` to be safe as it's likely used for display/saving name.
+                    // Wait, `globalCustomer` sets `productData.customer`. 
+                    // `productData.customer` is usually the Name. 
+                    // But `DocumentImport.js` sends `kodeCustomer`? 
+                    // Let's check the Quick Add logic. It saves `namaCustomer`.
+                    // Use `namaCustomer` for consistency with extraction, or `kodeCustomer` if that is what is intended.
+                    // Let's check `Product.js` model. `customer`: String.
+                    // Existing `DocumentImport.js` sends `kodeCustomer`. 
+                    // Backend `products.js`: `productData.customer = globalCustomer.trim()`.
+                    // So it saves the Kode Customer into the customer name field? That seems wrong but consistent with current code.
+                    // I will stick to what `globalCustomer` sends: `kodeCustomer`.
+
+                    customer: overrides.customer?.namaCustomer || null, // CHANGED TO NAME per user preference usually, but looking at line 436 it sends kode.
+                    // Let's re-read line 436 in the FILE VIEW I have.
+                    // Line 436: formData.append('globalCustomer', globalCustomer.kodeCustomer);
+                    // This suggests the system stores Kode Customer in that field. 
+                    // HOWEVER, if I look at `renderPreviewTable`, `col.id === 'customer'`.
+                    // If the PDF extracts "Budi", it shows "Budi". 
+                    // If we override with "CUST-001", it replaces "Budi" with "CUST-001".
+                    // Maybe the user wants the Name?
+                    // I'll stick to `kodeCustomer` to match existing global logic for now.
+                    customer: overrides.customer?.kodeCustomer || null,
+                    noOrder: overrides.noOrder?.noOrder || null,
+                    fieldStaff: overrides.fieldStaff?.kodeOrlap || null
+                };
+            });
+            formData.append('fileOverrides', JSON.stringify(serializedOverrides));
         }
 
         try {
@@ -512,6 +592,11 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                     {col.label}
                                 </TableCell>
                             ))}
+                            {selectedFiles.length > 0 && (
+                                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>
+                                    Source File
+                                </TableCell>
+                            )}
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -536,12 +621,12 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                         </TableCell>
                                     );
                                 })}
-                                <TableCell>
-                                    {/* Source File Column if multiple */}
-                                    {selectedFiles.length > 0 && (
-                                        <Chip label={previewData.errors?.find(e => e.productIndex === index)?.filename || 'Merged'} size="small" variant="outlined" />
-                                    )}
-                                </TableCell>
+                                {/* Source File Column if multiple */}
+                                {selectedFiles.length > 0 && (
+                                    <TableCell>
+                                        <Chip label={product.sourceFile || 'Merged'} size="small" variant="outlined" />
+                                    </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>
@@ -663,6 +748,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                     </Typography>
 
                     <Box sx={{ border: '2px dashed #ccc', borderRadius: 2, p: 3, textAlign: 'center' }}>
+                        {/* Single Upload */}
                         <input
                             type="file"
                             accept={acceptedTypes}
@@ -670,23 +756,60 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                             style={{ display: 'none' }}
                             id="document-file-input"
                         />
-                        <label htmlFor="document-file-input">
+                        <label htmlFor="document-file-input" style={{ marginRight: '10px' }}>
                             <Button
                                 variant="outlined"
                                 component="span"
                                 startIcon={<CloudUpload />}
                                 disabled={uploading}
                             >
-                                Pilih File Dokumen
+                                Pilih File (Single)
                             </Button>
                         </label>
 
-                        {selectedFile && (
-                            <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                                <Description color="action" />
-                                <Typography variant="body2">
-                                    <strong>{selectedFile.name}</strong> ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-                                </Typography>
+                        {/* Multi Upload */}
+                        <input
+                            type="file"
+                            accept={acceptedTypes}
+                            onChange={handleMultiFileSelect}
+                            style={{ display: 'none' }}
+                            id="multi-file-input"
+                            multiple
+                        />
+                        <label htmlFor="multi-file-input">
+                            <Button
+                                variant="contained"
+                                component="span"
+                                startIcon={<CloudUpload />}
+                                disabled={uploading}
+                                color="secondary"
+                            >
+                                Upload Banyak File
+                            </Button>
+                        </label>
+
+                        {(selectedFile || selectedFiles.length > 0) && (
+                            <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Description color="action" />
+                                    <Typography variant="body2">
+                                        {selectedFile ? (
+                                            <><strong>{selectedFile.name}</strong> ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)</>
+                                        ) : (
+                                            <strong>{selectedFiles.length} File Dipilih</strong>
+                                        )}
+                                    </Typography>
+                                </Box>
+                                {selectedFiles.length > 0 && (
+                                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', justifyContent: 'center' }}>
+                                        {selectedFiles.map((f, i) => (
+                                            <Chip key={i} label={f.name} size="small" onDelete={() => {
+                                                const newFiles = selectedFiles.filter((_, index) => index !== i);
+                                                validateAndSetFiles(newFiles);
+                                            }} />
+                                        ))}
+                                    </Box>
+                                )}
                             </Box>
                         )}
                     </Box>
@@ -741,10 +864,77 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                         {previewData.validation.valid > 0 && (
                             <Box sx={{ mt: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 1, border: '1px solid #e0e0e0' }}>
                                 <Typography variant="subtitle2" gutterBottom color="primary" sx={{ fontWeight: 'bold' }}>
-                                    Batch Override (Terapkan ke Semua Data)
+                                    Batch Override (Terapkan per File atau Global)
                                 </Typography>
                                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                                    Pilih Customer atau No. Order untuk menimpa data yang kosong di dokumen.
+                                    Lengkapi data yang kosong untuk setiap file.
+                                </Typography>
+
+                                {/* Per File Overrides */}
+                                {selectedFiles.length > 0 && selectedFiles.map((file, idx) => (
+                                    <Accordion key={idx} sx={{ mb: 1, border: '1px solid #eee' }} defaultExpanded>
+                                        <AccordionSummary expandIcon={<ExpandMore />}>
+                                            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                                                File #{idx + 1}: {file.name}
+                                            </Typography>
+                                        </AccordionSummary>
+                                        <AccordionDetails>
+                                            <Grid container spacing={2}>
+                                                <Grid item xs={12} md={4}>
+                                                    <Autocomplete
+                                                        fullWidth
+                                                        size="small"
+                                                        options={customers}
+                                                        getOptionLabel={(option) => `[${option.kodeCustomer}] ${option.namaCustomer}`}
+                                                        value={fileOverrides[file.name]?.customer || null}
+                                                        onChange={(e, newValue) => {
+                                                            setFileOverrides(prev => ({
+                                                                ...prev,
+                                                                [file.name]: { ...prev[file.name], customer: newValue }
+                                                            }));
+                                                        }}
+                                                        renderInput={(params) => <TextField {...params} label="Customer" placeholder="Timpa Customer Kosong" />}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} md={4}>
+                                                    <Autocomplete
+                                                        fullWidth
+                                                        size="small"
+                                                        options={orders}
+                                                        getOptionLabel={(option) => option.noOrder}
+                                                        value={fileOverrides[file.name]?.noOrder || null}
+                                                        onChange={(e, newValue) => {
+                                                            setFileOverrides(prev => ({
+                                                                ...prev,
+                                                                [file.name]: { ...prev[file.name], noOrder: newValue }
+                                                            }));
+                                                        }}
+                                                        renderInput={(params) => <TextField {...params} label="No. Order" placeholder="Timpa No Order Kosong" />}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} md={4}>
+                                                    <Autocomplete
+                                                        fullWidth
+                                                        size="small"
+                                                        options={fieldStaffs}
+                                                        getOptionLabel={(option) => `[${option.kodeOrlap}] ${option.namaOrlap}`}
+                                                        value={fileOverrides[file.name]?.fieldStaff || null}
+                                                        onChange={(e, newValue) => {
+                                                            setFileOverrides(prev => ({
+                                                                ...prev,
+                                                                [file.name]: { ...prev[file.name], fieldStaff: newValue }
+                                                            }));
+                                                        }}
+                                                        renderInput={(params) => <TextField {...params} label="Field Staff" placeholder="Timpa Orlap Kosong" />}
+                                                    />
+                                                </Grid>
+                                            </Grid>
+                                        </AccordionDetails>
+                                    </Accordion>
+                                ))}
+
+                                <Typography variant="subtitle2" gutterBottom color="primary" sx={{ fontWeight: 'bold', mt: 2 }}>
+                                    Global Fallback (Opsi Terakhir)
                                 </Typography>
 
                                 <Grid container spacing={2}>
@@ -910,6 +1100,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                             </Box>
                         )}
 
+
                         {validationData && !isValidating && (
                             <Box sx={{ mt: 2 }}>
                                 {(validationData.missingCustomers.length > 0 ||
@@ -987,7 +1178,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                     Batal
                 </Button>
 
-                {selectedFile && !previewData && (
+                {(selectedFile || selectedFiles.length > 0) && !previewData && (
                     <Button
                         onClick={handlePreview}
                         variant="outlined"
