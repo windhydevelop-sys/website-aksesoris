@@ -571,12 +571,21 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                     if (col.id === 'status') {
                                         return (
                                             <TableCell key={col.id}>
-                                                <Chip
-                                                    label="Valid"
-                                                    color="success"
-                                                    size="small"
-                                                    icon={<CheckCircle />}
-                                                />
+                                                {product.isDuplicate ? (
+                                                    <Chip
+                                                        label="Duplicate"
+                                                        color="warning"
+                                                        size="small"
+                                                        icon={<Error />}
+                                                    />
+                                                ) : (
+                                                    <Chip
+                                                        label="Valid"
+                                                        color="success"
+                                                        size="small"
+                                                        icon={<CheckCircle />}
+                                                    />
+                                                )}
                                             </TableCell>
                                         );
                                     }
@@ -1139,11 +1148,11 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                             <TableCell>
                                                 <Chip
                                                     label={res.status}
-                                                    color={res.status === 'Success' ? 'success' : 'error'}
+                                                    color={res.status === 'Success' ? 'success' : res.status === 'Duplicate' ? 'warning' : 'error'}
                                                     size="small"
                                                 />
                                             </TableCell>
-                                            <TableCell>{res.error || 'Saved'}</TableCell>
+                                            <TableCell>{res.message || res.error || 'Saved'}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>

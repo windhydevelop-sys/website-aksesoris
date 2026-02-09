@@ -300,6 +300,7 @@ router.post('/validate-import-data', auth, async (req, res) => {
     const Customer = require('../models/Customer');
     const FieldStaff = require('../models/FieldStaff');
     const Order = require('../models/Order');
+    const Product = require('../models/Product');
 
     const results = {
       missingCustomers: [],
@@ -364,6 +365,19 @@ router.post('/validate-import-data', auth, async (req, res) => {
       } else if (!results.missingFieldStaff.includes('(Kosong)')) {
         results.missingFieldStaff.push('(Kosong)');
       }
+
+      // 4. Duplicate Check (Order + Nama + Bank + Expired)
+      const duplicateQuery = {
+        noOrder: product.noOrder,
+        nama: product.nama,
+        bank: product.bank
+      };
+      if (product.expired) {
+        duplicateQuery.expired = product.expired;
+      }
+
+      const existingProduct = await Product.findOne(duplicateQuery);
+      product.isDuplicate = !!existingProduct;
     }
 
     res.json({
@@ -896,6 +910,31 @@ router.post('/import-document-save',
           // Apply manual status
           if (manualStatus) {
             productData.status = manualStatus;
+          }
+
+          // Check for duplicates (Benchmark: noOrder + nama + bank + expired)
+          const duplicateQuery = {
+            noOrder: productData.noOrder,
+            nama: productData.nama,
+            bank: productData.bank
+          };
+
+          // Only add expired to query if it exists
+          if (productData.expired) {
+            duplicateQuery.expired = productData.expired;
+          }
+
+          const existingProduct = await Product.findOne(duplicateQuery);
+
+          if (existingProduct) {
+            savedProducts.push({
+              id: existingProduct._id,
+              nama: productData.nama,
+              noOrder: productData.noOrder,
+              status: 'Duplicate',
+              message: 'Produk sudah ada (Duplicate)'
+            });
+            continue; // Skip saving this product
           }
 
           const product = new Product(productData);
