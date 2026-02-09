@@ -9,6 +9,15 @@ if (typeof global.File === 'undefined') {
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
+
+// Load environment variables immediately
+if (process.env.NODE_ENV === 'development') {
+  dotenv.config({ path: path.join(__dirname, '.env.development') });
+} else {
+  dotenv.config({ path: path.join(__dirname, '.env') });
+}
+
 const connectDB = require('./config/db');
 const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
@@ -22,13 +31,8 @@ const balanceTransactionRoutes = require('./routes/balance-transactions');
 const handphoneRoutes = require('./routes/handphone');
 const backupRoutes = require('./routes/backup');
 const menuPermissionRoutes = require('./routes/menuPermissions');
-const path = require('path');
 
-if (process.env.NODE_ENV === 'development') {
-  dotenv.config({ path: path.join(__dirname, '.env.development') });
-} else {
-  dotenv.config({ path: path.join(__dirname, '.env') });
-}
+
 
 
 const cron = require('node-cron');

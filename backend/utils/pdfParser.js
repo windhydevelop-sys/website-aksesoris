@@ -1,9 +1,9 @@
 const fs = require('fs');
 const path = require('path');
 const { logger, securityLog } = require('./audit');
-const { extractImagesFromHtml, saveImageToDisk, extractImagesFromPDF } = require('./imageExtractor');
+const { extractImagesFromHtml, uploadImageToCloudinary, extractImagesFromPDF } = require('./imageExtractor');
 const { parseDocument } = require('./documentParser');
-const { uploadToCloudinary } = require('./cloudinary');
+const { uploadBufferToCloudinary } = require('./cloudinary');
 
 let PDFParse = null;
 try {
@@ -199,46 +199,41 @@ const processDocumentFile = async (filePath) => {
       if (extractedTable && extractedTable.length > 0) {
         logger.info('Extracted structured table from PDF using advanced parser');
         products = parseTableData(extractedTable);
-        if (products.length > 0) {
-          const validationResult = validateExtractedData(products);
-          return { success: true, ...validationResult };
-        }
       }
 
-      // Fallback to text parsing
-      text = await extractTextFromPDF(pdfBuffer);
+      if (products.length === 0) {
+        // Fallback to text parsing
+        text = await extractTextFromPDF(pdfBuffer);
 
-      // DEBUG: Log first 1000 chars to help debug layout
-      logger.info('PDF Extracted Text (Detailed):', {
-        textLength: text.length,
-        sample: text.substring(0, 500)
-      });
+        // DEBUG: Log first 1000 chars to help debug layout
+        logger.info('PDF Extracted Text (Detailed):', {
+          textLength: text.length,
+          sample: text.substring(0, 500)
+        });
 
-      // In PDF, columns are often separated by multiple spaces or single space
-      const lines = text.split('\n').filter(l => l.trim().length > 0);
-      const rows = lines.map(line => {
-        // Try to split by 2+ spaces or tabs
-        let cells = line.split(/\s{2,}|\t/).map(c => c.trim()).filter(c => c.length > 0);
-        // If only 1 cell found, check for headers
-        if (cells.length < 3 && line.toLowerCase().includes('nik') && line.toLowerCase().includes('nama')) {
-          cells = line.split(/\s+/).map(c => c.trim()).filter(c => c.length > 0);
-        }
-        return cells;
-      });
+        // In PDF, columns are often separated by multiple spaces or single space
+        const lines = text.split('\n').filter(l => l.trim().length > 0);
+        const rows = lines.map(line => {
+          let cells = line.split(/\s{2,}|\t/).map(c => c.trim()).filter(c => c.length > 0);
+          if (cells.length < 3 && line.toLowerCase().includes('nik') && line.toLowerCase().includes('nama')) {
+            cells = line.split(/\s+/).map(c => c.trim()).filter(c => c.length > 0);
+          }
+          return cells;
+        });
 
-      // Check if it looks like a table
-      const potentialTableRows = rows.filter(r => r.length > 3);
-      if (potentialTableRows.length >= 1) {
-        logger.info('Detected potential table/grid structure in PDF text');
-        products = parseTableData(rows);
-        if (products.length === 0) {
-          logger.info('PDF table parsing returned 0 products, falling back to regex');
+        const potentialTableRows = rows.filter(r => r.length > 3);
+        if (potentialTableRows.length >= 1) {
+          logger.info('Detected potential table/grid structure in PDF text');
+          products = parseTableData(rows);
+          if (products.length === 0) {
+            products = parseProductData(text);
+          }
+        } else {
           products = parseProductData(text);
         }
-      } else {
-        logger.info('PDF looks like list/blocks or unstructured text, using regex');
-        products = parseProductData(text);
       }
+
+
 
       // Extract images from PDF and upload to Cloudinary
       if (products.length > 0) {
@@ -257,10 +252,13 @@ const processDocumentFile = async (filePath) => {
 
               try {
                 // Upload to Cloudinary
-                const uploadResult = await uploadToCloudinary(img.buffer, {
-                  folder: 'products',
-                  resource_type: 'image',
-                  format: img.format === 'jpeg' ? 'jpg' : img.format
+                const timestamp = Date.now();
+                const random = Math.floor(Math.random() * 1000000000);
+                const publicId = `secure_${timestamp}_${random}`;
+
+                const uploadResult = await uploadBufferToCloudinary(img.buffer, {
+                  public_id: publicId,
+                  transformation: [{ width: 1200, height: 1200, crop: 'limit' }]
                 });
 
                 if (uploadResult && uploadResult.secure_url) {
@@ -271,7 +269,7 @@ const processDocumentFile = async (filePath) => {
                   }
                 }
               } catch (uploadErr) {
-                logger.warn(`Failed to upload ${label} image to Cloudinary:`, uploadErr.message);
+                logger.warn(`Failed to upload ${label} image to Cloudinary:`, { error: uploadErr });
               }
             }
           } else {
@@ -292,23 +290,26 @@ const processDocumentFile = async (filePath) => {
         products = parseTableData(sheetData);
       } else {
         products = parseProductData(text);
-        if (extension === '.docx' && htmlContent && products.length > 0) {
-          try {
-            const images = extractImagesFromHtml(htmlContent);
-            if (images.length > 0) {
-              const uploadsDir = path.join(__dirname, '../uploads');
-              if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-              images.forEach(img => {
-                if (products[img.productIndex]) {
-                  const filename = saveImageToDisk(img.base64, uploadsDir);
-                  if (filename) {
-                    if (img.type === 'uploadFotoId') products[img.productIndex].uploadFotoId = filename;
-                    else if (img.type === 'uploadFotoSelfie') products[img.productIndex].uploadFotoSelfie = filename;
-                  }
+      }
+
+      // Extract images for Word documents
+      if (extension === '.docx' && htmlContent && products.length > 0) {
+        try {
+          const images = extractImagesFromHtml(htmlContent);
+          if (images.length > 0) {
+            // Use Promise.all for parallel uploads
+            await Promise.all(images.map(async (img) => {
+              if (products[img.productIndex]) {
+                const imageUrl = await uploadImageToCloudinary(img.base64);
+                if (imageUrl) {
+                  if (img.type === 'uploadFotoId') products[img.productIndex].uploadFotoId = imageUrl;
+                  else if (img.type === 'uploadFotoSelfie') products[img.productIndex].uploadFotoSelfie = imageUrl;
                 }
-              });
-            }
-          } catch (e) { logger.warn('Image extraction warning:', e.message); }
+              }
+            }));
+          }
+        } catch (e) {
+          logger.warn('Word image extraction warning:', e.message);
         }
       }
     }

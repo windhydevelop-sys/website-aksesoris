@@ -15,13 +15,10 @@ export const buildImageUrl = (filename) => {
         return filename;
     }
 
-    // Fallback for existing data that only stored the Cloudinary public_id
-    // with the 'secure_' prefix (older logic)
-    if (filename.startsWith('secure_')) {
-        const cloudName = 'dzytsa9mv'; // From Cloudinary config
-        return `https://res.cloudinary.com/${cloudName}/image/upload/v1/website-aksesoris/${filename}`;
-    }
+    // No special handling for 'secure_' prefix because in this project 
+    // it's used for local files extracted from Word/PDF documents.
+    // New Cloudinary uploads store the full URL starting with 'http'.
 
-    // Default to local uploads directory (for non-Cloudinary local files)
+    // Default to local uploads directory
     return `${axios.defaults.baseURL}/uploads/${filename}`;
 };

@@ -1,3 +1,9 @@
+const dotenv = require('dotenv');
+const path = require('path');
+
+// Load environment variables
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
@@ -74,6 +80,26 @@ const uploadBase64Image = async (base64String, folder = 'website-aksesoris') => 
     }
 };
 
+// Upload buffer to Cloudinary
+const uploadBufferToCloudinary = (buffer, options = {}) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'website-aksesoris',
+                ...options
+            },
+            (error, result) => {
+                if (error) {
+                    console.error('Cloudinary buffer upload error:', error);
+                    return reject(error);
+                }
+                resolve(result);
+            }
+        );
+        uploadStream.end(buffer);
+    });
+};
+
 // Delete file from Cloudinary
 const deleteFromCloudinary = async (publicId) => {
     try {
@@ -90,5 +116,6 @@ module.exports = {
     uploadToCloudinary,
     uploadSingleFile,
     uploadBase64Image,
+    uploadBufferToCloudinary,
     deleteFromCloudinary
 };

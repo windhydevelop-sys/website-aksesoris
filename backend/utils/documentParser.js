@@ -41,6 +41,7 @@ const parseWordDocument = async (filePath) => {
       return {
         success: true,
         text: html,
+        html: html, // Standardize to always provide html property
         format: 'docx',
         sheetData: tableData, // Same format as Excel parser
         hasTable: true

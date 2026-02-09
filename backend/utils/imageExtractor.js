@@ -2,6 +2,7 @@ const cheerio = require('cheerio');
 const fs = require('fs');
 const path = require('path');
 const { logger } = require('./audit');
+const { uploadBase64Image } = require('./cloudinary');
 
 /**
  * Extract images from HTML content based on text markers
@@ -87,30 +88,17 @@ const extractImagesFromHtml = (html) => {
 };
 
 /**
- * Save base64 image to disk and return filename
+ * Upload base64 image to Cloudinary and return secure URL
  */
-const saveImageToDisk = (base64Str, uploadsDir) => {
+const uploadImageToCloudinary = async (base64Str) => {
     try {
-        // base64Str format: "data:image/jpeg;base64,/9j/4AAQ..."
-        const matches = base64Str.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
-
-        if (!matches || matches.length !== 3) {
-            // Try raw base64 if no header
-            return null;
+        const result = await uploadBase64Image(base64Str);
+        if (result.success) {
+            return result.url;
         }
-
-        const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
-        const data = matches[2];
-        const buffer = Buffer.from(data, 'base64');
-
-        const filename = `secure_${Date.now()}_${Math.round(Math.random() * 1E9)}.${ext}`;
-        const filePath = path.join(uploadsDir, filename);
-
-        fs.writeFileSync(filePath, buffer);
-        return filename;
-
+        return null;
     } catch (err) {
-        logger.error('Failed to save extracted image', { error: err.message });
+        logger.error('Failed to upload extracted image to Cloudinary', { error: err.message });
         return null;
     }
 };
@@ -121,41 +109,76 @@ const saveImageToDisk = (base64Str, uploadsDir) => {
  */
 const extractImagesFromPDF = async (pdfBuffer) => {
     try {
-        logger.info('Starting PDF image extraction...');
+        logger.info('Starting PDF image extraction with pdf-lib...');
+        const { PDFDocument, PDFName, PDFDict, PDFRawStream, PDFRef } = require('pdf-lib');
 
-        const pdfExtract = require('pdf-extract-image');
+        const pdfDoc = await PDFDocument.load(pdfBuffer);
+        const images = [];
 
-        // Extract images from PDF buffer
-        const images = await pdfExtract(pdfBuffer);
+        const pages = pdfDoc.getPages();
+        for (let i = 0; i < pages.length; i++) {
+            const page = pages[i];
+            const resources = page.node.Resources();
+            if (!resources) continue;
 
-        if (!images || images.length === 0) {
-            logger.info('No images found in PDF');
-            return [];
+            const xObjects = resources.get(PDFName.of('XObject'));
+            if (!(xObjects instanceof PDFDict)) continue;
+
+            const xObjectNames = xObjects.keys();
+            for (const name of xObjectNames) {
+                let xObject = xObjects.get(name);
+
+                // If it's a reference, resolve it
+                if (xObject instanceof PDFRef) {
+                    xObject = pdfDoc.context.lookup(xObject);
+                }
+
+                if (!(xObject instanceof PDFRawStream)) continue;
+
+                const subtype = xObject.dict.get(PDFName.of('Subtype'));
+                if (subtype instanceof PDFName && subtype.toString() === '/Image') {
+                    const widthObj = xObject.dict.get(PDFName.of('Width'));
+                    const heightObj = xObject.dict.get(PDFName.of('Height'));
+
+                    const width = typeof widthObj.asNumber === 'function' ? widthObj.asNumber() : (typeof widthObj.numberValue === 'function' ? widthObj.numberValue() : Number(widthObj));
+                    const height = typeof heightObj.asNumber === 'function' ? heightObj.asNumber() : (typeof heightObj.numberValue === 'function' ? heightObj.numberValue() : Number(heightObj));
+
+                    const contents = xObject.contents;
+                    const filter = xObject.dict.get(PDFName.of('Filter'));
+
+                    let format = 'png';
+                    if (filter instanceof PDFName) {
+                        const filterName = filter.toString();
+                        if (filterName.includes('DCTDecode')) {
+                            format = 'jpg';
+                        }
+                    }
+
+
+                    images.push({
+                        buffer: Buffer.from(contents),
+                        format: format,
+                        width: width,
+                        height: height,
+                        pageIndex: i,
+                        size: contents.length,
+                        index: images.length
+                    });
+                }
+            }
         }
 
-        logger.info(`Extracted ${images.length} images from PDF`);
-
-        // Convert to our expected format
-        const formattedImages = images.map((img, index) => ({
-            buffer: img,  // Already a Buffer
-            format: 'png',  // pdf-extract-image returns PNG buffers
-            width: 0,  // Metadata not available from this library
-            height: 0,
-            pageIndex: 0,  // Page info not available
-            size: img.length,
-            index
-        }));
-
-        return formattedImages;
+        logger.info(`Extracted ${images.length} images from PDF using pdf-lib`);
+        return images;
 
     } catch (error) {
-        logger.error('PDF image extraction failed:', { error: error.message, stack: error.stack });
+        logger.error('PDF image extraction failed:', { error: error.message });
         return [];
     }
 };
 
 module.exports = {
     extractImagesFromHtml,
-    saveImageToDisk,
+    uploadImageToCloudinary,
     extractImagesFromPDF
 };
