@@ -366,18 +366,13 @@ router.post('/validate-import-data', auth, async (req, res) => {
         results.missingFieldStaff.push('(Kosong)');
       }
 
-      // 4. Duplicate Check (Order + Nama + Bank + Expired)
-      const duplicateQuery = {
-        noOrder: product.noOrder,
-        nama: product.nama,
-        bank: product.bank
-      };
-      if (product.expired) {
-        duplicateQuery.expired = product.expired;
+      // 4. Duplicate Check (Benchmark: noRek)
+      if (product.noRek && product.noRek.trim() !== '' && product.noRek !== '-') {
+        const existingProduct = await Product.findOne({ noRek: product.noRek });
+        product.isDuplicate = !!existingProduct;
+      } else {
+        product.isDuplicate = false;
       }
-
-      const existingProduct = await Product.findOne(duplicateQuery);
-      product.isDuplicate = !!existingProduct;
     }
 
     res.json({
@@ -829,7 +824,8 @@ router.post('/import-document-save',
 
       // Initialize aggregate results
       const aggregateResult = {
-        validProducts: [],
+        savedProducts: [],
+        duplicateProducts: [],
         errors: [],
         summary: { total: 0, valid: 0, invalid: 0 }
       };
@@ -846,7 +842,26 @@ router.post('/import-document-save',
           }
 
           if (result.success) {
-            aggregateResult.validProducts.push(...(result.validProducts || []).map(p => ({ ...p, sourceFile: file.originalname })));
+            // Processing each product to check for duplicates
+            for (const productData of (result.validProducts || [])) {
+              productData.sourceFile = file.originalname;
+
+              // Check for duplicates (Benchmark: noRek)
+              if (productData.noRek && productData.noRek.trim() !== '' && productData.noRek !== '-') {
+                const existingProduct = await Product.findOne({ noRek: productData.noRek });
+                if (existingProduct) {
+                  aggregateResult.duplicateProducts.push({
+                    ...productData,
+                    status: 'Duplicate',
+                    message: 'Produk sudah ada (Duplicate No. Rekening)'
+                  });
+                  continue;
+                }
+              }
+
+              aggregateResult.savedProducts.push(productData);
+            }
+
             aggregateResult.errors.push(...(result.errors || []).map(e => ({ ...e, filename: file.originalname })));
             aggregateResult.summary.total += (result.summary?.total || 0);
             aggregateResult.summary.valid += (result.summary?.valid || 0);
@@ -858,7 +873,8 @@ router.post('/import-document-save',
       }
 
       const validation = {
-        validProducts: aggregateResult.validProducts,
+        validProducts: aggregateResult.savedProducts,
+        duplicateProducts: aggregateResult.duplicateProducts,
         errors: aggregateResult.errors,
         summary: aggregateResult.summary
       };
@@ -912,31 +928,6 @@ router.post('/import-document-save',
             productData.status = manualStatus;
           }
 
-          // Check for duplicates (Benchmark: noOrder + nama + bank + expired)
-          const duplicateQuery = {
-            noOrder: productData.noOrder,
-            nama: productData.nama,
-            bank: productData.bank
-          };
-
-          // Only add expired to query if it exists
-          if (productData.expired) {
-            duplicateQuery.expired = productData.expired;
-          }
-
-          const existingProduct = await Product.findOne(duplicateQuery);
-
-          if (existingProduct) {
-            savedProducts.push({
-              id: existingProduct._id,
-              nama: productData.nama,
-              noOrder: productData.noOrder,
-              status: 'Duplicate',
-              message: 'Produk sudah ada (Duplicate)'
-            });
-            continue; // Skip saving this product
-          }
-
           const product = new Product(productData);
           await product.save();
           savedProducts.push({
@@ -972,15 +963,30 @@ router.post('/import-document-save',
         manualStatusSet: manualStatus
       }, req);
 
+      const totalSaved = savedProducts.length;
+      const totalDuplicates = validation.duplicateProducts.length;
+      const totalErrors = saveErrors.length + validation.errors.length;
+
+      let finalMessage = `Import selesai. ${totalSaved} produk disimpan.`;
+      if (totalDuplicates > 0) {
+        finalMessage += ` Terdeteksi ${totalDuplicates} data duplikat (tidak disimpan).`;
+      }
+      if (totalErrors > 0) {
+        finalMessage += ` ${totalErrors} gagal/invalid.`;
+      }
+
       res.json({
-        success: true,
-        message: `Import completed. ${savedProducts.length} products saved, ${saveErrors.length + validation.errors.length} failed/invalid.`,
+        success: totalErrors === 0,
+        hasDuplicates: totalDuplicates > 0,
+        message: finalMessage,
         data: {
           filename: req.files.length > 1 ? `${req.files.length} Files` : req.files[0].originalname,
-          savedCount: savedProducts.length,
-          failedCount: saveErrors.length + validation.errors.length,
+          savedCount: totalSaved,
+          duplicateCount: totalDuplicates,
+          failedCount: totalErrors,
           results: [
             ...savedProducts,
+            ...validation.duplicateProducts,
             ...saveErrors.map(e => ({ ...e, status: 'Failed' })),
             ...validation.errors.map(e => ({
               nama: e.product.nama || 'Unknown',
@@ -992,8 +998,9 @@ router.post('/import-document-save',
           summary: {
             extracted: validation.summary.total,
             valid: validation.summary.valid,
-            saved: savedProducts.length,
-            errors: saveErrors.length + validation.errors.length
+            saved: totalSaved,
+            duplicates: totalDuplicates,
+            errors: totalErrors
           }
         }
       });

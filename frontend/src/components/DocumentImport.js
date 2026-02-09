@@ -445,7 +445,12 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 }
             });
 
-            setSuccess(response.data.message);
+            if (response.data.hasDuplicates || !response.data.success) {
+                setError(response.data.message);
+            } else {
+                setSuccess(response.data.message);
+            }
+
             setImportResults(response.data.data.results);
             setPreviewData(null);
             setSelectedFile(null);
@@ -455,10 +460,13 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 onImportSuccess();
             }
 
-            // Close dialog after successful import
+            // Close dialog after successful or partially successful import
+            // If there's an error/duplicate, maybe we wait longer or let user close manually
             setTimeout(() => {
-                handleClose();
-            }, 2000);
+                if (response.data.success && !response.data.hasDuplicates) {
+                    handleClose();
+                }
+            }, 5000);
 
         } catch (err) {
             setError(err.response?.data?.error || 'Gagal mengimport data');
