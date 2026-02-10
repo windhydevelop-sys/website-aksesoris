@@ -375,13 +375,19 @@ router.post('/validate-import-data', auth, async (req, res) => {
       }
     }
 
+    const hasDuplicates = products.some(p => p.isDuplicate);
+    const duplicateCount = products.filter(p => p.isDuplicate).length;
+
     res.json({
       success: true,
       data: results,
       correctedProducts: products, // Return corrected products to frontend
+      hasDuplicates,
+      duplicateCount,
       isAllValid: results.missingCustomers.length === 0 &&
         results.missingFieldStaff.length === 0 &&
-        results.missingOrders.length === 0
+        results.missingOrders.length === 0 &&
+        !hasDuplicates
     });
 
   } catch (error) {

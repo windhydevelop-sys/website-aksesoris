@@ -315,7 +315,10 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 headers: { 'x-auth-token': token }
             });
             setValidationData(response.data.data);
-            if (!response.data.isAllValid) {
+
+            if (response.data.hasDuplicates) {
+                setError(`Terdeteksi ${response.data.duplicateCount} data duplikat (No. Rekening sudah ada). Data duplikat tidak akan disimpan.`);
+            } else if (!response.data.isAllValid) {
                 setError('Beberapa data (Customer/Orlap/Order) belum terdaftar di database. Silakan periksa peringatan di bawah.');
             }
         } catch (err) {
