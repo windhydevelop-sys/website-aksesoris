@@ -12,8 +12,10 @@ import {
     CloudUpload, ExpandMore, CheckCircle, Error, Info, Download, Description,
     Add as AddIcon
 } from '@mui/icons-material';
+import { useNotification } from '../contexts/NotificationContext';
 
 const DocumentImport = ({ open, onClose, onImportSuccess }) => {
+    const { showSuccess, showError, showWarning } = useNotification();
     const [selectedFile, setSelectedFile] = useState(null);
     const [selectedFiles, setSelectedFiles] = useState([]);
     const [uploading, setUploading] = useState(false);
@@ -316,8 +318,18 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             });
             setValidationData(response.data.data);
 
+            // Sync isDuplicate flags back to previewData
+            if (response.data.correctedProducts) {
+                setPreviewData(prev => ({
+                    ...prev,
+                    extractedData: response.data.correctedProducts
+                }));
+            }
+
             if (response.data.hasDuplicates) {
-                setError(`Terdeteksi ${response.data.duplicateCount} data duplikat (No. Rekening sudah ada). Data duplikat tidak akan disimpan.`);
+                const msg = `Terdeteksi ${response.data.duplicateCount} data duplikat (No. Rekening sudah ada). Data duplikat tidak akan disimpan.`;
+                setError(msg);
+                showWarning(msg);
             } else if (!response.data.isAllValid) {
                 setError('Beberapa data (Customer/Orlap/Order) belum terdaftar di database. Silakan periksa peringatan di bawah.');
             }
@@ -450,8 +462,10 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
 
             if (response.data.hasDuplicates || !response.data.success) {
                 setError(response.data.message);
+                showError(response.data.message);
             } else {
                 setSuccess(response.data.message);
+                showSuccess(response.data.message);
             }
 
             setImportResults(response.data.data.results);
