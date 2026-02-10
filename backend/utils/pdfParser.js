@@ -98,7 +98,7 @@ const parseProductData = (rawText) => {
   productBlocks.forEach((blockText, index) => {
     const patterns = {
       nik: /NIK[\s:]*([0-9\-\s]{16,25})/i,
-      nama: /Nama[\s:]*([A-Za-z\s\.]+?)(?:\s+Ibu|\s+Tempat|\s+No\.|\n|$)/i,
+      nama: /Nama[\s:]*([A-Za-z0-9\s\.\:\'\"\(\)\-\&\/]+?)(?:\s+Ibu|\s+Tempat|\s+No\.|\n|$)/i,
       namaIbuKandung: /(?:Nama\s*)?Ibu\s*Kandung[\s:]*([A-Za-z\s]+?)(?:\s+Tempat|\s+No\.|\n|$)/i,
       tempatTanggalLahir: /(?:Tempat|Tpat)?.*(?:Tanggal|Tgl)?.*Lahir[\s:]*([A-Za-z\s,0-9\-]+?)(?:\s+No\.|\n|$)/i,
       noRek: /No.*?Rek(?:ening)?[\s:]*([0-9\s\-]{8,25})/i,
