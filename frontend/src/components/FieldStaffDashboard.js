@@ -28,8 +28,7 @@ const FieldStaffDashboard = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
 
-  // Get current user info
-  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+
 
   const fetchStats = useCallback(async () => {
     try {
