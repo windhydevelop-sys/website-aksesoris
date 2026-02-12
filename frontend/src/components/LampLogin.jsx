@@ -11,7 +11,7 @@ const LampLogin = () => {
     // Ensure code only runs in browser
     if (typeof window === 'undefined') return;
 
-    
+
     // We already imported GSAP at the top, so we can use it directly.
     // (don't overwrite it with potentially undefined window.gsap)
 
@@ -279,7 +279,7 @@ const LampLogin = () => {
     </div>
   `;
 
-  return <div dangerouslySetInnerHTML={{ __html: markup }} />;
+  return <div className="lamp-login-wrapper" dangerouslySetInnerHTML={{ __html: markup }} />;
 };
 
 export default LampLogin;

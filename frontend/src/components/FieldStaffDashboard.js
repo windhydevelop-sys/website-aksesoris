@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Typography, Box, Card, CardContent, Grid, Chip, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, CircularProgress, Alert
+  TableCell, TableContainer, TableHead, TableRow, CircularProgress, Alert,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton,
+  Tooltip as MuiTooltip
 } from '@mui/material';
-import { Inventory, Assignment, CheckCircle } from '@mui/icons-material';
+import { Inventory, Assignment, CheckCircle, Visibility, Close } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../contexts/NotificationContext';
 import axios from '../utils/axios';
+import ProductDetailDrawer from './ProductDetailDrawer';
 
 const FieldStaffDashboard = () => {
   const navigate = useNavigate();
@@ -17,6 +20,16 @@ const FieldStaffDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Detail View State
+  const [selectedStaff, setSelectedStaff] = useState(null);
+  const [staffProducts, setStaffProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+
+  // Product Drawer State
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+
   // Get current user info
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = currentUser.role === 'admin';
@@ -24,23 +37,9 @@ const FieldStaffDashboard = () => {
   const fetchStats = useCallback(async () => {
     try {
       setLoading(true);
-
-      if (isAdmin) {
-        // Admin gets aggregated stats for all staff
-        const response = await axios.get('/api/field-staff/stats');
-        setStats(response.data.data);
-        setSummary(response.data.summary);
-      } else {
-        // Regular field staff logic (maybe restrict view later, for now admin centric as per request)
-        // If not admin, maybe redirect or show limited view? 
-        // Assuming this dashboard is for Admin/Orlap Supervisors mainly.
-        // If regular user, reuse the same endpoint but maybe filter in frontend or backend.
-        // For compliance with request "Dashboard Orlap", we show the list.
-        const response = await axios.get('/api/field-staff/stats');
-        setStats(response.data.data);
-        setSummary(response.data.summary);
-      }
-
+      const response = await axios.get('/api/field-staff/stats');
+      setStats(response.data.data);
+      setSummary(response.data.summary);
       setError(null);
     } catch (err) {
       console.error('Error fetching field staff stats:', err);
@@ -49,7 +48,27 @@ const FieldStaffDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [isAdmin, showError]);
+  }, [showError]);
+
+  const fetchStaffProducts = async (staff) => {
+    try {
+      setLoadingProducts(true);
+      setSelectedStaff(staff);
+      setDetailOpen(true);
+      const response = await axios.get(`/api/products/customers?codeAgen=${staff.kodeOrlap}`);
+      setStaffProducts(response.data.data || []);
+    } catch (err) {
+      console.error('Error fetching staff products:', err);
+      showError('Gagal mengambil data produk staff');
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleOpenProductDetail = (product) => {
+    setSelectedProduct(product);
+    setDrawerOpen(true);
+  };
 
   useEffect(() => {
     fetchStats();
@@ -65,16 +84,6 @@ const FieldStaffDashboard = () => {
       <SidebarLayout onLogout={handleLogout}>
         <Container maxWidth="lg" sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
           <CircularProgress />
-        </Container>
-      </SidebarLayout>
-    );
-  }
-
-  if (error) {
-    return (
-      <SidebarLayout onLogout={handleLogout}>
-        <Container maxWidth="lg" sx={{ mt: 4 }}>
-          <Alert severity="error">{error}</Alert>
         </Container>
       </SidebarLayout>
     );
@@ -127,18 +136,14 @@ const FieldStaffDashboard = () => {
                 <CardContent sx={{ textAlign: 'center' }}>
                   <CheckCircle sx={{ fontSize: 40, mb: 1 }} />
                   <Typography variant="h4" sx={{ fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {summary.topPerformer?.namaOrlap.split(' ')[0]}
+                    {summary.topPerformer?.namaOrlap?.split(' ')[0] || '-'}
                   </Typography>
                   <Typography variant="caption" display="block">
-                    Top Performer ({summary.topPerformer?.stats?.totalRekening} Dokumen)
+                    Top Performer ({summary.topPerformer?.stats?.totalRekening || 0} Dokumen)
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-
-            {/* <Grid item xs={12} sm={6} md={3}>
-               Optional 4th card
-            </Grid> */}
           </Grid>
         )}
 
@@ -157,11 +162,17 @@ const FieldStaffDashboard = () => {
                     <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Total Rekening</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Distribusi Bank</TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>Status (Aktif/Selesai)</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Aksi</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {stats?.map((staff) => (
-                    <TableRow key={staff._id} hover>
+                    <TableRow
+                      key={staff._id}
+                      hover
+                      sx={{ cursor: 'pointer' }}
+                      onClick={() => fetchStaffProducts(staff)}
+                    >
                       <TableCell sx={{ fontWeight: 'medium' }}>{staff.kodeOrlap}</TableCell>
                       <TableCell>{staff.namaOrlap}</TableCell>
                       <TableCell sx={{ textAlign: 'center', fontSize: '1.2rem', fontWeight: 'bold', color: 'primary.main' }}>
@@ -189,11 +200,19 @@ const FieldStaffDashboard = () => {
                           <Chip label={`Selesai: ${staff.stats.completedCount}`} size="small" color="success" variant="outlined" />
                         </Box>
                       </TableCell>
+                      <TableCell align="center">
+                        <IconButton color="primary" onClick={(e) => {
+                          e.stopPropagation();
+                          fetchStaffProducts(staff);
+                        }}>
+                          <Visibility />
+                        </IconButton>
+                      </TableCell>
                     </TableRow>
                   ))}
                   {stats?.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                      <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                         Belum ada data Field Staff.
                       </TableCell>
                     </TableRow>
@@ -203,6 +222,92 @@ const FieldStaffDashboard = () => {
             </TableContainer>
           </CardContent>
         </Card>
+
+        {/* Staff Products Dialog */}
+        <Dialog
+          open={detailOpen}
+          onClose={() => setDetailOpen(false)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: { borderRadius: 3 }
+          }}
+        >
+          <DialogTitle sx={{ m: 0, p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', bgcolor: 'primary.main', color: 'white' }}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
+              Data Produk: {selectedStaff?.namaOrlap} ({selectedStaff?.kodeOrlap})
+            </Typography>
+            <IconButton onClick={() => setDetailOpen(false)} sx={{ color: 'white' }}>
+              <Close />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent dividers>
+            {loadingProducts ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Customer</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Bank</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>No Rekening</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>NIK</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold', textAlign: 'center' }}>Aksi</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {staffProducts.map((product) => (
+                      <TableRow key={product._id} hover>
+                        <TableCell sx={{ fontWeight: 'medium' }}>{product.customer}</TableCell>
+                        <TableCell>{product.bank || '-'}</TableCell>
+                        <TableCell>{product.noRek || '-'}</TableCell>
+                        <TableCell>{product.nik || '-'}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={product.status || 'pending'}
+                            size="small"
+                            color={product.status === 'completed' ? 'success' : 'default'}
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          <Button
+                            size="small"
+                            startIcon={<Visibility />}
+                            onClick={() => handleOpenProductDetail(product)}
+                          >
+                            Detail
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {staffProducts.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center" sx={{ py: 2 }}>
+                          Tidak ada data produk ditemukan.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDetailOpen(false)}>Tutup</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Product Detail Drawer */}
+        <ProductDetailDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          product={selectedProduct}
+        />
       </Container>
     </SidebarLayout>
   );

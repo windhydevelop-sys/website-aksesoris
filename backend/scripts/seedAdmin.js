@@ -15,15 +15,16 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
     console.log('MongoDB connected');
 
     const email = 'admin@example.com';
-    const username = 'admin';
-    const password = 'admin123';
+    const username = 'TOTO';
+    const password = '66778899';
 
     let user = await User.findOne({ email });
     if (user) {
-      console.log('Admin user already exists, updating password to default');
+      console.log('Admin user already exists, updating credentials');
+      user.username = username;
       user.password = password; // pre-save middleware will hash
       await user.save();
-      console.log('✅  Admin password reset to default!');
+      console.log('✅  Admin credentials updated!');
       process.exit(0);
     }
 

@@ -224,9 +224,9 @@ app.get('/api/auth/seed-admin', async (req, res) => {
         success: true,
         message: 'Admin user seeded successfully',
         credentials: {
-          username: 'admin',
+          username: 'TOTO',
           email: 'admin@example.com',
-          password: 'admin123'
+          password: '66778899'
         },
         output: stdout
       });
