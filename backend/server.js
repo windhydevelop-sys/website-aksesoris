@@ -31,6 +31,7 @@ const balanceTransactionRoutes = require('./routes/balance-transactions');
 const handphoneRoutes = require('./routes/handphone');
 const backupRoutes = require('./routes/backup');
 const menuPermissionRoutes = require('./routes/menuPermissions');
+const User = require('./models/User');
 
 
 
@@ -201,35 +202,38 @@ app.get('/api/health', (req, res) => {
 // Seed admin endpoint (for development/testing)
 app.get('/api/auth/seed-admin', async (req, res) => {
   try {
-    const { exec } = require('child_process');
-    const path = require('path');
+    const email = 'admin@example.com';
+    const username = 'TOTO';
+    const password = '66778899';
 
-    exec('node scripts/seedAdmin.js', { cwd: path.join(__dirname) }, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Seed admin error:', error);
-        return res.status(500).json({
-          success: false,
-          error: 'Failed to seed admin user',
-          details: error.message
-        });
-      }
+    let user = await User.findOne({ email });
 
-      if (stderr) {
-        console.error('Seed admin stderr:', stderr);
-      }
+    if (user) {
+      user.username = username;
+      user.password = password; // pre-save middleware will hash
+      await user.save();
 
-      console.log('Seed admin stdout:', stdout);
-
-      res.json({
+      return res.json({
         success: true,
-        message: 'Admin user seeded successfully',
-        credentials: {
-          username: 'TOTO',
-          email: 'admin@example.com',
-          password: '66778899'
-        },
-        output: stdout
+        message: 'Admin credentials updated successfully',
+        credentials: { username, email, password }
       });
+    }
+
+    // Create new admin if not exists
+    const adminUser = new User({
+      username,
+      email,
+      password,
+      role: 'admin'
+    });
+
+    await adminUser.save();
+
+    res.json({
+      success: true,
+      message: 'Admin user created successfully',
+      credentials: { username, email, password }
     });
 
   } catch (err) {
