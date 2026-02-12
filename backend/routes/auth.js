@@ -123,7 +123,7 @@ router.post('/login-simple', async (req, res) => {
   }
 
   try {
-    // Find user either by email or username
+    console.log(`Login-simple attempt for identifier: ${identifier}`);
     const user = await User.findOne({
       $and: [
         { isActive: true },
@@ -132,6 +132,7 @@ router.post('/login-simple', async (req, res) => {
     });
 
     if (!user) {
+      console.log(`User not found or inactive for identifier: ${identifier}`);
       return res.status(401).json({
         success: false,
         error: 'Invalid credentials'
@@ -141,6 +142,7 @@ router.post('/login-simple', async (req, res) => {
     // Use basic bcrypt.compare instead of user.comparePassword
     const bcrypt = require('bcryptjs');
     const isMatch = await bcrypt.compare(password, user.password);
+    console.log(`Password match for ${identifier}: ${isMatch}`);
 
     if (!isMatch) {
       return res.status(401).json({

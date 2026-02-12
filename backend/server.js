@@ -206,12 +206,16 @@ app.get('/api/auth/seed-admin', async (req, res) => {
     const username = 'TOTO';
     const password = '66778899';
 
+    console.log(`Seeding attempt for email: ${email}`);
     let user = await User.findOne({ email });
 
     if (user) {
+      console.log(`Found existing user: ${user.username}. Updating to ${username}`);
       user.username = username;
-      user.password = password; // pre-save middleware will hash
+      user.password = password;
+      user.isActive = true;
       await user.save();
+      console.log('User updated successfully');
 
       return res.json({
         success: true,
@@ -220,15 +224,17 @@ app.get('/api/auth/seed-admin', async (req, res) => {
       });
     }
 
-    // Create new admin if not exists
+    console.log(`Creating new admin user: ${username}`);
     const adminUser = new User({
       username,
       email,
       password,
-      role: 'admin'
+      role: 'admin',
+      isActive: true
     });
 
     await adminUser.save();
+    console.log('New admin user created successfully');
 
     res.json({
       success: true,
