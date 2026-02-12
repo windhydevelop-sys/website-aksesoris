@@ -214,6 +214,7 @@ app.get('/api/auth/seed-admin', async (req, res) => {
       user.username = username;
       user.password = password;
       user.isActive = true;
+      user.role = 'admin';
       await user.save();
       console.log('User updated successfully');
 
