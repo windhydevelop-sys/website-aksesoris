@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Typography, Box, Card, CardContent, Grid, Chip, Table, TableBody,
-  TableCell, TableContainer, TableHead, TableRow, CircularProgress, Alert,
-  Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton,
-  Tooltip as MuiTooltip
+  TableCell, TableContainer, TableHead, TableRow, CircularProgress,
+  Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton
 } from '@mui/material';
 import { Inventory, Assignment, CheckCircle, Visibility, Close } from '@mui/icons-material';
 import SidebarLayout from './SidebarLayout';
@@ -18,7 +17,6 @@ const FieldStaffDashboard = () => {
   const [stats, setStats] = useState(null);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   // Detail View State
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -32,7 +30,6 @@ const FieldStaffDashboard = () => {
 
   // Get current user info
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-  const isAdmin = currentUser.role === 'admin';
 
   const fetchStats = useCallback(async () => {
     try {
@@ -40,10 +37,8 @@ const FieldStaffDashboard = () => {
       const response = await axios.get('/api/field-staff/stats');
       setStats(response.data.data);
       setSummary(response.data.summary);
-      setError(null);
     } catch (err) {
       console.error('Error fetching field staff stats:', err);
-      setError('Gagal mengambil data statistik Field Staff');
       showError('Gagal mengambil data statistik');
     } finally {
       setLoading(false);
