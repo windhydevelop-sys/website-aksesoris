@@ -109,10 +109,23 @@ const askNextField = async (chatId, session) => {
   };
 
   // Add Back button if not first step
+  const keyboardRow = [];
   if (currentIndex > 0) {
-    opts.reply_markup.inline_keyboard.push([
-      { text: '⬅️ Kembali', callback_data: 'prev_step' }
-    ]);
+    keyboardRow.push({ text: '⬅️ Kembali', callback_data: 'prev_step' });
+  }
+
+  // Add Skip button for certain fields or all fields after bank/identity
+  // For simplicity, allow skip for everything except basic identity
+  const nonSkippable = ['customer', 'bank', 'nama', 'nik'];
+  if (!nonSkippable.includes(field)) {
+    keyboardRow.push({ text: '⏭️ Lewati', callback_data: 'skip_step' });
+  }
+
+  // Always add Cancel button
+  keyboardRow.push({ text: '❌ Batal', callback_data: 'cancel_input' });
+
+  if (keyboardRow.length > 0) {
+    opts.reply_markup.inline_keyboard.push(keyboardRow);
   }
 
   await bot.sendMessage(chatId, labels[field], opts);
@@ -218,6 +231,16 @@ const handleWebhook = async (req, res) => {
         } else {
           await bot.sendMessage(chatId, 'Ini adalah pertanyaan pertama.');
         }
+      } else if (data === 'skip_step') {
+        session.sessionStep += 1;
+        await session.save();
+        await askNextField(chatId, session);
+      } else if (data === 'cancel_input') {
+        session.state = 'idle';
+        session.sessionStep = 0;
+        session.formData = {};
+        await session.save();
+        await bot.sendMessage(chatId, '❌ Input dibatalkan. Sesi telah direset.');
       }
 
       return res.status(200).send('Callback processed');
@@ -256,6 +279,15 @@ const handleWebhook = async (req, res) => {
       await bot.sendMessage(chatId, 'Masukkan Kode Orlap Anda untuk melanjutkan.');
 
       return res.status(200).send('Webhook processed');
+    }
+
+    if (text === '/cancel' || text === '❌ Batal') {
+      telegramUser.state = 'idle';
+      telegramUser.sessionStep = 0;
+      telegramUser.formData = {};
+      await telegramUser.save();
+      await bot.sendMessage(chatId, 'Sesi dibatalkan. Ketik /start untuk memulai kembali.');
+      return res.status(200).send('Canceled');
     }
 
     if (telegramUser.state === 'awaiting_orlap_code' && text && !text.startsWith('/')) {
