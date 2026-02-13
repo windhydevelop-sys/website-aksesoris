@@ -1064,8 +1064,8 @@ router.post('/import-document-save',
 );
 
 // Import corrected Word data to update existing products
-const documentUpload = multer({ dest: 'uploads/' }).single('file');
-router.post('/import-corrected-word', auth, documentUpload, async (req, res) => {
+const wordDocumentUpload = multer({ dest: 'uploads/' }).single('file');
+router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, error: 'No file uploaded' });
