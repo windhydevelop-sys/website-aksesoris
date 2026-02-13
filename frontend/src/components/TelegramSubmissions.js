@@ -25,10 +25,20 @@ const TelegramSubmissions = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
+    // Filters
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [statusFilter, setStatusFilter] = useState('pending');
+
     const fetchSubmissions = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await axios.get('/api/products/telegram-submissions');
+            const params = new URLSearchParams();
+            if (startDate) params.append('startDate', startDate);
+            if (endDate) params.append('endDate', endDate);
+            if (statusFilter) params.append('status', statusFilter);
+
+            const response = await axios.get(`/api/products/telegram-submissions?${params.toString()}`);
             if (response.data.success) {
                 setSubmissions(response.data.data);
             }
@@ -38,7 +48,7 @@ const TelegramSubmissions = () => {
         } finally {
             setLoading(false);
         }
-    }, [showError]);
+    }, [showError, startDate, endDate, statusFilter]);
 
     useEffect(() => {
         fetchSubmissions();
@@ -118,7 +128,9 @@ const TelegramSubmissions = () => {
             });
 
             if (response.data.success) {
-                showSuccess(`Berhasil memperbarui ${response.data.updatedCount || 0} data`);
+                const updated = response.data.updatedCount || 0;
+                const created = response.data.createdCount || 0;
+                showSuccess(`Berhasil: ${created} data baru dibuat, ${updated} diperbarui`);
                 fetchSubmissions();
             }
         } catch (error) {
@@ -178,6 +190,65 @@ const TelegramSubmissions = () => {
                     </Box>
                 </Box>
 
+                <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: isLightMono ? '#f9f9f9' : 'rgba(255,255,255,0.03)', display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Typography variant="caption" sx={{ color: isLightMono ? '#666' : '#aaa' }}>Status</Typography>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            style={{
+                                padding: '8px',
+                                borderRadius: '4px',
+                                border: isLightMono ? '1px solid #ccc' : '1px solid rgba(255,255,255,0.2)',
+                                background: isLightMono ? '#fff' : '#1e1e1e',
+                                color: isLightMono ? '#111' : '#fff'
+                            }}
+                        >
+                            <option value="pending">Pending (Baru)</option>
+                            <option value="processed">Processed (Sudah Import)</option>
+                            <option value="archived">Archived</option>
+                            <option value="">Semua (Kecuali Archive)</option>
+                        </select>
+                    </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Typography variant="caption" sx={{ color: isLightMono ? '#666' : '#aaa' }}>Tanggal Mulai</Typography>
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                            style={{
+                                padding: '8px',
+                                borderRadius: '4px',
+                                border: isLightMono ? '1px solid #ccc' : '1px solid rgba(255,255,255,0.2)',
+                                background: isLightMono ? '#fff' : '#1e1e1e',
+                                color: isLightMono ? '#111' : '#fff'
+                            }}
+                        />
+                    </Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Typography variant="caption" sx={{ color: isLightMono ? '#666' : '#aaa' }}>Tanggal Selesai</Typography>
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                            style={{
+                                padding: '8px',
+                                borderRadius: '4px',
+                                border: isLightMono ? '1px solid #ccc' : '1px solid rgba(255,255,255,0.2)',
+                                background: isLightMono ? '#fff' : '#1e1e1e',
+                                color: isLightMono ? '#111' : '#fff'
+                            }}
+                        />
+                    </Box>
+                    <Button
+                        size="small"
+                        onClick={() => { setStartDate(''); setEndDate(''); setStatusFilter('pending'); }}
+                        sx={{ mt: 2 }}
+                    >
+                        Reset Filter
+                    </Button>
+                </Box>
+
                 {loading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
                         <CircularProgress />
@@ -195,21 +266,21 @@ const TelegramSubmissions = () => {
                                             sx={{ color: isLightMono ? '#111' : '#fff' }}
                                         />
                                     </TableCell>
-                                    <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Info</TableCell>
+                                    <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Status</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>No. Order</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Customer</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Agent</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Bank</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Nama (KTP)</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>NIK</TableCell>
-                                    <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Tanggal</TableCell>
+                                    <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Dibuat</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {submissions.length === 0 ? (
                                     <TableRow>
                                         <TableCell colSpan={9} align="center" sx={{ py: 3, color: 'inherit' }}>
-                                            Tidak ada data submission Telegram.
+                                            Tidak ada data submission Telegram untuk filter ini.
                                         </TableCell>
                                     </TableRow>
                                 ) : (
@@ -222,7 +293,7 @@ const TelegramSubmissions = () => {
                                                 selected={isSelected}
                                                 sx={{
                                                     '&:hover': { bgcolor: isLightMono ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)' },
-                                                    bgcolor: missing ? (isLightMono ? 'rgba(255, 152, 0, 0.1)' : 'rgba(255, 152, 0, 0.1)') : 'inherit'
+                                                    bgcolor: missing && row.status !== 'processed' ? (isLightMono ? 'rgba(255, 152, 0, 0.1)' : 'rgba(255, 152, 0, 0.1)') : 'inherit'
                                                 }}
                                             >
                                                 <TableCell padding="checkbox">
@@ -233,12 +304,18 @@ const TelegramSubmissions = () => {
                                                     />
                                                 </TableCell>
                                                 <TableCell>
-                                                    {missing ? (
+                                                    {row.status === 'processed' ? (
+                                                        <Tooltip title="Sudah di-import ke Produk Utama">
+                                                            <CheckCircle color="success" />
+                                                        </Tooltip>
+                                                    ) : missing ? (
                                                         <Tooltip title="Data ini memerlukan koreksi (Order/Customer kosong)">
                                                             <Warning color="warning" />
                                                         </Tooltip>
                                                     ) : (
-                                                        <CheckCircle color="success" />
+                                                        <Tooltip title="Pending / Siap Export">
+                                                            <CheckCircle color="info" />
+                                                        </Tooltip>
                                                     )}
                                                 </TableCell>
                                                 <TableCell sx={{ color: 'inherit' }}>{row.noOrder || 'EMPTY'}</TableCell>
@@ -264,5 +341,6 @@ const TelegramSubmissions = () => {
         </SidebarLayout>
     );
 };
+
 
 export default TelegramSubmissions;

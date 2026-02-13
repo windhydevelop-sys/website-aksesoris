@@ -77,7 +77,7 @@ function TelegramProductForm() {
         }
       });
       if (res.data?.success) {
-        setStatusMsg('Produk berhasil dibuat.');
+        setStatusMsg('Produk berhasil dikirim ke Ruang Tunggu.');
       } else {
         setStatusMsg(res.data?.error || 'Gagal membuat produk.');
       }

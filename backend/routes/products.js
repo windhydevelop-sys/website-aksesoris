@@ -4,6 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Product = require('../models/Product');
+const TelegramSubmission = require('../models/TelegramSubmission');
 const auth = require('../middleware/auth');
 const { validateProduct, validateProductUpdate } = require('../utils/validation');
 const { auditLog, securityLog } = require('../utils/audit');
@@ -105,30 +106,44 @@ router.get('/complaints', auth, addUserInfo, async (req, res) => {
   }
 });
 
-// Get products submitted via Telegram for admin review
+// Get products submitted via Telegram for admin review (Staging Area)
 router.get('/telegram-submissions', auth, addUserInfo, async (req, res) => {
   console.log('[/api/products/telegram-submissions] Route hit.');
   try {
-    // Filter by source: 'telegram'
-    // To support older data, we also check if source is not 'web' and fieldStaff is present
-    const query = {
-      $or: [
-        { source: 'telegram' },
-        { source: { $exists: false }, fieldStaff: { $exists: true, $ne: '' } }
-      ]
-    };
+    const { startDate, endDate, status } = req.query;
+    let query = {};
 
-    const productsSize = await Product.countDocuments(query);
-    const products = await Product.findDecrypted(query);
+    // Filter by status if provided
+    if (status) {
+      query.status = status;
+    } else {
+      // Default to showing only pending and processed (hide archived)
+      query.status = { $ne: 'archived' };
+    }
 
-    auditLog('READ', req.userId, 'Product', 'telegram_submissions', {
-      count: products.length
+    // Filter by date range
+    if (startDate || endDate) {
+      query.createdAt = {};
+      if (startDate) query.createdAt.$gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+    }
+
+    const itemsSize = await TelegramSubmission.countDocuments(query);
+    const items = await TelegramSubmission.findDecrypted(query);
+
+    auditLog('READ', req.userId, 'TelegramSubmission', 'telegram_submissions_filtered', {
+      count: items.length,
+      filters: { startDate, endDate, status }
     }, req);
 
     res.json({
       success: true,
-      count: products.length,
-      data: products
+      count: items.length,
+      data: items
     });
   } catch (err) {
     console.error('[/api/products/telegram-submissions] Error:', err);
@@ -1100,6 +1115,7 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
     };
 
     let updatedCount = 0;
+    let createdCount = 0;
     for (const row of dataRows) {
       const rowData = {};
       headers.forEach((header, idx) => {
@@ -1107,30 +1123,62 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
         if (key) rowData[key] = row[idx];
       });
 
-      // Find by NIK or No Rekening
-      if (rowData.nik || rowData.noRek) {
-        const query = { $or: [] };
-        if (rowData.nik) query.$or.push({ nik: rowData.nik });
-        if (rowData.noRek) query.$or.push({ noRek: rowData.noRek });
+      if (!rowData.nik && !rowData.noRek) continue;
 
-        const existing = await Product.findOne(query);
-        if (existing) {
-          // Update fields
-          Object.keys(rowData).forEach(key => {
-            if (rowData[key] !== undefined && rowData[key] !== '') {
-              existing[key] = rowData[key];
-            }
-          });
-          existing.lastModifiedBy = req.userId;
-          await existing.save();
-          updatedCount++;
+      // 1. Check in TelegramSubmission (Staging)
+      const submissionQuery = { $or: [] };
+      if (rowData.nik) submissionQuery.$or.push({ nik: rowData.nik });
+      if (rowData.noRek) submissionQuery.$or.push({ noRek: rowData.noRek });
+
+      const submission = await TelegramSubmission.findOne(submissionQuery);
+
+      // 2. Check in Product (Main DB)
+      const productQuery = { $or: [] };
+      if (rowData.nik) productQuery.$or.push({ nik: rowData.nik });
+      if (rowData.noRek) productQuery.$or.push({ noRek: rowData.noRek });
+
+      const existingProduct = await Product.findOne(productQuery);
+
+      if (existingProduct) {
+        // Update existing product
+        Object.keys(rowData).forEach(key => {
+          if (rowData[key] !== undefined && rowData[key] !== '') {
+            existingProduct[key] = rowData[key];
+          }
+        });
+        existingProduct.lastModifiedBy = req.userId;
+        await existingProduct.save();
+        updatedCount++;
+
+        // If it was a submission, mark as processed
+        if (submission) {
+          submission.status = 'processed';
+          await submission.save();
         }
+      } else if (submission) {
+        // Promote from Submission to Product
+        const newProductData = {
+          ...submission.toObject(),
+          ...rowData,
+          source: 'telegram',
+          status: 'pending' // Default product status
+        };
+        delete newProductData._id;
+        delete newProductData.createdAt;
+        delete newProductData.updatedAt;
+
+        const newProduct = new Product(newProductData);
+        await newProduct.save();
+
+        submission.status = 'processed';
+        await submission.save();
+        createdCount++;
       }
     }
 
     if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
 
-    res.json({ success: true, updatedCount });
+    res.json({ success: true, updatedCount, createdCount });
   } catch (error) {
     console.error('Error importing corrected word:', error);
     if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);

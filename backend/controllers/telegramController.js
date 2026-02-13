@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const TelegramUser = require('../models/TelegramUser');
 const User = require('../models/User');
 const FieldStaff = require('../models/FieldStaff');
+const TelegramSubmission = require('../models/TelegramSubmission');
 
 const token = process.env.TELEGRAM_BOT_TOKEN;
 const bot = new TelegramBot(token);
@@ -105,7 +106,6 @@ const askNextField = async (chatId, session) => {
 
 const submitForm = async (chatId, session) => {
   try {
-    const Product = require('../models/Product');
     const data = { ...session.formData };
 
     // Convert expired to Date if exists
@@ -115,14 +115,13 @@ const submitForm = async (chatId, session) => {
 
     // Add metadata
     data.codeAgen = session.kodeOrlap;
-    data.fieldStaff = session.kodeOrlap;
-    data.createdBy = session.userId; // Link to web user if authenticated
+    data.telegramUserId = session.chatId;
     data.source = 'telegram';
 
-    const product = new Product(data);
-    await product.save();
+    const submission = new TelegramSubmission(data);
+    await submission.save();
 
-    await bot.sendMessage(chatId, `✅ Produk berhasil dibuat!\nNo. Order: ${product._id}\nCustomer: ${product.customer}`);
+    await bot.sendMessage(chatId, `✅ Produk berhasil dikirim ke Ruang Tunggu!\nCustomer: ${submission.customer}\nData Anda akan diproses oleh Admin.`);
 
     // Reset session
     session.state = 'idle';
