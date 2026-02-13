@@ -10,9 +10,12 @@ const bot = new TelegramBot(token);
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const setWebhook = async (req, res) => {
-  const webhookUrl = req.body.url;
+  const webhookUrl = req.query.url || req.body.url;
   if (!webhookUrl) {
-    return res.status(400).json({ message: 'URL webhook diperlukan.' });
+    return res.status(400).json({
+      message: 'URL webhook diperlukan.',
+      hint: 'Gunakan ?url=https://alamat-railway-anda.up.railway.app'
+    });
   }
 
   try {

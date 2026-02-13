@@ -7,6 +7,7 @@ const { setWebhook, handleWebhook } = require('../controllers/telegramController
 const TelegramUser = require('../models/TelegramUser');
 const { createProduct } = require('../controllers/products');
 
+router.get('/set-webhook', setWebhook);
 router.post('/set-webhook', setWebhook);
 
 router.post('/webhook', handleWebhook);
