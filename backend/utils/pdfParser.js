@@ -134,7 +134,7 @@ const parseProductData = (rawText) => {
 
       myBCAUser: /(?:BCA\s*ID|BCA-ID|User\s*myBCA)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
       myBCAPassword: /(?:Pass\s*BCA-ID|Pass\s*BCA\s*ID|Password\s*myBCA)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      myBCAPin: /(?:Pin\s*Transaksi|Pin\s*myBCA)[\s:]*([0-9]{4,10})/i
+      myBCAPin: /(?:Pin\s*Transaksi|Pin\s*myBCA|Pin\s*BCA\s*ID|Pin\s*BCA-ID)[\s:]*([0-9]{4,10})/i
     };
 
     const extractedData = {};
@@ -347,7 +347,7 @@ const parseTableData = (tableData) => {
     'foto selfie': 'uploadFotoSelfie', 'upload foto selfie': 'uploadFotoSelfie',
     'customer': 'customer', 'pelanggan': 'customer', 'nama customer': 'customer', 'nama pelanggan': 'customer',
     'kode akses': 'mobilePassword', 'user m-bca': 'mobileUser', 'pin m-bca': 'mobilePin', 'bca-id': 'myBCAUser', 'pass bca-id': 'myBCAPassword',
-    'pin transaksi': 'myBCAPin', 'user i-banking': 'ibUser', 'pin i-banking': 'ibPin', 'i-banking': 'ibUser', 'pass i-banking': 'ibPassword', 'password internet banking': 'ibPassword',
+    'pin transaksi': 'myBCAPin', 'pin bca-id': 'myBCAPin', 'pin bca id': 'myBCAPin', 'user i-banking': 'ibUser', 'pin i-banking': 'ibPin', 'i-banking': 'ibUser', 'pass i-banking': 'ibPassword', 'password internet banking': 'ibPassword',
     'pass i-banking': 'ibPassword', 'password i-banking': 'ibPassword', 'pin i-banking': 'ibPin',
     'user ib': 'ibUser', 'pass ib': 'ibPassword', 'password ib': 'ibPassword', 'pin ib': 'ibPin',
     // OCBC (Nyala)
