@@ -80,7 +80,7 @@ const askNextField = async (chatId, session) => {
     myBCAUser: '👤 Masukkan Username myBCA:',
     myBCAPassword: '🔑 Masukkan Password myBCA:',
     myBCAPin: '🔢 Masukkan PIN myBCA:',
-    brimoUser: '👤 Masukkan Username BRImo:',,
+    brimoUser: '👤 Masukkan Username BRImo:',
     brimoPassword: '🔑 Masukkan Password BRImo:',
     briMerchantUser: '🏪 Masukkan Username BRI Merchant:',
     briMerchantPassword: '🔑 Masukkan Password BRI Merchant:',
