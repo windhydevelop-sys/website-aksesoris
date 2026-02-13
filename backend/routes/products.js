@@ -1096,7 +1096,7 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
       'PIN ATM': 'pinAtm', 'Email': 'email', 'Password Email': 'passEmail',
       'User Mobile': 'mobileUser', 'Password Mobile': 'mobilePassword', 'PIN Mobile': 'mobilePin',
       'I-Banking': 'ibUser', 'Password IB': 'ibPassword', 'PIN IB': 'ibPin', 'BCA-ID': 'myBCAUser',
-      'Pass BCA-ID': 'myBCAPassword', 'Pin Transaksi': 'myBCAPin'
+      'Pass BCA-ID': 'myBCAPassword', 'Pin Transaksi': 'myBCAPin', 'Kode Akses': 'kodeAkses', 'Pin m-BCA': 'pinMBca'
     };
 
     let updatedCount = 0;

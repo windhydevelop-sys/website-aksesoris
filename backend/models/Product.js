@@ -48,6 +48,9 @@ const productSchema = new mongoose.Schema({
   brimoPassword: { type: String },
   briMerchantUser: { type: String },
   briMerchantPassword: { type: String },
+  // Specific for BCA
+  kodeAkses: { type: String },
+  pinMBca: { type: String },
   // Generic bank credential fields
   mobileUser: { type: String },
   mobilePassword: { type: String },
@@ -105,6 +108,12 @@ productSchema.pre('save', function (next) {
     }
     if (this.isModified('briMerchantPassword')) {
       this.briMerchantPassword = encrypt(this.briMerchantPassword);
+    }
+    if (this.isModified('kodeAkses')) {
+      this.kodeAkses = encrypt(this.kodeAkses);
+    }
+    if (this.isModified('pinMBca')) {
+      this.pinMBca = encrypt(this.pinMBca);
     }
     if (this.isModified('mobileUser')) {
       this.mobileUser = encrypt(this.mobileUser);
@@ -173,6 +182,12 @@ productSchema.pre('findOneAndUpdate', function (next) {
     if (update.briMerchantPassword) {
       update.briMerchantPassword = encrypt(update.briMerchantPassword);
     }
+    if (update.kodeAkses) {
+      update.kodeAkses = encrypt(update.kodeAkses);
+    }
+    if (update.pinMBca) {
+      update.pinMBca = encrypt(update.pinMBca);
+    }
     if (update.mobileUser) {
       update.mobileUser = encrypt(update.mobileUser);
     }
@@ -212,6 +227,7 @@ productSchema.methods.getDecryptedData = function () {
     'pinAtm', 'pinWondr', 'passWondr', 'passEmail',
     'myBCAUser', 'myBCAPassword', 'myBCAPin',
     'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword',
+    'kodeAkses', 'pinMBca',
     'mobileUser', 'mobilePassword', 'mobilePin',
     'ibUser', 'ibPassword', 'ibPin',
     'merchantUser', 'merchantPassword'

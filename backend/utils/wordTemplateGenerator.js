@@ -315,7 +315,8 @@ const generateCorrectedWord = async (products) => {
             'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
             'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email',
             'User Mobile', 'Password Mobile', 'PIN Mobile',
-            'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi'
+            'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi',
+            'Kode Akses', 'Pin m-BCA'
         ];
 
         // Mapping from product keys to headers
@@ -327,7 +328,7 @@ const generateCorrectedWord = async (products) => {
             pinAtm: 'PIN ATM', email: 'Email', passEmail: 'Password Email',
             mobileUser: 'User Mobile', mobilePassword: 'Password Mobile', mobilePin: 'PIN Mobile',
             ibUser: 'I-Banking', ibPassword: 'Password IB', ibPin: 'PIN IB', myBCAUser: 'BCA-ID',
-            myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi'
+            myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi', kodeAkses: 'Kode Akses', pinMBca: 'Pin m-BCA'
         };
 
         const tableRows = [];
@@ -418,7 +419,9 @@ const generateCorrectedWordList = async (products) => {
             { key: 'ibPin', label: 'PIN IB' },
             { key: 'myBCAUser', label: 'BCA-ID' },
             { key: 'myBCAPassword', label: 'Pass BCA-ID' },
-            { key: 'myBCAPin', label: 'Pin Transaksi' }
+            { key: 'myBCAPin', label: 'Pin Transaksi' },
+            { key: 'kodeAkses', label: 'Kode Akses' },
+            { key: 'pinMBca', label: 'Pin m-BCA' }
         ];
 
         const sections = products.map((p, idx) => {

