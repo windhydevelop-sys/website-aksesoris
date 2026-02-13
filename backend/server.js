@@ -65,7 +65,6 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
     const allowedOrigins = [
@@ -75,57 +74,31 @@ const corsOptions = {
       'http://localhost:5173',
       'https://website-aksesoris.vercel.app',
       'https://website-aksesoris-git-main-windhydevelop-sys.vercel.app',
-      // Railway frontend URLs
       'https://website-aksesoris-frontend-production.up.railway.app',
       'https://website-aksesoris-frontend-staging.up.railway.app',
-      // NEW: Render backend URL
-      'https://website-aksesoris.onrender.app',
-      // Railway deployment URLs with random subdomains
-      /\.railway\.app$/,
-      // Allow all vercel deployments
-      /\.vercel\.app$/,
-      process.env.FRONTEND_URL
+      'https://website-aksesoris-production.up.railway.app'
     ].filter(Boolean);
 
-    // In development, allow all origins if no specific origin is set
-    if (process.env.NODE_ENV === 'development' && process.env.ALLOW_ALL_ORIGINS === 'true') {
-      console.log('Development mode: allowing all origins');
+    // Dynamic patterns
+    const isVercel = origin.endsWith('.vercel.app');
+    const isRailway = origin.endsWith('.railway.app');
+
+    if (allowedOrigins.includes(origin) || isVercel || isRailway || origin === process.env.FRONTEND_URL) {
       return callback(null, true);
     }
 
-    // Check if origin matches any allowed pattern
-    for (let i = 0; i < allowedOrigins.length; i++) {
-      const allowed = allowedOrigins[i];
-
-      if (allowed instanceof RegExp) {
-        if (allowed.test(origin)) {
-          console.log('CORS allowed origin (regex):', origin);
-          return callback(null, true);
-        }
-      } else if (allowed === origin) {
-        console.log('CORS allowed origin (exact):', origin);
-        return callback(null, true);
-      }
-    }
-
-    console.log('CORS blocked origin:', origin);
-
-    // Log more details for debugging
-    console.log('Request headers:', origin);
-    console.log('Environment:', process.env.NODE_ENV);
-    console.log('Frontend URL env:', process.env.FRONTEND_URL);
-
-    // In production, be more restrictive, in development allow with warning
+    // In production, be restrictive, in development allow with warning
     if (process.env.NODE_ENV === 'production') {
+      console.log('CORS blocked in production:', origin);
       return callback(new Error('Not allowed by CORS'));
     } else {
-      console.warn('Development mode: allowing blocked origin for testing');
+      console.warn('CORS allowed (Dev Warning):', origin);
       return callback(null, true);
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'x-auth-token', 'Authorization'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'x-auth-token', 'Authorization', 'X-Telegram-User-Id'],
   optionsSuccessStatus: 200
 };
 

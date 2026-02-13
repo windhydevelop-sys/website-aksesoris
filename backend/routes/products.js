@@ -1108,10 +1108,12 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
       'Grade': 'grade', 'Kantor Cabang': 'kcp', 'NIK': 'nik', 'Nama': 'nama',
       'Nama Ibu Kandung': 'namaIbuKandung', 'Tempat/Tanggal Lahir': 'tempatTanggalLahir',
       'No. Rekening': 'noRek', 'No. ATM': 'noAtm', 'Valid Kartu': 'validThru', 'No. HP': 'noHp',
-      'PIN ATM': 'pinAtm', 'Email': 'email', 'Password Email': 'passEmail',
+      'PIN ATM': 'pinAtm', 'Email': 'email', 'Password Email': 'passEmail', 'Expired': 'expired',
       'User Mobile': 'mobileUser', 'Password Mobile': 'mobilePassword', 'PIN Mobile': 'mobilePin',
       'I-Banking': 'ibUser', 'Password IB': 'ibPassword', 'PIN IB': 'ibPin', 'BCA-ID': 'myBCAUser',
-      'Pass BCA-ID': 'myBCAPassword', 'Pin Transaksi': 'myBCAPin', 'Kode Akses': 'kodeAkses', 'Pin m-BCA': 'pinMBca'
+      'Pass BCA-ID': 'myBCAPassword', 'Pin Transaksi': 'myBCAPin', 'Kode Akses': 'kodeAkses', 'Pin m-BCA': 'pinMBca',
+      'PIN Wondr': 'pinWondr', 'Pass Wondr': 'passWondr', 'User BRImo': 'brimoUser', 'Pass BRImo': 'brimoPassword',
+      'User Merchant': 'briMerchantUser', 'Pass Merchant': 'briMerchantPassword'
     };
 
     let updatedCount = 0;

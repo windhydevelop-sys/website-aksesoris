@@ -313,10 +313,11 @@ const generateCorrectedWord = async (products) => {
         const headers = [
             'No. Order', 'Code Agen', 'Customer', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
             'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
-            'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email',
+            'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
             'User Mobile', 'Password Mobile', 'PIN Mobile',
             'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi',
-            'Kode Akses', 'Pin m-BCA'
+            'Kode Akses', 'Pin m-BCA', 'PIN Wondr', 'Pass Wondr',
+            'User BRImo', 'Pass BRImo', 'User Merchant', 'Pass Merchant'
         ];
 
         // Mapping from product keys to headers
@@ -325,10 +326,12 @@ const generateCorrectedWord = async (products) => {
             grade: 'Grade', kcp: 'Kantor Cabang', nik: 'NIK', nama: 'Nama',
             namaIbuKandung: 'Nama Ibu Kandung', tempatTanggalLahir: 'Tempat/Tanggal Lahir',
             noRek: 'No. Rekening', noAtm: 'No. ATM', validThru: 'Valid Kartu', noHp: 'No. HP',
-            pinAtm: 'PIN ATM', email: 'Email', passEmail: 'Password Email',
+            pinAtm: 'PIN ATM', email: 'Email', passEmail: 'Password Email', expired: 'Expired',
             mobileUser: 'User Mobile', mobilePassword: 'Password Mobile', mobilePin: 'PIN Mobile',
             ibUser: 'I-Banking', ibPassword: 'Password IB', ibPin: 'PIN IB', myBCAUser: 'BCA-ID',
-            myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi', kodeAkses: 'Kode Akses', pinMBca: 'Pin m-BCA'
+            myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi', kodeAkses: 'Kode Akses', pinMBca: 'Pin m-BCA',
+            pinWondr: 'PIN Wondr', passWondr: 'Pass Wondr', brimoUser: 'User BRImo', brimoPassword: 'Pass BRImo',
+            briMerchantUser: 'User Merchant', briMerchantPassword: 'Pass Merchant'
         };
 
         const tableRows = [];

