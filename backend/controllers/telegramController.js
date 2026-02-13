@@ -19,7 +19,7 @@ const setWebhook = async (req, res) => {
   }
 
   try {
-    await bot.setWebhook(`${webhookUrl}/api/telegram/webhook`);
+    await bot.setWebHook(`${webhookUrl}/api/telegram/webhook`);
     res.status(200).json({ message: 'Webhook Telegram berhasil diatur.' });
   } catch (error) {
     console.error('Error setting Telegram webhook:', error);
