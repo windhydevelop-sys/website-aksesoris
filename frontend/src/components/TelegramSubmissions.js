@@ -2,13 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
 import {
     Container, Typography, Box, Table, TableBody, TableCell, TableContainer,
-    TableHead, TableRow, Paper, Button, Chip, IconButton, Tooltip,
-    Dialog, DialogTitle, DialogContent, DialogActions, TextField,
-    CircularProgress, Alert, Checkbox
+    TableHead, TableRow, Paper, Button, Chip,
+    CircularProgress, Checkbox
 } from '@mui/material';
 import {
-    CloudDownload, CloudUpload, Edit, Delete, Warning,
-    CheckCircle, FilterAlt, Refresh, Description
+    CloudDownload, CloudUpload, Warning,
+    CheckCircle, Refresh
 } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 import { useThemeMode } from '../contexts/ThemeModeContext';
