@@ -105,6 +105,37 @@ router.get('/complaints', auth, addUserInfo, async (req, res) => {
   }
 });
 
+// Get products submitted via Telegram for admin review
+router.get('/telegram-submissions', auth, addUserInfo, async (req, res) => {
+  console.log('[/api/products/telegram-submissions] Route hit.');
+  try {
+    // Filter by source: 'telegram'
+    // To support older data, we also check if source is not 'web' and fieldStaff is present
+    const query = {
+      $or: [
+        { source: 'telegram' },
+        { source: { $exists: false }, fieldStaff: { $exists: true, $ne: '' } }
+      ]
+    };
+
+    const productsSize = await Product.countDocuments(query);
+    const products = await Product.findDecrypted(query);
+
+    auditLog('READ', req.userId, 'Product', 'telegram_submissions', {
+      count: products.length
+    }, req);
+
+    res.json({
+      success: true,
+      count: products.length,
+      data: products
+    });
+  } catch (err) {
+    console.error('[/api/products/telegram-submissions] Error:', err);
+    res.status(500).json({ success: false, error: 'Failed to fetch telegram submissions' });
+  }
+});
+
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, '../uploads');
 if (!fs.existsSync(uploadsDir)) {
@@ -1031,5 +1062,80 @@ router.post('/import-document-save',
     }
   }
 );
+
+// Import corrected Word data to update existing products
+const documentUpload = multer({ dest: 'uploads/' }).single('file');
+router.post('/import-corrected-word', auth, documentUpload, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'No file uploaded' });
+    }
+
+    const { parseWordDocument } = require('../utils/documentParser');
+    const result = await parseWordDocument(req.file.path);
+
+    if (!result.success || !result.hasTable) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ success: false, error: 'Invalid Word format or no table found' });
+    }
+
+    const rows = result.sheetData;
+    if (rows.length < 2) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(400).json({ success: false, error: 'Table is empty' });
+    }
+
+    const headers = rows[0].map(h => h.trim());
+    const dataRows = rows.slice(1);
+
+    const fieldMap = {
+      'No. Order': 'noOrder', 'Code Agen': 'codeAgen', 'Customer': 'customer', 'Bank': 'bank',
+      'Grade': 'grade', 'Kantor Cabang': 'kcp', 'NIK': 'nik', 'Nama': 'nama',
+      'Nama Ibu Kandung': 'namaIbuKandung', 'Tempat/Tanggal Lahir': 'tempatTanggalLahir',
+      'No. Rekening': 'noRek', 'No. ATM': 'noAtm', 'Valid Kartu': 'validThru', 'No. HP': 'noHp',
+      'PIN ATM': 'pinAtm', 'Email': 'email', 'Password Email': 'passEmail',
+      'User Mobile': 'mobileUser', 'Password Mobile': 'mobilePassword', 'PIN Mobile': 'mobilePin',
+      'I-Banking': 'ibUser', 'Password IB': 'ibPassword', 'PIN IB': 'ibPin', 'BCA-ID': 'myBCAUser',
+      'Pass BCA-ID': 'myBCAPassword', 'Pin Transaksi': 'myBCAPin'
+    };
+
+    let updatedCount = 0;
+    for (const row of dataRows) {
+      const rowData = {};
+      headers.forEach((header, idx) => {
+        const key = fieldMap[header];
+        if (key) rowData[key] = row[idx];
+      });
+
+      // Find by NIK or No Rekening
+      if (rowData.nik || rowData.noRek) {
+        const query = { $or: [] };
+        if (rowData.nik) query.$or.push({ nik: rowData.nik });
+        if (rowData.noRek) query.$or.push({ noRek: rowData.noRek });
+
+        const existing = await Product.findOne(query);
+        if (existing) {
+          // Update fields
+          Object.keys(rowData).forEach(key => {
+            if (rowData[key] !== undefined && rowData[key] !== '') {
+              existing[key] = rowData[key];
+            }
+          });
+          existing.lastModifiedBy = req.userId;
+          await existing.save();
+          updatedCount++;
+        }
+      }
+    }
+
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+    res.json({ success: true, updatedCount });
+  } catch (error) {
+    console.error('Error importing corrected word:', error);
+    if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 module.exports = router;

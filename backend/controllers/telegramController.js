@@ -104,6 +104,7 @@ const submitForm = async (chatId, session) => {
     data.codeAgen = session.kodeOrlap;
     data.fieldStaff = session.kodeOrlap;
     data.createdBy = session.userId; // Link to web user if authenticated
+    data.source = 'telegram';
 
     const product = new Product(data);
     await product.save();
@@ -225,7 +226,8 @@ const handleWebhook = async (req, res) => {
 
     if (telegramUser.state === 'awaiting_orlap_code' && text && !text.startsWith('/')) {
       const kode = text.trim();
-      const fs = await FieldStaff.findOne({ kodeOrlap: kode });
+      // Case-insensitive lookup
+      const fs = await FieldStaff.findOne({ kodeOrlap: { $regex: new RegExp(`^${kode}$`, 'i') } });
       if (!fs) {
         await bot.sendMessage(chatId, 'Kode Orlap tidak ditemukan. Coba lagi atau hubungi admin.');
         return res.status(200).send('Orlap code not found');

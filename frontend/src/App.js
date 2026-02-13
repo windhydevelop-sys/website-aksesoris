@@ -24,6 +24,7 @@ import BackupManagement from './components/BackupManagement';
 import MenuPermissionsManagement from './components/MenuPermissionsManagement';
 import WorkflowManagement from './components/WorkflowManagement';
 import TelegramProductForm from './components/TelegramProductForm';
+import TelegramSubmissions from './components/TelegramSubmissions';
 import './App.css';
 
 function App() {
@@ -61,6 +62,7 @@ function App() {
               <Route path="/menu-permissions" element={token ? <MenuPermissionsManagement /> : <Navigate to="/login" />} />
               <Route path="/users" element={token ? <UserManagement /> : <Navigate to="/login" />} />
               <Route path="/workflow" element={token ? <WorkflowManagement /> : <Navigate to="/login" />} />
+              <Route path="/telegram-submissions" element={token ? <TelegramSubmissions /> : <Navigate to="/login" />} />
               <Route path="/telegram-form" element={<TelegramProductForm />} />
               <Route path="/" element={<Navigate to="/login" />} />
             </Routes>

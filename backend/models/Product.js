@@ -62,6 +62,11 @@ const productSchema = new mongoose.Schema({
     enum: ['pending', 'in_progress', 'completed', 'cancelled'],
     default: 'pending'
   }, // New field for product status
+  source: {
+    type: String,
+    enum: ['web', 'telegram', 'import'],
+    default: 'web'
+  }
 }, { timestamps: true });
 
 // Pre-save middleware to encrypt sensitive data

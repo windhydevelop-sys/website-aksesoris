@@ -160,29 +160,29 @@ const SidebarLayout = ({ children, onLogout }) => {
         <Box sx={{ overflow: 'auto' }}>
           <List>
             {(userRole === 'admin' || menuPermissions.input_product) && (
-               <ListItem disablePadding>
-                 <ListItemButton
-                   selected={isActive('/dashboard')}
-                   onClick={() => navigate('/dashboard')}
-                   sx={navItemSx}
-                 >
-                   <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
-                   <ListItemText primary="Input Product" sx={{ color: 'inherit' }} />
-                 </ListItemButton>
-               </ListItem>
-             )}
-             {(userRole === 'admin' || menuPermissions.input_product) && (
-               <ListItem disablePadding>
-                 <ListItemButton
-                   selected={isActive('/workflow')}
-                   onClick={() => navigate('/workflow')}
-                   sx={navItemSx}
-                 >
-                   <ListItemIcon sx={{ color: 'inherit' }}><Timeline /></ListItemIcon>
-                   <ListItemText primary="Workflow Management" sx={{ color: 'inherit' }} />
-                 </ListItemButton>
-               </ListItem>
-             )}
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={isActive('/dashboard')}
+                  onClick={() => navigate('/dashboard')}
+                  sx={navItemSx}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
+                  <ListItemText primary="Input Product" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {(userRole === 'admin' || menuPermissions.input_product) && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={isActive('/workflow')}
+                  onClick={() => navigate('/workflow')}
+                  sx={navItemSx}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><Timeline /></ListItemIcon>
+                  <ListItemText primary="Workflow Management" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
             {(userRole === 'admin' || menuPermissions.detail_produk) && (
               <ListItem disablePadding>
                 <ListItemButton
@@ -228,6 +228,18 @@ const SidebarLayout = ({ children, onLogout }) => {
                 >
                   <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
                   <ListItemText primary="Dashboard Orlap" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {userRole === 'admin' && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={isActive('/telegram-submissions')}
+                  onClick={() => navigate('/telegram-submissions')}
+                  sx={navItemSx}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><Description /></ListItemIcon>
+                  <ListItemText primary="Data Input Telegram" sx={{ color: 'inherit' }} />
                 </ListItemButton>
               </ListItem>
             )}
