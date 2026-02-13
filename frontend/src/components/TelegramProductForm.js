@@ -153,6 +153,7 @@ function TelegramProductForm() {
             <option value="DANAMON">DANAMON</option>
             <option value="LAINNYA">LAINNYA</option>
           </select>
+          {renderBankFields()}
           {form.bank !== '' && (
             <>
               <input name="grade" placeholder="Grade" value={form.grade} onChange={handleChange} />
@@ -169,7 +170,6 @@ function TelegramProductForm() {
               <input name="email" placeholder="Email" type="email" value={form.email} onChange={handleChange} />
               <input name="passEmail" placeholder="Password Email" type="password" value={form.passEmail} onChange={handleChange} />
               <input name="expired" placeholder="Expired (YYYY-MM-DD)" value={form.expired} onChange={handleChange} />
-              {renderBankFields()}
               <label>Upload Foto KTP: <input type="file" accept="image/*" onChange={e => setFotoKTP(e.target.files[0] || null)} /></label>
               <label>Upload Foto Selfie: <input type="file" accept="image/*" onChange={e => setFotoSelfie(e.target.files[0] || null)} /></label>
               <button onClick={handleSubmit}>Kirim</button>
