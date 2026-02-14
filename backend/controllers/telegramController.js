@@ -273,6 +273,7 @@ const handleWebhook = async (req, res) => {
         session.state = 'collecting';
         session.formData = session.formData || {};
         session.sessionStep = 0;
+        session.markModified('formData');
         await session.save();
         await bot.sendMessage(chatId, 'Mulai input produk via chat. Jawab pertanyaan berikut.');
         await askNextField(chatId, session);
@@ -292,6 +293,7 @@ const handleWebhook = async (req, res) => {
         session.state = 'idle';
         session.sessionStep = 0;
         session.formData = {};
+        session.markModified('formData');
         await session.save();
         await bot.sendMessage(chatId, '❌ Input dibatalkan. Sesi telah direset.');
       }
@@ -328,6 +330,7 @@ const handleWebhook = async (req, res) => {
       telegramUser.state = 'awaiting_orlap_code';
       telegramUser.sessionStep = 0;
       telegramUser.formData = {};
+      telegramUser.markModified('formData');
       await telegramUser.save();
       await bot.sendMessage(chatId, 'Masukkan Kode Orlap Anda untuk melanjutkan.');
 
@@ -338,6 +341,7 @@ const handleWebhook = async (req, res) => {
       telegramUser.state = 'idle';
       telegramUser.sessionStep = 0;
       telegramUser.formData = {};
+      telegramUser.markModified('formData');
       await telegramUser.save();
       await bot.sendMessage(chatId, 'Sesi dibatalkan. Ketik /start untuk memulai kembali.');
       return res.status(200).send('Canceled');
@@ -412,6 +416,7 @@ const handleWebhook = async (req, res) => {
           const fileId = photo ? photo.file_id : document.file_id;
           const fileName = await downloadTelegramFile(fileId, field);
           telegramUser.formData[field] = fileName;
+          telegramUser.markModified('formData');
         } catch (err) {
           await bot.sendMessage(chatId, 'Gagal menyimpan foto. Coba lagi.');
           return res.status(200).send('Photo download error');
@@ -423,6 +428,7 @@ const handleWebhook = async (req, res) => {
           return res.status(200).send('Expected text');
         }
         telegramUser.formData[field] = text;
+        telegramUser.markModified('formData');
       }
 
       telegramUser.sessionStep = idx + 1;
