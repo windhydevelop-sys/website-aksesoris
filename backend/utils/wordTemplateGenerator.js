@@ -1,4 +1,4 @@
-const { Document, Packer, Paragraph, TextRun, Table, TableCell, TableRow, WidthType, AlignmentType, BorderStyle } = require('docx');
+const { Document, Packer, Paragraph, TextRun, Table, TableCell, TableRow, WidthType, AlignmentType, BorderStyle, ImageRun } = require('docx');
 const fs = require('fs');
 const path = require('path');
 const { logger } = require('./audit');
@@ -427,9 +427,7 @@ const generateCorrectedWordList = async (products) => {
                     { key: 'pinMBca', label: 'Pin m-BCA' },
                     { key: 'myBCAUser', label: 'BCA-ID' },
                     { key: 'myBCAPassword', label: 'Pass BCA-ID' },
-                    { key: 'myBCAPin', label: 'Pin Transaksi' },
-                    { key: 'ibUser', label: 'User KlikBCA' },
-                    { key: 'ibPassword', label: 'PIN KlikBCA' }
+                    { key: 'myBCAPin', label: 'Pin Transaksi' }
                 ];
             } else if (bank === 'BRI') {
                 specificFields = [
@@ -460,6 +458,50 @@ const generateCorrectedWordList = async (products) => {
 
             const currentFields = [...commonFields, ...specificFields];
 
+            // Logic to add images
+            const imageParagraphs = [];
+            const addImage = (filename, label) => {
+                if (!filename || filename === '-') return;
+                try {
+                    const uploadsDir = path.join(__dirname, '../uploads');
+                    const imagePath = path.join(uploadsDir, filename);
+
+                    if (fs.existsSync(imagePath)) {
+                        const imageBuffer = fs.readFileSync(imagePath);
+                        imageParagraphs.push(
+                            new Paragraph({
+                                children: [
+                                    new TextRun({
+                                        text: label,
+                                        bold: true,
+                                        size: 24,
+                                        break: 1
+                                    }),
+                                ],
+                                spacing: { before: 200 }
+                            }),
+                            new Paragraph({
+                                children: [
+                                    new ImageRun({
+                                        data: imageBuffer,
+                                        transformation: {
+                                            width: 300,
+                                            height: 200,
+                                        },
+                                    }),
+                                ],
+                                spacing: { after: 200 }
+                            })
+                        );
+                    }
+                } catch (err) {
+                    logger.warn(`Failed to embed image ${filename}`, { error: err.message });
+                }
+            };
+
+            addImage(p.uploadFotoId, 'FOTO KTP');
+            addImage(p.uploadFotoSelfie, 'FOTO SELFIE');
+
             return {
                 properties: {
                     type: idx === 0 ? undefined : 'nextPage'
@@ -487,6 +529,7 @@ const generateCorrectedWordList = async (products) => {
                             spacing: { after: 120 },
                         });
                     }),
+                    ...imageParagraphs,
                     new Paragraph({
                         children: [
                             new TextRun({
