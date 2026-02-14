@@ -26,14 +26,102 @@ const getSteps = (bank) => {
     bankSteps = ['brimoUser', 'brimoPassword', 'mobilePin', 'briMerchantUser', 'briMerchantPassword'];
   } else if (b === 'BNI') {
     bankSteps = ['pinWondr', 'passWondr', 'mobileUser', 'mobilePassword'];
-  } else if (b === 'OCBC') {
+  } else if (b === 'OCBC' || b === 'OCBC NISP') {
     bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword'];
+  } else if (b === 'MANDIRI' || b === 'LIVIN') {
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
+  } else if (b === 'DANAMON') {
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
+  } else if (b === 'PERMATA') {
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
+  } else if (b === 'MAYBANK') {
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
+  } else if (b === 'PANIN') {
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
   } else if (bank) {
-    // Other bank: common mobile/ib fields
+    // Default for other banks: ask for generic Mobile & IB
     bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
   }
 
   return [...commonStart, ...bankSteps, ...commonEnd, 'uploadFotoId', 'uploadFotoSelfie'];
+};
+
+const getBankSpecificLabel = (field, bankName) => {
+  const bank = (bankName || '').toUpperCase();
+
+  const labels = {
+    customer: '👤 Masukkan nama Customer:',
+    bank: '🏦 Masukkan nama Bank (BCA/BRI/MANDIRI/BNI/DLL):',
+    grade: '📊 Masukkan Grade:',
+    kcp: '🏢 Masukkan KCP (Kantor Cabang):',
+    nik: '🆔 Masukkan NIK (16 digit):',
+    nama: '📛 Masukkan Nama Lengkap sesuai KTP:',
+    namaIbuKandung: '👩 Masukkan Nama Ibu Kandung:',
+    tempatTanggalLahir: '📅 Masukkan Tempat/Tanggal Lahir (contoh: Jakarta, 01-01-1990):',
+    noRek: '💳 Masukkan Nomor Rekening:',
+    noAtm: '🏧 Masukkan Nomor Kartu ATM:',
+    validThru: '📆 Masukkan Valid Thru (MM/YY):',
+    noHp: '📱 Masukkan Nomor HP terdaftar:',
+    pinAtm: '🔢 Masukkan PIN ATM:',
+    email: '📧 Masukkan Email terdaftar:',
+    passEmail: '🔑 Masukkan Password Email:',
+    expired: '⏳ Masukkan Tanggal Expired (YYYY-MM-DD):',
+    // Specific Fields
+    kodeAkses: '🔐 Masukkan Kode Akses (BCA):',
+    pinMBca: '🔢 Masukkan PIN m-BCA:',
+    myBCAUser: '👤 Masukkan BCA-ID (myBCA):',
+    myBCAPassword: '🔑 Masukkan Password BCA-ID (myBCA):',
+    myBCAPin: '🔢 Masukkan PIN Transaksi (myBCA):',
+    brimoUser: '👤 Masukkan Username BRImo:',
+    brimoPassword: '🔑 Masukkan Password BRImo:',
+    briMerchantUser: '🏪 Masukkan Username BRI Merchant:',
+    briMerchantPassword: '🔑 Masukkan Password BRI Merchant:',
+    pinWondr: '🛡️ Masukkan PIN Wondr (BNI):',
+    passWondr: '🔓 Masukkan Password Wondr (BNI):',
+    uploadFotoId: '📸 Silakan kirim FOTO KTP Anda:',
+    uploadFotoSelfie: '📸 Terakhir, silakan kirim FOTO SELFIE dengan KTP:'
+  };
+
+  // Dynamic Labels based on field and bank
+  if (field === 'mobileUser') {
+    if (bank === 'MANDIRI') return "👤 Masukkan User Livin' by Mandiri:";
+    if (bank === 'BNI') return "👤 Masukkan User BNI Mobile Banking:";
+    if (bank === 'DANAMON') return "👤 Masukkan User D-Bank PRO:";
+    if (bank === 'OCBC' || bank === 'OCBC NISP') return "👤 Masukkan User One Mobile (OCBC):";
+    if (bank === 'PERMATA') return "👤 Masukkan User PermataMobile X:";
+    if (bank === 'MAYBANK') return "👤 Masukkan User M2U (Maybank):";
+    if (bank === 'CIMB' || bank === 'CIMB NIAGA') return "👤 Masukkan User OCTO Mobile:";
+    return "👤 Masukkan Username Mobile Banking:";
+  }
+
+  if (field === 'mobilePassword') {
+    if (bank === 'MANDIRI') return "🔑 Masukkan Password Livin' by Mandiri:";
+    if (bank === 'BNI') return "🔑 Masukkan MPIN/Password BNI Mobile:";
+    if (bank === 'DANAMON') return "🔑 Masukkan Password D-Bank PRO:";
+    if (bank === 'OCBC' || bank === 'OCBC NISP') return "🔑 Masukkan Password One Mobile (OCBC):";
+    if (bank === 'PERMATA') return "🔑 Masukkan Password PermataMobile X:";
+    if (bank === 'MAYBANK') return "🔑 Masukkan Password M2U (Maybank):";
+    if (bank === 'CIMB' || bank === 'CIMB NIAGA') return "🔑 Masukkan Password OCTO Mobile:";
+    return "🔑 Masukkan Password Mobile Banking:";
+  }
+
+  if (field === 'mobilePin') {
+    if (bank === 'BRI') return "🔢 Masukkan PIN BRImo:";
+    if (bank === 'MANDIRI') return "🔢 Masukkan PIN Livin' by Mandiri:";
+    return "🔢 Masukkan PIN Mobile Banking:";
+  }
+
+  if (field === 'ibUser') {
+    if (bank === 'OCBC' || bank === 'OCBC NISP') return "👤 Masukkan User Internet Banking (OCBC):";
+    return "👤 Masukkan Username Internet Banking:";
+  }
+
+  if (field === 'ibPassword') {
+    if (bank === 'OCBC' || bank === 'OCBC NISP') return "🔑 Masukkan Password Internet Banking (OCBC):";
+    return "🔑 Masukkan Password Internet Banking:";
+  }
+
+  return labels[field] || `Masukkan ${field}:`;
 };
 
 const setWebhook = async (req, res) => {
@@ -66,44 +154,7 @@ const askNextField = async (chatId, session) => {
   }
 
   const field = steps[currentIndex];
-  const labels = {
-    customer: '👤 Masukkan nama Customer:',
-    bank: '🏦 Masukkan nama Bank (BCA/BRI/Lainnya):',
-    grade: '📊 Masukkan Grade:',
-    kcp: '🏢 Masukkan KCP (Kantor Cabang):',
-    nik: '🆔 Masukkan NIK (16 digit):',
-    nama: '📛 Masukkan Nama Lengkap sesuai KTP:',
-    namaIbuKandung: '👩 Masukkan Nama Ibu Kandung:',
-    tempatTanggalLahir: '📅 Masukkan Tempat/Tanggal Lahir (contoh: Jakarta, 01-01-1990):',
-    noRek: '💳 Masukkan Nomor Rekening:',
-    noAtm: '🏧 Masukkan Nomor Kartu ATM:',
-    validThru: '📆 Masukkan Valid Thru (MM/YY):',
-    noHp: '📱 Masukkan Nomor HP terdaftar:',
-    pinAtm: '🔢 Masukkan PIN ATM:',
-    kodeAkses: '🔐 Masukkan Kode Akses (BCA):',
-    pinMBca: '🔢 Masukkan PIN m-BCA:',
-    pinWondr: '🛡️ Masukkan PIN Wondr:',
-    passWondr: '🔓 Masukkan Password Wondr:',
-    email: '📧 Masukkan Email terdaftar:',
-    passEmail: '🔑 Masukkan Password Email:',
-    expired: '⏳ Masukkan Tanggal Expired (YYYY-MM-DD):',
-    myBCAUser: '👤 Masukkan BCA-ID:',
-    myBCAPassword: '🔑 Masukkan Password BCA-ID:',
-    myBCAPin: '🔢 Masukkan PIN Transaksi (BCA):',
-    brimoUser: '👤 Masukkan Username BRImo:',
-    brimoPassword: '🔑 Masukkan Password BRImo:',
-    briMerchantUser: '🏪 Masukkan Username BRI Merchant:',
-    briMerchantPassword: '🔑 Masukkan Password BRI Merchant:',
-    jenisRekening: '📝 Masukkan Jenis Rekening (misal: Britama/Simpedes):',
-    mobileUser: '👤 Masukkan Username Mobile Banking / User Nyala:',
-    mobilePassword: '🔑 Masukkan Password Mobile Banking / Password Wondr:',
-    mobilePin: '🔢 Masukkan PIN Mobile Banking / PIN BRImo:',
-    ibUser: '👤 Masukkan Username I-Banking / User IB OCBC:',
-    ibPassword: '🔑 Masukkan Password I-Banking / Password IB OCBC:',
-    ibPin: '🔢 Masukkan PIN I-Banking:',
-    uploadFotoId: '📸 Silakan kirim FOTO KTP Anda:',
-    uploadFotoSelfie: '📸 Terakhir, silakan kirim FOTO SELFIE dengan KTP:'
-  };
+  const label = getBankSpecificLabel(field, bank);
   const opts = {
     reply_markup: {
       inline_keyboard: []
@@ -130,7 +181,7 @@ const askNextField = async (chatId, session) => {
     opts.reply_markup.inline_keyboard.push(keyboardRow);
   }
 
-  await bot.sendMessage(chatId, labels[field], opts);
+  await bot.sendMessage(chatId, label, opts);
 };
 
 const submitForm = async (chatId, session) => {
