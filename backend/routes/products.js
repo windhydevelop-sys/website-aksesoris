@@ -450,7 +450,8 @@ router.post('/export-corrected-word', auth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid products data' });
     }
 
-    const exportFunc = format === 'list' ? generateCorrectedWordList : generateCorrectedWord;
+    // Default to 'list' format as requested by user
+    const exportFunc = format === 'table' ? generateCorrectedWord : generateCorrectedWordList;
     const { success, buffer, filename, error } = await exportFunc(products);
 
     if (!success) {

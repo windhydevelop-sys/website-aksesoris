@@ -424,7 +424,13 @@ const generateCorrectedWordList = async (products) => {
             { key: 'myBCAPassword', label: 'Pass BCA-ID' },
             { key: 'myBCAPin', label: 'Pin Transaksi' },
             { key: 'kodeAkses', label: 'Kode Akses' },
-            { key: 'pinMBca', label: 'Pin m-BCA' }
+            { key: 'pinMBca', label: 'Pin m-BCA' },
+            { key: 'pinWondr', label: 'PIN Wondr' },
+            { key: 'passWondr', label: 'Pass Wondr' },
+            { key: 'brimoUser', label: 'User BRImo' },
+            { key: 'brimoPassword', label: 'Pass BRImo' },
+            { key: 'briMerchantUser', label: 'User Merchant' },
+            { key: 'briMerchantPassword', label: 'Pass Merchant' }
         ];
 
         const sections = products.map((p, idx) => {

