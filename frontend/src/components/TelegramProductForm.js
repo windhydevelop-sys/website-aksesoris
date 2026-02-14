@@ -96,6 +96,8 @@ function TelegramProductForm() {
           <input name="myBCAUser" placeholder="BCA-ID" value={form.myBCAUser} onChange={handleChange} />
           <input name="myBCAPassword" placeholder="Password BCA-ID" type="password" value={form.myBCAPassword} onChange={handleChange} />
           <input name="myBCAPin" placeholder="PIN Transaksi (BCA)" value={form.myBCAPin} onChange={handleChange} />
+          <input name="ibUser" placeholder="User KlikBCA (IB)" value={form.ibUser} onChange={handleChange} />
+          <input name="ibPassword" placeholder="PIN KlikBCA (IB)" type="password" value={form.ibPassword} onChange={handleChange} />
         </>
       );
     } else if (b === 'BRI') {

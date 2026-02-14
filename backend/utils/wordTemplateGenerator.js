@@ -396,7 +396,7 @@ const generateCorrectedWordList = async (products) => {
     try {
         logger.info('Generating Corrected Word List document', { count: products.length });
 
-        const fields = [
+        const commonFields = [
             { key: 'noOrder', label: 'No. Order' },
             { key: 'codeAgen', label: 'Code Agen' },
             { key: 'customer', label: 'Customer' },
@@ -414,26 +414,52 @@ const generateCorrectedWordList = async (products) => {
             { key: 'pinAtm', label: 'PIN ATM' },
             { key: 'email', label: 'Email' },
             { key: 'passEmail', label: 'Password Email' },
-            { key: 'mobileUser', label: 'User Mobile' },
-            { key: 'mobilePassword', label: 'Password Mobile' },
-            { key: 'mobilePin', label: 'PIN Mobile' },
-            { key: 'ibUser', label: 'I-Banking' },
-            { key: 'ibPassword', label: 'Password IB' },
-            { key: 'ibPin', label: 'PIN IB' },
-            { key: 'myBCAUser', label: 'BCA-ID' },
-            { key: 'myBCAPassword', label: 'Pass BCA-ID' },
-            { key: 'myBCAPin', label: 'Pin Transaksi' },
-            { key: 'kodeAkses', label: 'Kode Akses' },
-            { key: 'pinMBca', label: 'Pin m-BCA' },
-            { key: 'pinWondr', label: 'PIN Wondr' },
-            { key: 'passWondr', label: 'Pass Wondr' },
-            { key: 'brimoUser', label: 'User BRImo' },
-            { key: 'brimoPassword', label: 'Pass BRImo' },
-            { key: 'briMerchantUser', label: 'User Merchant' },
-            { key: 'briMerchantPassword', label: 'Pass Merchant' }
+            { key: 'expired', label: 'Expired' }
         ];
 
         const sections = products.map((p, idx) => {
+            const bank = (p.bank || '').toUpperCase();
+            let specificFields = [];
+
+            if (bank === 'BCA') {
+                specificFields = [
+                    { key: 'kodeAkses', label: 'Kode Akses' },
+                    { key: 'pinMBca', label: 'Pin m-BCA' },
+                    { key: 'myBCAUser', label: 'BCA-ID' },
+                    { key: 'myBCAPassword', label: 'Pass BCA-ID' },
+                    { key: 'myBCAPin', label: 'Pin Transaksi' },
+                    { key: 'ibUser', label: 'User KlikBCA' },
+                    { key: 'ibPassword', label: 'PIN KlikBCA' }
+                ];
+            } else if (bank === 'BRI') {
+                specificFields = [
+                    { key: 'brimoUser', label: 'User BRImo' },
+                    { key: 'brimoPassword', label: 'Pass BRImo' },
+                    { key: 'mobilePin', label: 'PIN BRImo' },
+                    { key: 'briMerchantUser', label: 'User Merchant' },
+                    { key: 'briMerchantPassword', label: 'Pass Merchant' }
+                ];
+            } else if (bank === 'BNI') {
+                specificFields = [
+                    { key: 'pinWondr', label: 'PIN Wondr' },
+                    { key: 'passWondr', label: 'Pass Wondr' },
+                    { key: 'mobileUser', label: 'User Mobile' },
+                    { key: 'mobilePassword', label: 'Pass Mobile' }
+                ];
+            } else {
+                // Default for Mandiri, Danamon, OCBC, etc.
+                specificFields = [
+                    { key: 'mobileUser', label: 'User Mobile' },
+                    { key: 'mobilePassword', label: 'Pass Mobile' },
+                    { key: 'mobilePin', label: 'PIN Mobile' },
+                    { key: 'ibUser', label: 'User IB' },
+                    { key: 'ibPassword', label: 'Pass IB' },
+                    { key: 'ibPin', label: 'PIN IB' }
+                ];
+            }
+
+            const currentFields = [...commonFields, ...specificFields];
+
             return {
                 properties: {
                     type: idx === 0 ? undefined : 'nextPage'
@@ -451,7 +477,7 @@ const generateCorrectedWordList = async (products) => {
                         alignment: AlignmentType.CENTER,
                         spacing: { after: 400 },
                     }),
-                    ...fields.map(field => {
+                    ...currentFields.map(field => {
                         const val = p[field.key] || '-';
                         return new Paragraph({
                             children: [
