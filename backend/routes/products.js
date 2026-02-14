@@ -1189,4 +1189,28 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
   }
 });
 
+
+// Delete Telegram submission
+router.delete('/telegram-submissions/:id', auth, async (req, res) => {
+  try {
+    const submission = await TelegramSubmission.findById(req.params.id);
+    if (!submission) {
+      return res.status(404).json({ success: false, error: 'Data not found' });
+    }
+
+    await TelegramSubmission.findByIdAndDelete(req.params.id);
+
+    // Audit log
+    auditLog('TELEGRAM_SUBMISSION_DELETE', req.userId, 'TelegramSubmission', req.params.id, {
+      customer: submission.customer,
+      bank: submission.bank
+    }, req);
+
+    res.json({ success: true, message: 'Data deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting telegram submission:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 module.exports = router;

@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import {
     CloudDownload, CloudUpload, Warning,
-    CheckCircle, Refresh
+    CheckCircle, Refresh, Delete
 } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 import { useThemeMode } from '../contexts/ThemeModeContext';
@@ -139,6 +139,23 @@ const TelegramSubmissions = () => {
         } finally {
             setIsImporting(false);
             event.target.value = null;
+        }
+    };
+
+    const handleDelete = async (id, name, noOrder) => {
+        if (!window.confirm(`Yakin ingin menghapus data ${name} ${noOrder ? `(${noOrder})` : ''}? Data tidak bisa dikembalikan.`)) {
+            return;
+        }
+
+        try {
+            const response = await axios.delete(`/api/products/telegram-submissions/${id}`);
+            if (response.data.success) {
+                showSuccess('Data berhasil dihapus');
+                fetchSubmissions();
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            showError('Gagal menghapus data');
         }
     };
 
@@ -274,12 +291,13 @@ const TelegramSubmissions = () => {
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Nama (KTP)</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>NIK</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Dibuat</TableCell>
+                                    <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Aksi</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {submissions.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={9} align="center" sx={{ py: 3, color: 'inherit' }}>
+                                        <TableCell colSpan={10} align="center" sx={{ py: 3, color: 'inherit' }}>
                                             Tidak ada data submission Telegram untuk filter ini.
                                         </TableCell>
                                     </TableRow>
@@ -328,6 +346,18 @@ const TelegramSubmissions = () => {
                                                 <TableCell sx={{ color: 'inherit' }}>{row.nik || '-'}</TableCell>
                                                 <TableCell sx={{ color: 'inherit' }}>
                                                     {new Date(row.createdAt).toLocaleDateString('id-ID')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Tooltip title="Hapus Data">
+                                                        <Button
+                                                            size="small"
+                                                            color="error"
+                                                            onClick={() => handleDelete(row._id, row.nama || row.customer, row.noOrder)}
+                                                            sx={{ minWidth: 40 }}
+                                                        >
+                                                            <Delete />
+                                                        </Button>
+                                                    </Tooltip>
                                                 </TableCell>
                                             </TableRow>
                                         );
