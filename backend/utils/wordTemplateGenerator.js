@@ -311,7 +311,7 @@ const generateCorrectedWord = async (products) => {
         logger.info('Generating Corrected Word document', { count: products.length });
 
         const headers = [
-            'No. Order', 'Code Agen', 'Customer', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
+            'No. Order', 'Code Agen', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
             'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
             'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
             'User Mobile', 'Password Mobile', 'PIN Mobile',
@@ -322,7 +322,7 @@ const generateCorrectedWord = async (products) => {
 
         // Mapping from product keys to headers
         const fieldMap = {
-            noOrder: 'No. Order', codeAgen: 'Code Agen', customer: 'Customer', bank: 'Bank',
+            noOrder: 'No. Order', codeAgen: 'Code Agen', bank: 'Bank',
             grade: 'Grade', kcp: 'Kantor Cabang', nik: 'NIK', nama: 'Nama',
             namaIbuKandung: 'Nama Ibu Kandung', tempatTanggalLahir: 'Tempat/Tanggal Lahir',
             noRek: 'No. Rekening', noAtm: 'No. ATM', validThru: 'Valid Kartu', noHp: 'No. HP',
@@ -399,7 +399,6 @@ const generateCorrectedWordList = async (products) => {
         const commonFields = [
             { key: 'noOrder', label: 'No. Order' },
             { key: 'codeAgen', label: 'Code Agen' },
-            { key: 'customer', label: 'Customer' },
             { key: 'bank', label: 'Bank' },
             { key: 'grade', label: 'Grade' },
             { key: 'kcp', label: 'Kantor Cabang' },

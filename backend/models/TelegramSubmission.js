@@ -4,7 +4,7 @@ const { encrypt, decrypt } = require('../utils/encryption');
 const TelegramSubmissionSchema = new mongoose.Schema({
     telegramUserId: { type: String, required: true },
     codeAgen: { type: String, required: true },
-    customer: { type: String },
+    noOrder: { type: String },
     bank: { type: String },
     grade: { type: String },
     kcp: { type: String },

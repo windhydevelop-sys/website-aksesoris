@@ -51,7 +51,27 @@ const parseWordDocument = async (filePath) => {
       const textResult = await mammoth.extractRawText({ path: filePath });
       const text = textResult.value;
 
-      logger.info('Word document parsed successfully (no table)', {
+      // Try to parse List Format (Label: Value)
+      const listData = parseListFormat(text);
+
+      if (listData.length > 0) {
+        logger.info('Word document with List format parsed successfully', {
+          filePath,
+          rows: listData.length,
+          hasTable: true // Pretend it has table so import logic works
+        });
+
+        return {
+          success: true,
+          text,
+          html,
+          format: 'docx',
+          sheetData: listData,
+          hasTable: true
+        };
+      }
+
+      logger.info('Word document parsed successfully (no table/list)', {
         filePath,
         textLength: text.length,
         hasTable: false
@@ -77,6 +97,63 @@ const parseWordDocument = async (filePath) => {
       error: `Failed to parse Word document: ${error.message}`,
       format: 'docx'
     };
+  }
+};
+
+/**
+ * Parse text content from Word document in List format
+ * Logic: Looks for "HASIL KOREKSI DATA" as separator, then "Label: Value" lines
+ */
+const parseListFormat = (text) => {
+  try {
+    const sections = text.split(/HASIL KOREKSI DATA - PRODUK \d+/i);
+    // First section is usually empty or header, ignore if it doesn't have fields
+    const validSections = sections.filter(s => s.trim().length > 0 && s.includes(':'));
+
+    if (validSections.length === 0) return [];
+
+    const headers = [
+      'No. Order', 'Code Agen', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
+      'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
+      'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
+      'User Mobile', 'Password Mobile', 'PIN Mobile',
+      'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi',
+      'Kode Akses', 'Pin m-BCA', 'PIN Wondr', 'Pass Wondr',
+      'User BRImo', 'Pass BRImo', 'User Merchant', 'Pass Merchant'
+    ];
+
+    const rows = [headers]; // First row is header
+
+    validSections.forEach(section => {
+      const rowData = new Array(headers.length).fill('');
+      const lines = section.split('\n').map(l => l.trim()).filter(l => l);
+
+      lines.forEach(line => {
+        const separatorIndex = line.indexOf(':');
+        if (separatorIndex > -1) {
+          const key = line.substring(0, separatorIndex).trim();
+          const value = line.substring(separatorIndex + 1).trim();
+
+          // Match key to header (fuzzy match or exact?)
+          // Exact match first, then case-insensitive
+          const headerIndex = headers.findIndex(h => h.toLowerCase() === key.toLowerCase());
+          if (headerIndex > -1) {
+            rowData[headerIndex] = value === '-' ? '' : value;
+          }
+        }
+      });
+
+      // Only add if we found at least one field (e.g. NIK or No Order)
+      // Or just check if not empty
+      if (rowData.some(val => val !== '')) {
+        rows.push(rowData);
+      }
+    });
+
+    return rows.length > 1 ? rows : [];
+  } catch (e) {
+    console.error('Error parsing list format:', e);
+    return [];
   }
 };
 

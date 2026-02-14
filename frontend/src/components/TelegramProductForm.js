@@ -5,7 +5,7 @@ import './Dashboard.css';
 function TelegramProductForm() {
   const [tgUser, setTgUser] = useState(null);
   const [form, setForm] = useState({
-    customer: '',
+    noOrder: '',
     bank: '',
     grade: '',
     kcp: '',
@@ -147,7 +147,7 @@ function TelegramProductForm() {
       )}
       <div className="card">
         <div style={{ display: 'grid', gap: 12 }}>
-          <input name="customer" placeholder="Customer" value={form.customer} onChange={handleChange} />
+          <input name="noOrder" placeholder="No. Order" value={form.noOrder} onChange={handleChange} />
           <select name="bank" value={form.bank} onChange={handleChange}>
             <option value="">Pilih Bank</option>
             <option value="BCA">BCA</option>

@@ -160,7 +160,7 @@ const TelegramSubmissions = () => {
     };
 
     const isMissingData = (product) => {
-        return !product.noOrder || !product.customer;
+        return !product.noOrder;
     };
 
     return (
@@ -200,6 +200,7 @@ const TelegramSubmissions = () => {
                             startIcon={<CloudUpload />}
                             disabled={isImporting}
                             color="primary"
+
                         >
                             {isImporting ? <CircularProgress size={24} /> : 'Import Corrected'}
                             <input type="file" hidden accept=".docx" onChange={handleImportWord} />
@@ -285,7 +286,6 @@ const TelegramSubmissions = () => {
                                     </TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Status</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>No. Order</TableCell>
-                                    <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Customer</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Agent</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Bank</TableCell>
                                     <TableCell sx={{ color: 'inherit', fontWeight: 'bold' }}>Nama (KTP)</TableCell>
@@ -327,7 +327,7 @@ const TelegramSubmissions = () => {
                                                             <CheckCircle color="success" />
                                                         </Tooltip>
                                                     ) : missing ? (
-                                                        <Tooltip title="Data ini memerlukan koreksi (Order/Customer kosong)">
+                                                        <Tooltip title="Data ini memerlukan koreksi (No. Order kosong)">
                                                             <Warning color="warning" />
                                                         </Tooltip>
                                                     ) : (
@@ -337,7 +337,6 @@ const TelegramSubmissions = () => {
                                                     )}
                                                 </TableCell>
                                                 <TableCell sx={{ color: 'inherit' }}>{row.noOrder || 'EMPTY'}</TableCell>
-                                                <TableCell sx={{ color: 'inherit' }}>{row.customer || 'EMPTY'}</TableCell>
                                                 <TableCell>
                                                     <Chip label={row.codeAgen || row.fieldStaff || '-'} size="small" />
                                                 </TableCell>
@@ -352,7 +351,7 @@ const TelegramSubmissions = () => {
                                                         <Button
                                                             size="small"
                                                             color="error"
-                                                            onClick={() => handleDelete(row._id, row.nama || row.customer, row.noOrder)}
+                                                            onClick={() => handleDelete(row._id, row.nama || row.noOrder, row.noOrder)}
                                                             sx={{ minWidth: 40 }}
                                                         >
                                                             <Delete />
