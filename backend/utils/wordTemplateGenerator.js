@@ -1,6 +1,7 @@
 const { Document, Packer, Paragraph, TextRun, Table, TableCell, TableRow, WidthType, AlignmentType, BorderStyle, ImageRun } = require('docx');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 const { logger } = require('./audit');
 
 /**
@@ -416,7 +417,8 @@ const generateCorrectedWordList = async (products) => {
             { key: 'expired', label: 'Expired' }
         ];
 
-        const sections = products.map((p, idx) => {
+        // Process each product and its images asynchronously
+        const sections = await Promise.all(products.map(async (p, idx) => {
             const bank = (p.bank || '').toUpperCase();
             let specificFields = [];
 
@@ -459,47 +461,54 @@ const generateCorrectedWordList = async (products) => {
 
             // Logic to add images
             const imageParagraphs = [];
-            const addImage = (filename, label) => {
-                if (!filename || filename === '-') return;
+
+            const getImageBuffer = async (filename) => {
+                if (!filename || filename === '-' || filename === '') return null;
                 try {
+                    if (filename.startsWith('http')) {
+                        const axiosResponse = await require('axios').get(filename, { responseType: 'arraybuffer' });
+                        return Buffer.from(axiosResponse.data);
+                    }
                     const uploadsDir = path.join(__dirname, '../uploads');
                     const imagePath = path.join(uploadsDir, filename);
-
                     if (fs.existsSync(imagePath)) {
-                        const imageBuffer = fs.readFileSync(imagePath);
-                        imageParagraphs.push(
-                            new Paragraph({
-                                children: [
-                                    new TextRun({
-                                        text: label,
-                                        bold: true,
-                                        size: 24,
-                                        break: 1
-                                    }),
-                                ],
-                                spacing: { before: 200 }
-                            }),
-                            new Paragraph({
-                                children: [
-                                    new ImageRun({
-                                        data: imageBuffer,
-                                        transformation: {
-                                            width: 300,
-                                            height: 200,
-                                        },
-                                    }),
-                                ],
-                                spacing: { after: 200 }
-                            })
-                        );
+                        return fs.readFileSync(imagePath);
                     }
                 } catch (err) {
-                    logger.warn(`Failed to embed image ${filename}`, { error: err.message });
+                    logger.warn(`Failed to get image buffer for ${filename}`, { error: err.message });
+                }
+                return null;
+            };
+
+            const addImageToDoc = async (filename, label) => {
+                const buffer = await getImageBuffer(filename);
+                if (!buffer) return;
+                try {
+                    imageParagraphs.push(
+                        new Paragraph({
+                            children: [
+                                new TextRun({ text: label, bold: true, size: 24, break: 1 }),
+                            ],
+                            spacing: { before: 200 }
+                        }),
+                        new Paragraph({
+                            children: [
+                                new ImageRun({
+                                    data: buffer,
+                                    transformation: { width: 300, height: 200 },
+                                }),
+                            ],
+                            spacing: { after: 200 }
+                        })
+                    );
+                } catch (err) {
+                    logger.warn(`Failed to embed image run for ${filename}`, { error: err.message });
                 }
             };
 
-            addImage(p.uploadFotoId, 'FOTO KTP');
-            addImage(p.uploadFotoSelfie, 'FOTO SELFIE');
+            // Add images asynchronously
+            await addImageToDoc(p.uploadFotoId, 'FOTO KTP');
+            await addImageToDoc(p.uploadFotoSelfie, 'FOTO SELFIE');
 
             return {
                 properties: {
@@ -542,7 +551,7 @@ const generateCorrectedWordList = async (products) => {
                     }),
                 ]
             };
-        });
+        }));
 
         const doc = new Document({
             sections: sections

