@@ -395,37 +395,59 @@ const generateCorrectedWordList = async (products) => {
             const currentFields = [...commonFields, ...specificFields];
             const imageParagraphs = [];
 
-            const getImageBuffer = async (filename) => {
-                if (!filename || filename === '-' || filename === '') return null;
+            const getImageBuffer = async (src) => {
+                if (!src || src === '-' || src === '') return null;
                 try {
-                    if (filename.startsWith('http')) {
-                        const axiosResponse = await axios.get(filename, { responseType: 'arraybuffer' });
-                        return Buffer.from(axiosResponse.data);
+                    if (src.toString().startsWith('http')) {
+                        logger.info(`Fetching remote image: ${src}`);
+                        const axios = require('axios');
+                        const response = await axios.get(src, {
+                            responseType: 'arraybuffer',
+                            timeout: 10000
+                        });
+                        return Buffer.from(response.data);
                     }
-                    const imagePath = path.join(__dirname, '../uploads', filename);
-                    if (fs.existsSync(imagePath)) return fs.readFileSync(imagePath);
+
+                    // Local file handling
+                    const filename = path.basename(src);
+                    const localPath = path.join(__dirname, '../uploads', filename);
+
+                    if (fs.existsSync(localPath)) {
+                        logger.info(`Loading local image: ${localPath}`);
+                        return fs.readFileSync(localPath);
+                    } else {
+                        // Try root uploads too
+                        const rootUploadsPath = path.join(__dirname, '../../uploads', filename);
+                        if (fs.existsSync(rootUploadsPath)) {
+                            logger.info(`Loading local image from root: ${rootUploadsPath}`);
+                            return fs.readFileSync(rootUploadsPath);
+                        }
+                    }
+
+                    logger.warn(`Image file not found: ${src}`);
                 } catch (err) {
-                    logger.warn(`Failed to get image buffer for ${filename}`, { error: err.message });
+                    logger.warn(`Failed to get image buffer for ${src}`, { error: err.message });
                 }
                 return null;
             };
 
-            const addImageToDoc = async (filename, label) => {
-                const buffer = await getImageBuffer(filename);
+            const addImageToDoc = async (src, label) => {
+                const buffer = await getImageBuffer(src);
                 if (!buffer) return;
                 try {
+                    logger.info(`Embedding image in Word: ${label} (Buffer size: ${buffer.length})`);
                     imageParagraphs.push(
                         new Paragraph({
                             children: [new TextRun({ text: label, bold: true, size: 24, break: 1 })],
                             spacing: { before: 200 }
                         }),
                         new Paragraph({
-                            children: [new ImageRun({ data: buffer, transformation: { width: 300, height: 200 } })],
+                            children: [new ImageRun({ data: buffer, transformation: { width: 400, height: 300 } })],
                             spacing: { after: 200 }
                         })
                     );
                 } catch (err) {
-                    logger.warn(`Failed to embed image run for ${filename}`, { error: err.message });
+                    logger.warn(`Failed to embed image run for ${src}`, { error: err.message });
                 }
             };
 
