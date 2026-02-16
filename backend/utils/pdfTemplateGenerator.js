@@ -40,6 +40,22 @@ const generateCorrectedPDF = async (products, format = 'table') => {
             { key: 'myBCAPin', label: 'Pin Transaksi' }
         ];
 
+        // Helper to resolve image path for Puppeteer
+        const buildImageSrc = (src) => {
+            if (!src || src === '-' || src === '') return null;
+            if (src.toString().startsWith('http')) return src;
+
+            // For local files, Puppeteer needs absolute file:// paths
+            const filename = path.basename(src);
+            const localPath = path.join(__dirname, '../uploads', filename);
+            if (fs.existsSync(localPath)) return `file://${localPath}`;
+
+            const rootPath = path.join(__dirname, '../../uploads', filename);
+            if (fs.existsSync(rootPath)) return `file://${rootPath}`;
+
+            return null;
+        };
+
         let html = `
         <!DOCTYPE html>
         <html>
@@ -63,6 +79,14 @@ const generateCorrectedPDF = async (products, format = 'table') => {
                 .field-row { display: flex; border-bottom: 1px solid #eee; padding: 8px 0; }
                 .field-label { width: 200px; font-weight: bold; color: #555; }
                 .field-value { flex: 1; }
+
+                /* Image Gallery */
+                .image-section { margin-top: 30px; }
+                .image-title { font-weight: bold; color: #007bff; border-left: 4px solid #007bff; padding-left: 10px; margin: 20px 0 10px 0; }
+                .image-container { display: flex; gap: 20px; flex-wrap: wrap; }
+                .image-box { border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fff; }
+                .image-box img { max-width: 400px; max-height: 300px; object-fit: contain; display: block; }
+                .image-label { text-align: center; font-weight: bold; margin-top: 5px; font-size: 12px; }
             </style>
         </head>
         <body>
@@ -89,9 +113,40 @@ const generateCorrectedPDF = async (products, format = 'table') => {
             </table>
             
             <p style="font-size: 12px; margin-top: 20px;">* Tabel di atas hanya menampilkan 10 kolom utama. Gunakan format List untuk detail lengkap per produk.</p>
+            
+            <div class="image-section">
+                ${products.map((p, idx) => {
+                const ktpSrc = buildImageSrc(p.uploadFotoId);
+                const selfieSrc = buildImageSrc(p.uploadFotoSelfie);
+
+                if (!ktpSrc && !selfieSrc) return '';
+
+                return `
+                        <div class="image-title">LAMPIRAN FOTO - PRODUK ${idx + 1} (${p.nama || '-'})</div>
+                        <div class="image-container">
+                            ${ktpSrc ? `
+                                <div class="image-box">
+                                    <img src="${ktpSrc}" alt="KTP">
+                                    <div class="image-label">FOTO KTP</div>
+                                </div>
+                            ` : ''}
+                            ${selfieSrc ? `
+                                <div class="image-box">
+                                    <img src="${selfieSrc}" alt="Selfie">
+                                    <div class="image-label">FOTO SELFIE</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+            }).join('')}
+            </div>
             `;
         } else {
-            html += products.map((p, idx) => `
+            html += products.map((p, idx) => {
+                const ktpSrc = buildImageSrc(p.uploadFotoId);
+                const selfieSrc = buildImageSrc(p.uploadFotoSelfie);
+
+                return `
                 <div class="product-card">
                     <div class="product-header">PRODUK ${idx + 1} - ${p.nama || 'Tanpa Nama'}</div>
                     ${fields.map(f => `
@@ -100,8 +155,29 @@ const generateCorrectedPDF = async (products, format = 'table') => {
                             <div class="field-value">${p[f.key] || '-'}</div>
                         </div>
                     `).join('')}
+                    
+                    ${(ktpSrc || selfieSrc) ? `
+                        <div class="image-section">
+                            <div class="image-title">LAMPIRAN FOTO</div>
+                            <div class="image-container">
+                                ${ktpSrc ? `
+                                    <div class="image-box">
+                                        <img src="${ktpSrc}" alt="KTP">
+                                        <div class="image-label">FOTO KTP</div>
+                                    </div>
+                                ` : ''}
+                                ${selfieSrc ? `
+                                    <div class="image-box">
+                                        <img src="${selfieSrc}" alt="Selfie">
+                                        <div class="image-label">FOTO SELFIE</div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
-            `).join('');
+            `;
+            }).join('');
         }
 
         html += `
@@ -113,10 +189,10 @@ const generateCorrectedPDF = async (products, format = 'table') => {
         `;
 
         browser = await puppeteer.launch({
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--allow-file-access-from-files']
         });
         const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'domcontentloaded' });
+        await page.setContent(html, { waitUntil: 'networkidle0' });
 
         const pdfBuffer = await page.pdf({
             format: 'A4',

@@ -234,6 +234,67 @@ const generateBankSpecificTemplate = async (bankName) => {
 };
 
 /**
+ * Retrieves image data from a URL or local path and returns a Buffer.
+ */
+const getImageBuffer = async (src) => {
+    if (!src || src === '-' || src === '') return null;
+    try {
+        if (src.toString().startsWith('http')) {
+            logger.info(`Fetching remote image: ${src}`);
+            const response = await axios.get(src, {
+                responseType: 'arraybuffer',
+                timeout: 10000
+            });
+            return Buffer.from(response.data);
+        }
+
+        // Local file handling
+        const filename = path.basename(src);
+        const localPath = path.join(__dirname, '../uploads', filename);
+
+        if (fs.existsSync(localPath)) {
+            logger.info(`Loading local image: ${localPath}`);
+            return fs.readFileSync(localPath);
+        } else {
+            // Try root uploads too
+            const rootUploadsPath = path.join(__dirname, '../../uploads', filename);
+            if (fs.existsSync(rootUploadsPath)) {
+                logger.info(`Loading local image from root: ${rootUploadsPath}`);
+                return fs.readFileSync(rootUploadsPath);
+            }
+        }
+
+        logger.warn(`Image file not found: ${src}`);
+    } catch (err) {
+        logger.warn(`Failed to get image buffer for ${src}`, { error: err.message });
+    }
+    return null;
+};
+
+/**
+ * Adds an image to a given array of paragraphs.
+ */
+const addImageToParagraphs = async (paragraphs, src, label) => {
+    const buffer = await getImageBuffer(src);
+    if (!buffer) return;
+    try {
+        logger.info(`Embedding image in Word: ${label} (Buffer size: ${buffer.length})`);
+        paragraphs.push(
+            new Paragraph({
+                children: [new TextRun({ text: label, bold: true, size: 24, break: 1 })],
+                spacing: { before: 200 }
+            }),
+            new Paragraph({
+                children: [new ImageRun({ data: buffer, transformation: { width: 400, height: 300 } })],
+                spacing: { after: 200 }
+            })
+        );
+    } catch (err) {
+        logger.warn(`Failed to embed image run for ${src}`, { error: err.message });
+    }
+};
+
+/**
  * Generate Word document from corrected/extracted product data
  */
 const generateCorrectedWord = async (products) => {
@@ -267,7 +328,7 @@ const generateCorrectedWord = async (products) => {
 
         // Header row
         tableRows.push(new TableRow({
-            header: true,
+            tableHeader: true,
             children: headers.map(header =>
                 new TableCell({
                     children: [new Paragraph({ text: header, alignment: AlignmentType.CENTER })],
@@ -290,20 +351,44 @@ const generateCorrectedWord = async (products) => {
             tableRows.push(new TableRow({ children: dataCells }));
         });
 
+        // Add Image Section for each product
+        const contentChildren = [
+            new Paragraph({
+                text: 'Hasil Koreksi Data Bulk Upload',
+                heading: HeadingLevel.HEADING_1,
+                alignment: AlignmentType.CENTER
+            }),
+            new Paragraph({ text: '' }),
+            new Table({
+                rows: tableRows,
+                width: { size: 100, type: WidthType.PERCENTAGE }
+            }),
+            new Paragraph({ text: '', break: 1 })
+        ];
+
+        // Process images for each product (concatenated after table)
+        for (let i = 0; i < products.length; i++) {
+            const p = products[i];
+            const productImages = [];
+
+            await addImageToParagraphs(productImages, p.uploadFotoId, `PRODUCT ${i + 1} - FOTO KTP`);
+            await addImageToParagraphs(productImages, p.uploadFotoSelfie, `PRODUCT ${i + 1} - FOTO SELFIE`);
+
+            if (productImages.length > 0) {
+                contentChildren.push(
+                    new Paragraph({
+                        text: `LAMPIRAN FOTO - PRODUK ${i + 1} (${p.nama || '-'})`,
+                        heading: HeadingLevel.HEADING_2,
+                        spacing: { before: 400, after: 200 }
+                    }),
+                    ...productImages
+                );
+            }
+        }
+
         const doc = new Document({
             sections: [{
-                children: [
-                    new Paragraph({
-                        text: 'Hasil Koreksi Data Bulk Upload',
-                        heading: HeadingLevel.HEADING_1,
-                        alignment: AlignmentType.CENTER
-                    }),
-                    new Paragraph({ text: '' }),
-                    new Table({
-                        rows: tableRows,
-                        width: { size: 100, type: WidthType.PERCENTAGE }
-                    })
-                ]
+                children: contentChildren
             }]
         });
 
@@ -311,7 +396,7 @@ const generateCorrectedWord = async (products) => {
         return { success: true, buffer, filename: `hasil-koreksi-${Date.now()}.docx` };
 
     } catch (error) {
-        logger.error('Failed to generate Corrected Word', { error: error.message });
+        logger.error('Failed to generate Corrected Word', { error: error.message, stack: error.stack });
         return { success: false, error: error.message };
     }
 };
@@ -395,64 +480,8 @@ const generateCorrectedWordList = async (products) => {
             const currentFields = [...commonFields, ...specificFields];
             const imageParagraphs = [];
 
-            const getImageBuffer = async (src) => {
-                if (!src || src === '-' || src === '') return null;
-                try {
-                    if (src.toString().startsWith('http')) {
-                        logger.info(`Fetching remote image: ${src}`);
-                        const axios = require('axios');
-                        const response = await axios.get(src, {
-                            responseType: 'arraybuffer',
-                            timeout: 10000
-                        });
-                        return Buffer.from(response.data);
-                    }
-
-                    // Local file handling
-                    const filename = path.basename(src);
-                    const localPath = path.join(__dirname, '../uploads', filename);
-
-                    if (fs.existsSync(localPath)) {
-                        logger.info(`Loading local image: ${localPath}`);
-                        return fs.readFileSync(localPath);
-                    } else {
-                        // Try root uploads too
-                        const rootUploadsPath = path.join(__dirname, '../../uploads', filename);
-                        if (fs.existsSync(rootUploadsPath)) {
-                            logger.info(`Loading local image from root: ${rootUploadsPath}`);
-                            return fs.readFileSync(rootUploadsPath);
-                        }
-                    }
-
-                    logger.warn(`Image file not found: ${src}`);
-                } catch (err) {
-                    logger.warn(`Failed to get image buffer for ${src}`, { error: err.message });
-                }
-                return null;
-            };
-
-            const addImageToDoc = async (src, label) => {
-                const buffer = await getImageBuffer(src);
-                if (!buffer) return;
-                try {
-                    logger.info(`Embedding image in Word: ${label} (Buffer size: ${buffer.length})`);
-                    imageParagraphs.push(
-                        new Paragraph({
-                            children: [new TextRun({ text: label, bold: true, size: 24, break: 1 })],
-                            spacing: { before: 200 }
-                        }),
-                        new Paragraph({
-                            children: [new ImageRun({ data: buffer, transformation: { width: 400, height: 300 } })],
-                            spacing: { after: 200 }
-                        })
-                    );
-                } catch (err) {
-                    logger.warn(`Failed to embed image run for ${src}`, { error: err.message });
-                }
-            };
-
-            await addImageToDoc(p.uploadFotoId, 'FOTO KTP');
-            await addImageToDoc(p.uploadFotoSelfie, 'FOTO SELFIE');
+            await addImageToParagraphs(imageParagraphs, p.uploadFotoId, 'FOTO KTP');
+            await addImageToParagraphs(imageParagraphs, p.uploadFotoSelfie, 'FOTO SELFIE');
 
             return {
                 properties: { type: idx === 0 ? undefined : SectionType.NEXT_PAGE },

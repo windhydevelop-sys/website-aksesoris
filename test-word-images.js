@@ -1,32 +1,56 @@
-const { generateCorrectedWordList } = require('./backend/utils/wordTemplateGenerator');
+const { generateCorrectedWord, generateCorrectedWordList } = require('./backend/utils/wordTemplateGenerator');
 const fs = require('fs');
-const path = require('path');
 
-const testExport = async () => {
-    // We'll use the real image filename found in DB
-    const sampleProduct = {
-        noOrder: 'TEST-ORDER-002',
+const testProducts = [
+    {
+        nama: 'Test User KTP Only',
+        uploadFotoId: 'secure_1763063594960-183427657.jpg',
+        uploadFotoSelfie: '-',
+        bank: 'BRI',
+        noRek: '123456789'
+    },
+    {
+        nama: 'Test User Selfie Only',
+        uploadFotoId: '',
+        uploadFotoSelfie: 'secure_1763063594960-385479040.png',
         bank: 'BCA',
-        nama: 'Asep Cloudinary',
-        uploadFotoId: 'http://res.cloudinary.com/dzytsa9mv/image/upload/v1739092174/website-aksesoris/secure_1739092173574_560563456.png',
-        uploadFotoSelfie: '-'
-    };
+        noRek: '987654321'
+    },
+    {
+        nama: 'Test User Remote Image',
+        uploadFotoId: 'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+        uploadFotoSelfie: '-',
+        bank: 'OCBC',
+        noRek: '555555555'
+    }
+];
 
-    console.log('Starting test export with image:', sampleProduct.uploadFotoId);
-
+async function runTest() {
+    console.log('--- Testing Word Export (Table Format) ---');
     try {
-        const result = await generateCorrectedWordList([sampleProduct]);
-        if (result.success) {
-            const outputPath = path.join(__dirname, 'test_export_result.docx');
-            fs.writeFileSync(outputPath, result.buffer);
-            console.log('Export successful! Results saved to:', outputPath);
-            console.log('Buffer size:', result.buffer.length);
+        const tableResult = await generateCorrectedWord(testProducts);
+        if (tableResult.success) {
+            fs.writeFileSync('test-table-images.docx', tableResult.buffer);
+            console.log('Table format export saved to test-table-images.docx');
         } else {
-            console.error('Export failed:', result.error);
+            console.error('Table format export failed:', tableResult.error);
         }
     } catch (err) {
-        console.error('Critical error in test:', err);
+        console.error('Table format crash:', err);
     }
-};
 
-testExport();
+    console.log('\n--- Testing Word Export (List Format) ---');
+    try {
+        const listResult = await generateCorrectedWordList(testProducts);
+        if (listResult.success) {
+            fs.writeFileSync('test-list-images.docx', listResult.buffer);
+            console.log('List format export saved to test-list-images.docx');
+        } else {
+            console.error('List format export failed:', listResult.error);
+        }
+    } catch (err) {
+        console.error('List format crash:', err);
+    }
+}
+
+runTest();
