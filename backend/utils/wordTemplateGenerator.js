@@ -432,6 +432,7 @@ const generateCorrectedWordList = async (products) => {
                 ];
             } else if (bank === 'BRI') {
                 specificFields = [
+                    { key: 'jenisRekening', label: 'Jenis Rekening' },
                     { key: 'brimoUser', label: 'User BRImo' },
                     { key: 'brimoPassword', label: 'Pass BRImo' },
                     { key: 'mobilePin', label: 'PIN BRImo' },

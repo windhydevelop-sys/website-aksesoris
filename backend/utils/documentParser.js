@@ -113,7 +113,7 @@ const parseListFormat = (text) => {
     if (validSections.length === 0) return [];
 
     const headers = [
-      'No. Order', 'Code Agen', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
+      'No. Order', 'Code Agen', 'Jenis Rekening', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
       'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
       'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
       'User Mobile', 'Password Mobile', 'PIN Mobile',

