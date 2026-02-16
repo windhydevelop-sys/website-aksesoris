@@ -60,6 +60,7 @@ const productSchema = new mongoose.Schema({
   ibPin: { type: String }, // Internet Banking PIN (New Field)
   merchantUser: { type: String },
   merchantPassword: { type: String },
+  ocbcNyalaUser: { type: String },
   status: {
     type: String,
     enum: ['pending', 'in_progress', 'completed', 'cancelled'],

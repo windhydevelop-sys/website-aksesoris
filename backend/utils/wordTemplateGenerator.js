@@ -445,6 +445,16 @@ const generateCorrectedWordList = async (products) => {
                     { key: 'mobileUser', label: 'User Mobile' },
                     { key: 'mobilePassword', label: 'Pass Mobile' }
                 ];
+            } else if (bank === 'OCBC' || bank === 'OCBC NISP') {
+                specificFields = [
+                    { key: 'ocbcNyalaUser', label: 'User Nyala' },
+                    { key: 'mobileUser', label: 'User Mobile' },
+                    { key: 'mobilePassword', label: 'Pass Mobile' },
+                    { key: 'mobilePin', label: 'PIN Mobile' },
+                    { key: 'ibUser', label: 'User IB' },
+                    { key: 'ibPassword', label: 'Pass IB' },
+                    { key: 'ibPin', label: 'PIN IB' }
+                ];
             } else {
                 // Default for Mandiri, Danamon, OCBC, etc.
                 specificFields = [

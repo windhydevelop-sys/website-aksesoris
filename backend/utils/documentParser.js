@@ -118,7 +118,7 @@ const parseListFormat = (text) => {
       'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
       'User Mobile', 'Password Mobile', 'PIN Mobile',
       'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi',
-      'Kode Akses', 'Pin m-BCA', 'PIN Wondr', 'Pass Wondr',
+      'Kode Akses', 'Pin m-BCA', 'PIN Wondr', 'Pass Wondr', 'User Nyala',
       'User BRImo', 'Pass BRImo', 'User Merchant', 'Pass Merchant'
     ];
 

