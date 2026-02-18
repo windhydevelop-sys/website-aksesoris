@@ -91,21 +91,32 @@ const TelegramSubmissions = () => {
         setIsExporting(true);
         try {
             const selectedProducts = submissions.filter(s => selected.includes(s._id));
-            const response = await axios.post('/api/products/export-corrected-word', {
-                products: selectedProducts,
-                format: 'list'
-            }, {
-                responseType: 'blob'
-            });
 
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `telegram-submissions-${Date.now()}.docx`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            showSuccess('File Word berhasil di-generate');
+            // Sequential download for individual files
+            for (let i = 0; i < selectedProducts.length; i++) {
+                const product = selectedProducts[i];
+                const response = await axios.post('/api/products/export-corrected-word', {
+                    products: [product],
+                    format: 'list'
+                }, {
+                    responseType: 'blob'
+                });
+
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                const fileName = `hasil-koreksi-${product.nama || 'produk'}-${Date.now()}.docx`.replace(/\s+/g, '-');
+                link.setAttribute('download', fileName);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                // Small delay to help browser handle multiple downloads
+                if (i < selectedProducts.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                }
+            }
+            showSuccess(`${selectedProducts.length} file Word berhasil di-generate`);
         } catch (error) {
             console.error('Export error:', error);
             showError('Gagal meng-export ke Word');

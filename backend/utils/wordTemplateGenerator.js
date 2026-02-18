@@ -316,7 +316,7 @@ const addImageToParagraphs = async (paragraphs, src, label) => {
         logger.info(`Embedding image in Word: ${label} (Buffer size: ${buffer.length})`);
         paragraphs.push(
             new Paragraph({
-                children: [new TextRun({ text: label, bold: true, size: 24, break: 1 })],
+                children: [new TextRun({ text: label, bold: true, size: 24 })],
                 spacing: { before: 200 }
             }),
             new Paragraph({
@@ -336,28 +336,70 @@ const generateCorrectedWord = async (products) => {
     try {
         logger.info('Generating Corrected Word document', { count: products.length });
 
-        const headers = [
+        const commonHeaders = [
             'No. Order', 'Code Agen', 'Bank', 'Jenis Rekening', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
-            'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'Sisa Saldo', 'No. ATM',
-            'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
-            'User Mobile', 'Password Mobile', 'PIN Mobile',
-            'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi',
-            'Kode Akses', 'Pin m-BCA', 'PIN Wondr', 'Pass Wondr',
-            'User BRImo', 'Pass BRImo', 'User Merchant', 'Pass Merchant'
+            'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
+            'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired'
         ];
 
-        const fieldMap = {
+        const commonFieldMap = {
             noOrder: 'No. Order', codeAgen: 'Code Agen', bank: 'Bank', jenisRekening: 'Jenis Rekening',
             grade: 'Grade', kcp: 'Kantor Cabang', nik: 'NIK', nama: 'Nama',
             namaIbuKandung: 'Nama Ibu Kandung', tempatTanggalLahir: 'Tempat/Tanggal Lahir',
-            noRek: 'No. Rekening', sisaSaldo: 'Sisa Saldo', noAtm: 'No. ATM', validThru: 'Valid Kartu', noHp: 'No. HP',
-            pinAtm: 'PIN ATM', email: 'Email', passEmail: 'Password Email', expired: 'Expired',
-            mobileUser: 'User Mobile', mobilePassword: 'Password Mobile', mobilePin: 'PIN Mobile',
-            ibUser: 'I-Banking', ibPassword: 'Password IB', ibPin: 'PIN IB', myBCAUser: 'BCA-ID',
-            myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi', kodeAkses: 'Kode Akses', pinMBca: 'Pin m-BCA',
-            pinWondr: 'PIN Wondr', passWondr: 'Pass Wondr', brimoUser: 'User BRImo', brimoPassword: 'Pass BRImo',
-            briMerchantUser: 'User Merchant', briMerchantPassword: 'Pass Merchant'
+            noRek: 'No. Rekening', noAtm: 'No. ATM', validThru: 'Valid Kartu', noHp: 'No. HP',
+            pinAtm: 'PIN ATM', email: 'Email', passEmail: 'Password Email', expired: 'Expired'
         };
+
+        // Determine bank-specific fields
+        let specificHeaders = [];
+        let specificFieldMap = {};
+
+        const banks = [...new Set(products.map(p => (p.bank || '').toUpperCase()))];
+        const bank = banks.length === 1 ? banks[0] : 'ALL';
+
+        if (bank === 'BCA') {
+            specificHeaders = ['BCA-ID', 'Pass BCA-ID', 'Pin Transaksi', 'Kode Akses', 'Pin m-BCA'];
+            specificFieldMap = {
+                myBCAUser: 'BCA-ID', myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi',
+                kodeAkses: 'Kode Akses', pinMBca: 'Pin m-BCA'
+            };
+        } else if (bank === 'BRI') {
+            specificHeaders = ['User BRImo', 'Pass BRImo', 'PIN BRImo', 'User Merchant', 'Pass Merchant'];
+            specificFieldMap = {
+                brimoUser: 'User BRImo', brimoPassword: 'Pass BRImo', mobilePin: 'PIN BRImo',
+                briMerchantUser: 'User Merchant', briMerchantPassword: 'Pass Merchant'
+            };
+        } else if (bank === 'BNI') {
+            specificHeaders = ['PIN Wondr', 'Pass Wondr', 'User Mobile', 'Pass Mobile'];
+            specificFieldMap = {
+                pinWondr: 'PIN Wondr', passWondr: 'Pass Wondr',
+                mobileUser: 'User Mobile', mobilePassword: 'Pass Mobile'
+            };
+        } else if (bank === 'OCBC' || bank === 'OCBC NISP') {
+            specificHeaders = ['User Nyala', 'User Mobile', 'Pass Mobile', 'PIN Mobile', 'User IB', 'Pass IB', 'PIN IB'];
+            specificFieldMap = {
+                ocbcNyalaUser: 'User Nyala', mobileUser: 'User Mobile', mobilePassword: 'Pass Mobile',
+                mobilePin: 'PIN Mobile', ibUser: 'User IB', ibPassword: 'Pass IB', ibPin: 'PIN IB'
+            };
+        } else {
+            // Default/Fallback for multiple banks or unknown bank
+            specificHeaders = [
+                'User Mobile', 'Password Mobile', 'PIN Mobile',
+                'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi',
+                'Kode Akses', 'Pin m-BCA', 'PIN Wondr', 'Pass Wondr',
+                'User BRImo', 'Pass BRImo', 'User Merchant', 'Pass Merchant'
+            ];
+            specificFieldMap = {
+                mobileUser: 'User Mobile', mobilePassword: 'Password Mobile', mobilePin: 'PIN Mobile',
+                ibUser: 'I-Banking', ibPassword: 'Password IB', ibPin: 'PIN IB', myBCAUser: 'BCA-ID',
+                myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi', kodeAkses: 'Kode Akses', pinMBca: 'Pin m-BCA',
+                pinWondr: 'PIN Wondr', passWondr: 'Pass Wondr', brimoUser: 'User BRImo', brimoPassword: 'Pass BRImo',
+                briMerchantUser: 'User Merchant', briMerchantPassword: 'Pass Merchant'
+            };
+        }
+
+        const headers = [...commonHeaders, ...specificHeaders];
+        const fieldMap = { ...commonFieldMap, ...specificFieldMap };
 
         const tableRows = [];
 
@@ -455,7 +497,6 @@ const generateCorrectedWordList = async (products) => {
             { key: 'namaIbuKandung', label: 'Nama Ibu Kandung' },
             { key: 'tempatTanggalLahir', label: 'Tempat/Tanggal Lahir' },
             { key: 'noRek', label: 'No. Rekening' },
-            { key: 'sisaSaldo', label: 'Sisa Saldo' },
             { key: 'noAtm', label: 'No. ATM' },
             { key: 'validThru', label: 'Valid Kartu' },
             { key: 'noHp', label: 'No. HP' },
@@ -479,7 +520,6 @@ const generateCorrectedWordList = async (products) => {
                 ];
             } else if (bank === 'BRI') {
                 specificFields = [
-                    { key: 'jenisRekening', label: 'Jenis Rekening' },
                     { key: 'brimoUser', label: 'User BRImo' },
                     { key: 'brimoPassword', label: 'Pass BRImo' },
                     { key: 'mobilePin', label: 'PIN BRImo' },
@@ -549,7 +589,7 @@ const generateCorrectedWordList = async (products) => {
                     new Paragraph({
                         children: [
                             new TextRun({
-                                text: "\nCatatan: Dokumen ini telah distandardisasi oleh sistem.",
+                                text: "Catatan: Dokumen ini telah distandardisasi oleh sistem.",
                                 size: 16,
                                 italic: true,
                                 color: '808080'
