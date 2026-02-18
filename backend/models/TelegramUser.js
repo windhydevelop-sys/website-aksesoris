@@ -46,6 +46,10 @@ const telegramUserSchema = mongoose.Schema(
     kodeOrlap: {
       type: String,
       default: null
+    },
+    isNotifyEnabled: {
+      type: Boolean,
+      default: false
     }
   },
   {

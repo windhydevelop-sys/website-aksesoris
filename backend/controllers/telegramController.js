@@ -381,6 +381,36 @@ const handleWebhook = async (req, res) => {
       return res.status(200).send('Orlap authenticated');
     }
 
+    if (text === '/myid' || text === '/id') {
+      await bot.sendMessage(chatId, `ID Telegram Anda adalah: \`${chatId}\``, { parse_mode: 'Markdown' });
+      return res.status(200).send('ID sent');
+    }
+
+    if (text === '/register_notif') {
+      if (telegramUser.isNotifyEnabled) {
+        await bot.sendMessage(chatId, '✅ Anda sudah terdaftar untuk menerima notifikasi harian.');
+        return res.status(200).send('Already registered');
+      }
+
+      const count = await TelegramUser.countDocuments({ isNotifyEnabled: true });
+      if (count >= 5) {
+        await bot.sendMessage(chatId, '❌ Maaf, kuota penerima notifikasi sudah penuh (maksimal 5 orang).');
+        return res.status(200).send('Quota full');
+      }
+
+      telegramUser.isNotifyEnabled = true;
+      await telegramUser.save();
+      await bot.sendMessage(chatId, '🚀 Berhasil! Anda sekarang akan menerima ringkasan produk expired setiap hari pukul 00:00.');
+      return res.status(200).send('Registration success');
+    }
+
+    if (text === '/unregister_notif') {
+      telegramUser.isNotifyEnabled = false;
+      await telegramUser.save();
+      await bot.sendMessage(chatId, '📴 Anda telah dihapus dari daftar penerima notifikasi harian.');
+      return res.status(200).send('Unregistration success');
+    }
+
     if (text.startsWith('/login')) {
       const parts = text.split(' ');
       if (parts.length < 3) {
