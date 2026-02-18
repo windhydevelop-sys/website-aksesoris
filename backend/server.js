@@ -172,60 +172,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Seed admin endpoint (for development/testing)
-app.get('/api/auth/seed-admin', async (req, res) => {
-  try {
-    const email = 'admin@example.com';
-    const username = 'TOTO';
-    const password = '66778899';
-
-    console.log(`Seeding attempt for email: ${email}`);
-    let user = await User.findOne({ email });
-
-    if (user) {
-      console.log(`Found existing user: ${user.username}. Updating to ${username}`);
-      user.username = username;
-      user.password = password;
-      user.isActive = true;
-      user.role = 'admin';
-      await user.save();
-      console.log('User updated successfully');
-
-      return res.json({
-        success: true,
-        message: 'Admin credentials updated successfully',
-        credentials: { username, email, password }
-      });
-    }
-
-    console.log(`Creating new admin user: ${username}`);
-    const adminUser = new User({
-      username,
-      email,
-      password,
-      role: 'admin',
-      isActive: true
-    });
-
-    await adminUser.save();
-    console.log('New admin user created successfully');
-
-    res.json({
-      success: true,
-      message: 'Admin user created successfully',
-      credentials: { username, email, password }
-    });
-
-  } catch (err) {
-    console.error('Seed admin route error:', err);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to seed admin user',
-      details: err.message
-    });
-  }
-});
-
 const PORT = process.env.PORT || 5000;
 
 // Global server variable for graceful shutdown

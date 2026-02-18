@@ -3,12 +3,14 @@ const router = express.Router();
 const path = require('path');
 const fs = require('fs');
 const { setWebhook, handleWebhook } = require('../controllers/telegramController');
+const auth = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/auth');
 const TelegramUser = require('../models/TelegramUser');
 const { createProduct } = require('../controllers/products');
 const { uploadToCloudinary } = require('../utils/cloudinary');
 
-router.get('/set-webhook', setWebhook);
-router.post('/set-webhook', setWebhook);
+router.get('/set-webhook', auth, requireAdmin, setWebhook);
+router.post('/set-webhook', auth, requireAdmin, setWebhook);
 
 router.post('/webhook', handleWebhook);
 
