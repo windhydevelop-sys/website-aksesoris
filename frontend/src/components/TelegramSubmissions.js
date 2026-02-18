@@ -93,7 +93,7 @@ const TelegramSubmissions = () => {
             const selectedProducts = submissions.filter(s => selected.includes(s._id));
             const response = await axios.post('/api/products/export-corrected-word', {
                 products: selectedProducts,
-                format: 'list'
+                format: 'table'
             }, {
                 responseType: 'blob'
             });

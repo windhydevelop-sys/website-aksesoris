@@ -14,7 +14,7 @@ const generateCorrectedPDF = async (products, format = 'table') => {
         const fields = [
             { key: 'noOrder', label: 'No. Order' },
             { key: 'codeAgen', label: 'Code Agen' },
-            { key: 'customer', label: 'Customer' },
+            { key: 'jenisRekening', label: 'Jenis Rekening' },
             { key: 'bank', label: 'Bank' },
             { key: 'grade', label: 'Grade' },
             { key: 'kcp', label: 'Kantor Cabang' },
@@ -23,10 +23,13 @@ const generateCorrectedPDF = async (products, format = 'table') => {
             { key: 'namaIbuKandung', label: 'Nama Ibu Kandung' },
             { key: 'tempatTanggalLahir', label: 'Tempat/Tanggal Lahir' },
             { key: 'noRek', label: 'No. Rekening' },
+            { key: 'sisaSaldo', label: 'Sisa Saldo' },
             { key: 'noAtm', label: 'No. ATM' },
             { key: 'validThru', label: 'Valid Kartu' },
             { key: 'noHp', label: 'No. HP' },
             { key: 'pinAtm', label: 'PIN ATM' },
+            { key: 'pinWondr', label: 'PIN Wondr' },
+            { key: 'passWondr', label: 'Pass Wondr' },
             { key: 'email', label: 'Email' },
             { key: 'passEmail', label: 'Password Email' },
             { key: 'mobileUser', label: 'User Mobile' },
@@ -37,21 +40,25 @@ const generateCorrectedPDF = async (products, format = 'table') => {
             { key: 'ibPin', label: 'PIN IB' },
             { key: 'myBCAUser', label: 'BCA-ID' },
             { key: 'myBCAPassword', label: 'Pass BCA-ID' },
-            { key: 'myBCAPin', label: 'Pin Transaksi' }
+            { key: 'myBCAPin', label: 'Pin Transaksi' },
+            { key: 'complaint', label: 'Complaint' }
         ];
 
         // Helper to resolve image path for Puppeteer
         const buildImageSrc = (src) => {
             if (!src || src === '-' || src === '') return null;
-            if (src.toString().startsWith('http')) return src;
 
-            // For local files, Puppeteer needs absolute file:// paths
-            const filename = path.basename(src);
+            // Always try to find locally first by filename, even if it's a URL
+            // This handles cases where the Cloudinary link is broken but the file is still local
+            const filename = path.basename(src.split('?')[0]);
             const localPath = path.join(__dirname, '../uploads', filename);
             if (fs.existsSync(localPath)) return `file://${localPath}`;
 
             const rootPath = path.join(__dirname, '../../uploads', filename);
             if (fs.existsSync(rootPath)) return `file://${rootPath}`;
+
+            // If not found locally, and it's a URL, return the URL
+            if (src.toString().startsWith('http')) return src;
 
             return null;
         };
@@ -90,7 +97,10 @@ const generateCorrectedPDF = async (products, format = 'table') => {
             </style>
         </head>
         <body>
-            <h1>Hasil Koreksi Data Bulk Upload</h1>
+            <h1>Laporan Data Produk Lengkap</h1>
+            <div style="text-align: right; font-size: 12px; margin-bottom: 20px;">
+                Dibuat pada: ${new Date().toLocaleDateString('id-ID')} ${new Date().toLocaleTimeString('id-ID')}
+            </div>
         `;
 
         if (format === 'table') {
@@ -181,7 +191,17 @@ const generateCorrectedPDF = async (products, format = 'table') => {
         }
 
         html += `
+            <div style="margin-top: 50px; display: flex; justify-content: flex-end; page-break-inside: avoid;">
+                <div style="width: 250px; text-align: center;">
+                    <div style="font-size: 12px; margin-bottom: 60px;">Dicetak oleh Administrator,</div>
+                    <div style="border-bottom: 1px solid #000; margin-bottom: 5px;"></div>
+                    <div style="font-size: 12px; font-weight: bold;">( _____________________ )</div>
+                    <div style="font-size: 10px; color: #666;">Tanda Tangan & Nama Terang</div>
+                </div>
+            </div>
+
             <div class="footer">
+                <p>© ${new Date().getFullYear()} Website Aksesoris - Laporan Sistem Keamanan</p>
                 <p>Dokumen ini dihasilkan secara otomatis oleh sistem pada ${new Date().toLocaleString('id-ID')}</p>
             </div>
         </body>

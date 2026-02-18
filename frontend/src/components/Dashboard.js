@@ -217,6 +217,10 @@ const ProductExportPdfDocument = ({ products }) => (
               <Text style={styles.value}>{product.bank || '-'}</Text>
             </View>
             <View style={styles.row}>
+              <Text style={styles.label}>Jenis Rekening:</Text>
+              <Text style={styles.value}>{product.jenisRekening || '-'}</Text>
+            </View>
+            <View style={styles.row}>
               <Text style={styles.label}>Grade:</Text>
               <Text style={styles.value}>{product.grade || '-'}</Text>
             </View>
@@ -248,6 +252,10 @@ const ProductExportPdfDocument = ({ products }) => (
             <View style={styles.row}>
               <Text style={styles.label}>No. Rekening:</Text>
               <Text style={styles.value}>{product.noRek || '-'}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Sisa Saldo:</Text>
+              <Text style={styles.value}>{product.sisaSaldo || '-'}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>No. ATM:</Text>
@@ -367,6 +375,16 @@ const ProductExportPdfDocument = ({ products }) => (
           </View>
         </View>
       ))}
+
+      {/* Signature Section */}
+      <View style={{ marginTop: 40, flexDirection: 'row', justifyContent: 'flex-end' }} wrap={false}>
+        <View style={{ width: 200, textAlign: 'center' }}>
+          <Text style={{ fontSize: 10, marginBottom: 50 }}>Dicetak oleh Administrator,</Text>
+          <View style={{ borderBottom: '1px solid #000', marginBottom: 5, width: '100%' }} />
+          <Text style={{ fontSize: 10, fontWeight: 'bold' }}>( _____________________ )</Text>
+          <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>Tanda Tangan & Nama Terang</Text>
+        </View>
+      </View>
     </Page>
   </Document>
 );

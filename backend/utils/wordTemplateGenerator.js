@@ -241,11 +241,31 @@ const getImageBuffer = async (src) => {
     try {
         if (src.toString().startsWith('http')) {
             logger.info(`Fetching remote image: ${src}`);
-            const response = await axios.get(src, {
-                responseType: 'arraybuffer',
-                timeout: 10000
-            });
-            return Buffer.from(response.data);
+            try {
+                const response = await axios.get(src, {
+                    responseType: 'arraybuffer',
+                    timeout: 10000
+                });
+                return Buffer.from(response.data);
+            } catch (fetchErr) {
+                logger.warn(`Failed to fetch remote image ${src}, trying local fallback...`, { error: fetchErr.message });
+                // Fallback: extract filename from Cloudinary URL and try local uploads
+                // Example: http://res.cloudinary.com/.../v123/folder/secure_123.png -> secure_123.png
+                const filename = path.basename(src.split('?')[0]);
+                const localPath = path.join(__dirname, '../uploads', filename);
+
+                if (fs.existsSync(localPath)) {
+                    logger.info(`Found local fallback for broken URL: ${localPath}`);
+                    return fs.readFileSync(localPath);
+                } else {
+                    const rootUploadsPath = path.join(__dirname, '../../uploads', filename);
+                    if (fs.existsSync(rootUploadsPath)) {
+                        logger.info(`Found local fallback in root for broken URL: ${rootUploadsPath}`);
+                        return fs.readFileSync(rootUploadsPath);
+                    }
+                }
+                throw fetchErr; // Re-throw if fallback fails too
+            }
         }
 
         // Local file handling
@@ -302,8 +322,8 @@ const generateCorrectedWord = async (products) => {
         logger.info('Generating Corrected Word document', { count: products.length });
 
         const headers = [
-            'No. Order', 'Code Agen', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
-            'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
+            'No. Order', 'Code Agen', 'Bank', 'Jenis Rekening', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
+            'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'Sisa Saldo', 'No. ATM',
             'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
             'User Mobile', 'Password Mobile', 'PIN Mobile',
             'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi',
@@ -312,10 +332,10 @@ const generateCorrectedWord = async (products) => {
         ];
 
         const fieldMap = {
-            noOrder: 'No. Order', codeAgen: 'Code Agen', bank: 'Bank',
+            noOrder: 'No. Order', codeAgen: 'Code Agen', bank: 'Bank', jenisRekening: 'Jenis Rekening',
             grade: 'Grade', kcp: 'Kantor Cabang', nik: 'NIK', nama: 'Nama',
             namaIbuKandung: 'Nama Ibu Kandung', tempatTanggalLahir: 'Tempat/Tanggal Lahir',
-            noRek: 'No. Rekening', noAtm: 'No. ATM', validThru: 'Valid Kartu', noHp: 'No. HP',
+            noRek: 'No. Rekening', sisaSaldo: 'Sisa Saldo', noAtm: 'No. ATM', validThru: 'Valid Kartu', noHp: 'No. HP',
             pinAtm: 'PIN ATM', email: 'Email', passEmail: 'Password Email', expired: 'Expired',
             mobileUser: 'User Mobile', mobilePassword: 'Password Mobile', mobilePin: 'PIN Mobile',
             ibUser: 'I-Banking', ibPassword: 'Password IB', ibPin: 'PIN IB', myBCAUser: 'BCA-ID',
@@ -411,6 +431,7 @@ const generateCorrectedWordList = async (products) => {
         const commonFields = [
             { key: 'noOrder', label: 'No. Order' },
             { key: 'codeAgen', label: 'Code Agen' },
+            { key: 'jenisRekening', label: 'Jenis Rekening' },
             { key: 'bank', label: 'Bank' },
             { key: 'grade', label: 'Grade' },
             { key: 'kcp', label: 'Kantor Cabang' },
@@ -419,6 +440,7 @@ const generateCorrectedWordList = async (products) => {
             { key: 'namaIbuKandung', label: 'Nama Ibu Kandung' },
             { key: 'tempatTanggalLahir', label: 'Tempat/Tanggal Lahir' },
             { key: 'noRek', label: 'No. Rekening' },
+            { key: 'sisaSaldo', label: 'Sisa Saldo' },
             { key: 'noAtm', label: 'No. ATM' },
             { key: 'validThru', label: 'Valid Kartu' },
             { key: 'noHp', label: 'No. HP' },

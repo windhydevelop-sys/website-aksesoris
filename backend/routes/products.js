@@ -1106,9 +1106,9 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
 
     const fieldMap = {
       'No. Order': 'noOrder', 'Code Agen': 'codeAgen', 'Customer': 'customer', 'Bank': 'bank',
-      'Grade': 'grade', 'Kantor Cabang': 'kcp', 'NIK': 'nik', 'Nama': 'nama',
+      'Jenis Rekening': 'jenisRekening', 'Grade': 'grade', 'Kantor Cabang': 'kcp', 'NIK': 'nik', 'Nama': 'nama',
       'Nama Ibu Kandung': 'namaIbuKandung', 'Tempat/Tanggal Lahir': 'tempatTanggalLahir',
-      'No. Rekening': 'noRek', 'No. ATM': 'noAtm', 'Valid Kartu': 'validThru', 'No. HP': 'noHp',
+      'No. Rekening': 'noRek', 'Sisa Saldo': 'sisaSaldo', 'No. ATM': 'noAtm', 'Valid Kartu': 'validThru', 'No. HP': 'noHp',
       'PIN ATM': 'pinAtm', 'Email': 'email', 'Password Email': 'passEmail', 'Expired': 'expired',
       'User Mobile': 'mobileUser', 'Password Mobile': 'mobilePassword', 'PIN Mobile': 'mobilePin',
       'I-Banking': 'ibUser', 'Password IB': 'ibPassword', 'PIN IB': 'ibPin', 'BCA-ID': 'myBCAUser',

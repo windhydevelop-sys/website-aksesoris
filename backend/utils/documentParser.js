@@ -114,7 +114,7 @@ const parseListFormat = (text) => {
 
     const headers = [
       'No. Order', 'Code Agen', 'Jenis Rekening', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
-      'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
+      'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'Sisa Saldo', 'No. ATM',
       'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
       'User Mobile', 'Password Mobile', 'PIN Mobile',
       'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi',
