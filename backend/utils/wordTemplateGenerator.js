@@ -238,55 +238,70 @@ const generateBankSpecificTemplate = async (bankName) => {
  */
 const getImageBuffer = async (src) => {
     if (!src || src === '-' || src === '') return null;
+
+    logger.info(`[getImageBuffer] Attempting to load image. Source: "${src}" (type: ${typeof src})`);
+
     try {
+        // 1. If it's a URL, try fetching remotely first
         if (src.toString().startsWith('http')) {
-            logger.info(`Fetching remote image: ${src}`);
+            logger.info(`[getImageBuffer] Source is URL, fetching remotely: ${src}`);
             try {
                 const response = await axios.get(src, {
                     responseType: 'arraybuffer',
                     timeout: 10000
                 });
+                logger.info(`[getImageBuffer] Remote fetch SUCCESS (${response.data.byteLength} bytes)`);
                 return Buffer.from(response.data);
             } catch (fetchErr) {
-                logger.warn(`Failed to fetch remote image ${src}, trying local fallback...`, { error: fetchErr.message });
-                // Fallback: extract filename from Cloudinary URL and try local uploads
-                // Example: http://res.cloudinary.com/.../v123/folder/secure_123.png -> secure_123.png
-                const filename = path.basename(src.split('?')[0]);
-                const localPath = path.join(__dirname, '../uploads', filename);
-
-                if (fs.existsSync(localPath)) {
-                    logger.info(`Found local fallback for broken URL: ${localPath}`);
-                    return fs.readFileSync(localPath);
-                } else {
-                    const rootUploadsPath = path.join(__dirname, '../../uploads', filename);
-                    if (fs.existsSync(rootUploadsPath)) {
-                        logger.info(`Found local fallback in root for broken URL: ${rootUploadsPath}`);
-                        return fs.readFileSync(rootUploadsPath);
-                    }
-                }
-                throw fetchErr; // Re-throw if fallback fails too
+                logger.warn(`[getImageBuffer] Remote fetch FAILED: ${fetchErr.message}. Trying local fallback...`);
+                // Fall through to local file search below
             }
         }
 
-        // Local file handling
-        const filename = path.basename(src);
-        const localPath = path.join(__dirname, '../uploads', filename);
+        // 2. Extract filename from src (handles URLs, paths, and plain filenames)
+        const filename = path.basename(src.split('?')[0]);
+        logger.info(`[getImageBuffer] Extracted filename: "${filename}"`);
 
-        if (fs.existsSync(localPath)) {
-            logger.info(`Loading local image: ${localPath}`);
-            return fs.readFileSync(localPath);
+        // 3. Try multiple local paths
+        const searchPaths = [
+            path.join(__dirname, '../uploads', filename),
+            path.join(__dirname, '../../uploads', filename),
+            path.join(process.cwd(), 'uploads', filename),
+            path.join(process.cwd(), 'backend/uploads', filename),
+        ];
+
+        // Also try exact path if src looks like an absolute path
+        if (src.startsWith('/') || src.startsWith('C:')) {
+            searchPaths.unshift(src);
+        }
+
+        for (const searchPath of searchPaths) {
+            if (fs.existsSync(searchPath)) {
+                logger.info(`[getImageBuffer] FOUND image at: ${searchPath}`);
+                return fs.readFileSync(searchPath);
+            }
+        }
+
+        // 4. Fuzzy search: look for any file in uploads that contains part of the filename
+        const uploadsDir = path.join(__dirname, '../uploads');
+        if (fs.existsSync(uploadsDir)) {
+            const allFiles = fs.readdirSync(uploadsDir);
+            // Try exact match first, then partial match
+            const found = allFiles.find(f => f === filename) ||
+                allFiles.find(f => filename.includes(f) || f.includes(filename));
+            if (found) {
+                const foundPath = path.join(uploadsDir, found);
+                logger.info(`[getImageBuffer] FOUND via fuzzy search: ${foundPath}`);
+                return fs.readFileSync(foundPath);
+            }
+            logger.warn(`[getImageBuffer] NOT FOUND in uploads dir (${allFiles.length} files checked). Filename: "${filename}"`);
         } else {
-            // Try root uploads too
-            const rootUploadsPath = path.join(__dirname, '../../uploads', filename);
-            if (fs.existsSync(rootUploadsPath)) {
-                logger.info(`Loading local image from root: ${rootUploadsPath}`);
-                return fs.readFileSync(rootUploadsPath);
-            }
+            logger.warn(`[getImageBuffer] Uploads directory does not exist: ${uploadsDir}`);
         }
 
-        logger.warn(`Image file not found: ${src}`);
+        logger.warn(`[getImageBuffer] Image file NOT FOUND after all attempts: "${src}"`);
     } catch (err) {
-        logger.warn(`Failed to get image buffer for ${src}`, { error: err.message });
+        logger.error(`[getImageBuffer] UNEXPECTED ERROR for "${src}": ${err.message}`, { stack: err.stack });
     }
     return null;
 };

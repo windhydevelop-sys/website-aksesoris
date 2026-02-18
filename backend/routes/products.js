@@ -450,6 +450,11 @@ router.post('/export-corrected-word', auth, async (req, res) => {
       return res.status(400).json({ success: false, error: 'Invalid products data' });
     }
 
+    // Log photo fields for debugging
+    products.forEach((p, idx) => {
+      console.log(`[Word Export] Product ${idx + 1}: uploadFotoId="${p.uploadFotoId || 'EMPTY'}", uploadFotoSelfie="${p.uploadFotoSelfie || 'EMPTY'}"`);
+    });
+
     // Default to 'list' format as requested by user
     const exportFunc = format === 'table' ? generateCorrectedWord : generateCorrectedWordList;
     const { success, buffer, filename, error } = await exportFunc(products);
