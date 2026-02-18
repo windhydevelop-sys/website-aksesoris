@@ -225,22 +225,38 @@ const downloadTelegramFile = async (fileId, fieldName) => {
   try {
     const path = require('path');
     const fs = require('fs');
+    const { uploadSingleFile } = require('../utils/cloudinary');
     const uploadsDir = path.join(__dirname, '../uploads');
 
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    // bot.downloadFile returns the path where it was saved
+    // 1. Download from Telegram to local temp
     const downloadedPath = await bot.downloadFile(fileId, uploadsDir);
 
-    // Rename to our secure format
+    // 2. Rename to our secure format
     const ext = path.extname(downloadedPath) || '.jpg';
     const fileName = `secure_tg_${Date.now()}_${fieldName}${ext}`;
     const newPath = path.join(uploadsDir, fileName);
-
     fs.renameSync(downloadedPath, newPath);
-    return fileName;
+
+    // 3. Upload to Cloudinary for persistent storage
+    try {
+      const cloudResult = await uploadSingleFile(newPath);
+      if (cloudResult.success && cloudResult.url) {
+        console.log(`[Telegram] Photo uploaded to Cloudinary: ${cloudResult.url}`);
+        // Clean up local file after successful Cloudinary upload
+        try { fs.unlinkSync(newPath); } catch (e) { /* ignore cleanup errors */ }
+        return cloudResult.url; // Return Cloudinary URL
+      } else {
+        console.warn(`[Telegram] Cloudinary upload failed, keeping local file: ${fileName}`);
+        return fileName; // Fallback to local filename
+      }
+    } catch (cloudErr) {
+      console.error('[Telegram] Cloudinary upload error:', cloudErr.message);
+      return fileName; // Fallback to local filename
+    }
   } catch (error) {
     console.error('Error downloading Telegram file:', error);
     throw error;

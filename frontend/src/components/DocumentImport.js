@@ -340,7 +340,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
         }
     };
 
-    const handleDownloadCorrected = async (format = 'table') => {
+    const handleDownloadCorrected = async (format = 'list') => {
         if (!previewData?.extractedData) return;
         setExportAnchorEl(null);
         try {
