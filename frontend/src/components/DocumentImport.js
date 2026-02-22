@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from '../utils/axios';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions, Button,
-    Typography, Box, Alert, LinearProgress, Paper, Table,
+    Typography, Box, Alert, Paper, Table,
     TableBody, TableCell, TableContainer, TableHead, TableRow,
     Chip, Accordion, AccordionSummary, AccordionDetails,
     Menu, MenuItem, Autocomplete, TextField, CircularProgress,
