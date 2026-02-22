@@ -97,44 +97,57 @@ const parseProductData = (rawText) => {
 
   productBlocks.forEach((blockText, index) => {
     const patterns = {
-      nik: /NIK[\s:]*([0-9\-\s]{16,25})/i,
-      nama: /Nama[\s:]*([A-Za-z0-9\s\.\:\'\"\(\)\-\&\/]+?)(?:\s+Ibu|\s+Tempat|\s+No\.|\n|$)/i,
-      namaIbuKandung: /(?:Nama\s*)?Ibu\s*Kandung[\s:]*([A-Za-z\s]+?)(?:\s+Tempat|\s+No\.|\n|$)/i,
-      tempatTanggalLahir: /(?:Tempat|Tpat)?.*(?:Tanggal|Tgl)?.*Lahir[\s:]*([A-Za-z\s,0-9\-]+?)(?:\s+No\.|\n|$)/i,
-      noRek: /No.*?Rek(?:ening)?[\s:]*([0-9\s\-]{8,25})/i,
-      jenisRekening: /(?:Jenis\s*Rekening|Tipe\s*Rekening|Account\s*Type)[\s:]*([A-Za-z0-9\s]+?)(?:\s+No\.|\s+No\s*ATM|\n|$)/i,
-      noAtm: /(?:No\.?\s*ATM|Nomor\s*ATM|No\.?\s*Kartu\s*Debit)[\s:]*([0-9\s\-]{16,25})(?:\s*\(([0-9\/\s\-]+?)\))?/i,
-      validThru: /(?:Valid.*Thru|Valid.*Kartu)\s*[\s:]+\s*([0-9\/\-]+)/i,
-      noHp: /No.*HP[\s:]*([0-9+\-\s]+)/i,
-      pinAtm: /Pin.*ATM[\s:]*([0-9\s\-]{4,10})/i,
-      email: /Email[\s:]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
-      bank: /(?:^|\s)(?<!cabang\s)(?:Bank|Nama\s?Bank)[\s:]*([A-Za-z\s]+?)(?:\s*\((?:Grade\s+)?([^)]+?)\))?(?:\s+Grade|\s+KCP|\s+Kantor\s+Cabang|\n|$)/i,
-      grade: /(?:^|\s)Grade[\s:]*([A-Za-z0-9\s]+?)(?:\s*\)|$|\s+KCP|\s+Kantor\s+Cabang|\s+NIK|\n)/i,
-      kcp: /(?:KCP|Kantor\s+Cabang|Cabang\s+Bank)\s*[\s:]+\s*([A-Za-z0-9\s\-\.]+?)(?:\s+NIK|\n|$)/i,
-      noOrder: /No\s*\.?\s*ORDER[\s:]*[(\[]?\s*([^\]\)\n]+?)(?:\s+NIK|\s+Nama|\n|$|[)\]])/i,
-      codeAgen: /(?:Code\s*Agen|Kode\s*Orlap)[\s:]*[(\[]?([A-Za-z0-9\-]+)[)\]]?/i,
-      customer: /(?:Customer|Pelanggan)[\s:]*[(\[]?([A-Za-z0-9\s]+?)[)\]]?(?:\s+NIK|\s+Nama|\n|$)/i,
+      // 1. BRI BRIMO - Explicit patterns first
+      brimoUser: /(?:User|ID|Account|Login|Username)\s*(?:Brimo|BRIMO|BRI\s*Mobile)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      brimoPassword: /(?:Pass(?:word)?|Kata\s*Sandi|Password)\s*(?:Brimo|BRIMO|BRI\s*Mobile)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      // brimoPin is mapped to mobilePin below for consistency
 
-      // IB Credentials (Priority)
-      ibUser: /(?:User\s*I-Banking|I-Banking|User\s*IB|Internet\s*Banking|IB\s*User|IB)[\s:]+([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      ibPassword: /(?:Pass(?:word)?\s*I-Banking|Pass(?:word)?\s*IB|Password\s*Internet\s*Banking)[\s:]+([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      ibPin: /(?:Pin\s*I-Banking|Pin\s*IB)[\s:]+([0-9]{4,10})/i,
+      // 2. BRI MERCHANT QRIS
+      briMerchantUser: /(?:User|ID|Username|Account)\s*(?:Merchant|Qris|QRIS)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      briMerchantPassword: /(?:Pass(?:word)?|Kata\s*Sandi)\s*(?:Merchant|Qris|QRIS)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
 
-      // Merchant Credentials (BRI Qris)
-      merchantUser: /(?:User|ID|Username)\s*(?:Merchant|Qris)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      merchantPassword: /(?:Pass(?:word)?|Kata\s*Sandi)\s*(?:Merchant|Qris)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      // 3. BCA Specific Fields
+      kodeAkses: /Kode\s+Akses[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      pinMBca: /Pin\s+M-?BCA[ \t:]*([0-9]{4,10})/i,
+      myBCAUser: /BCA-?ID[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      myBCAPassword: /Pass\s+BCA-?ID[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      myBCAPin: /Pin\s+Transaksi[ \t:]*([0-9]{4,10})/i,
 
+      // 4. OCBC Nyala
+      ocbcNyalaUser: /(?:User|ID|Account|Login|Username)\s*(?:Nyala|NYALA|OCBC)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      ocbcNyalaPassword: /(?:Pass(?:word)?|Kata\s*Sandi)\s*(?:Nyala|NYALA|OCBC)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      ocbcNyalaPin: /(?:PIN?|Pin\s*Login|Pin\s*Transaksi)\s*(?:Nyala|NYALA)?[ \t:]*([0-9]{4,10})/i,
 
-      pinWondr: /PIN\s*Wondr[\s:]*([0-9]{4,8})/i,
-      passWondr: /Pass(?:word)?\s*Wondr[\s:]*([A-Za-z0-9!@#$%^&*]+)/i,
-      passEmail: /Pass(?:word)?\s*Email[\s:]*([A-Za-z0-9!@#$%^&*]+)/i,
-      mobileUser: /(?:User|Id|Login|Account|User\s*Id|User\s*M-Banking|User\s*M-Bank)\s*(?:Mobile|M-BCA|MBCA|BRIMO|Livin|Wondr|Nyala|M-Bank|MBANK|M-Banking|Login|Account)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      mobilePassword: /(?:Kode\s*Akses|Password|Pass|Login|Pass\s*Login|Pass\s*Mobile|Password\s*Mobile)\s*(?:Mobile|M-BCA|MBCA|BRIMO|Livin|Wondr|M-Bank|MBANK|M-Banking|Login)?[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      mobilePin: /(?:Pin|Pin\s*Login|Pin\s*Mobile)\s*(?:M-BCA|MBCA|Mobile|BRIMO|Livin|Wondr|M-Bank|MBANK|M-Banking|Login)?[\s:]*([0-9]{4,10})/i,
+      // 5. Generic / Multi-bank Mobile (BNI, Mandiri, BRI fallback, etc)
+      mobileUser: /(?:User\s*ID|Username|Account|Login|User|ID)\s*(?:M-?Banking|Wondr|WON|Livin|BRIMO|Nyala|Mobile)?\s*[ \t:]+([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      mobilePassword: /(?:Pass(?:word)?|Kata\s*Sandi|Password)\s*(?:M-?Banking|Wondr|WON|Livin|BRIMO|Nyala|Mobile)?\s*[ \t:]+([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      mobilePin: /(?:Pin|PIN)\s*(?:Mobile|M-BCA|M\s*BCA|Mobile\s*BCA|M-Bank|Livin|Wondr|WON|BRIMO|Nyala|Login|Transaksi)?\s*[ \t:]*([0-9]{4,10})/i,
 
-      myBCAUser: /(?:BCA\s*ID|BCA-ID|User\s*myBCA)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      myBCAPassword: /(?:Pass\s*BCA-ID|Pass\s*BCA\s*ID|Password\s*myBCA)[\s:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      myBCAPin: /(?:Pin\s*Transaksi|Pin\s*myBCA|Pin\s*BCA\s*ID|Pin\s*BCA-ID)[\s:]*([0-9]{4,10})/i
+      // 6. IB Credentials
+      ibUser: /User\s+I-?Banking[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]*)/i,
+      ibPin: /Pin\s+I-?Banking[ \t:]*([0-9]{4,10})?/i,
+
+      // 7. Basic Fields
+      nik: /NIK[ \t:]*([0-9\-\s]{16,25})/i,
+      nama: /Nama[ \t:]*([A-Za-z0-9\s\.\:\'\"\(\)\-\&\/]+?)(?:\s+Ibu|\s+Tempat|\s+No\.|\n|$)/i,
+      namaIbuKandung: /(?:Nama\s*)?Ibu\s*Kandung[ \t:]*([A-Za-z\s]+?)(?:\s+Tempat|\s+No\.|\n|$)/i,
+      tempatTanggalLahir: /(?:Tempat|Tpat)?.*(?:Tanggal|Tgl)?.*Lahir[ \t:]*([A-Za-z\s,0-9\-]+?)(?:\s+No\.|\n|$)/i,
+      noRek: /(?:No.*?Rek(?:ening)?|No\.?Rek)[ \t:]*([0-9\s\-]{8,25})/i,
+      jenisRekening: /(?:Jenis\s*Rekening|Tipe\s*Rekening|Account\s*Type)[ \t:]*([A-Za-z0-9\s]+?)(?:\s+No\.|\s+No\s*ATM|\n|$)/i,
+      noAtm: /(?:No\.?\s*(?:ATM|Kartu(?:\s+Debit)?)|Nomor\s*(?:ATM|Kartu)|No\.?\s*Kartu)[ \t:]*([0-9\s\-]{16,25})(?:\s*\(([0-9\/\s\-]+?)\))?/i,
+      validThru: /(?:Valid(?:\s*Thru)?|Valid(?:\s*Kartu)?|Valid(?:\s*SD)|Exp(?:ire)?(?:d)?(?:\s*Date)?|Masa\s*Aktif|Berlaku\s*Sampai)[ \t:]*([0-9\/\-]{4,10})/i,
+      noHp: /(?:No.*HP|Nomor.*HP)[ \t:]*([0-9+\-\s]+)/i,
+      pinAtm: /(?:(?:U-)?PIN(?:\s+ATM)?|PIN(?:\s+Kartu)?|PIN\s+Transaksi\s+ATM)[ \t:]*([0-9\s\-]{4,10})/i,
+      email: /Email[ \t:]*([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
+      bank: /(?:^|\s)(?<!cabang\s)(?:Bank|Nama\s?Bank)[ \t:]*([A-Za-z\s]+?)(?:\s*\((?:Grade\s+)?([^)]+?)\))?(?:\s+Grade|\s+KCP|\s+Kantor\s+Cabang|\n|$)/i,
+      grade: /(?:^|\s)Grade[ \t:]*([A-Z])(?:\s*\([^)]*\))?/i,
+      kcp: /(?:KCP|Kantor\s+Cabang|Cabang(?:\s+Bank)?|Cabang)[ \t:]*([A-Za-z0-9\s\-\.]+?)(?:\s+(?:NIK|Grade)|\n|$)/i,
+      noOrder: /(?:No\s*\.?\s*ORDER|No\s*Order)[ \t:]*[(\[]?\s*([^\]\)\n]+?)(?:\s+NIK|\s+Nama|\n|$|[)\]])/i,
+      codeAgen: /(?:Code\s*Agen|Kode\s*Orlap|Kode\s*Agen)[ \t:]*[(\[]?([A-Za-z0-9\-]+)[)\]]?/i,
+      customer: /(?:Customer|Pelanggan)[ \t:]*[(\[]?([A-Za-z0-9\s]+?)[)\]]?(?:\s+NIK|\s+Nama|\n|$)/i,
+      passEmail: /Pass\s+Email[ \t:]*([A-Za-z0-9!@#$%^&* .\-_@]+)/i,
+      merchantUser: /(?:User|ID|Username)\s*(?:Merchant|Qris)\s*[:=][ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      merchantPassword: /(?:Pass(?:word)?|Kata\s*Sandi)\s*(?:Merchant|Qris)\s*[:=][ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
     };
 
     const extractedData = {};
@@ -144,11 +157,21 @@ const parseProductData = (rawText) => {
         extractedData[key] = match[1].trim();
 
         // Secondary capture groups for combined fields
-        if (key === 'bank' && match[2] && !extractedData.grade) {
+        if (key === 'bank' && match[2] && (!extractedData.grade || extractedData.grade === '-')) {
           extractedData.grade = match[2].trim();
         }
-        if (key === 'noAtm' && match[2] && !extractedData.validThru) {
-          extractedData.validThru = match[2].trim();
+
+        // Extract Valid Thru from No. Kartu line if present in brackets
+        if (key === 'noAtm') {
+          const fullMatch = match[0];
+          const parenMatch = fullMatch.match(/\(([^)]+)\)/);
+          if (parenMatch && parenMatch[1] && (!extractedData.validThru || extractedData.validThru === '-')) {
+            extractedData.validThru = parenMatch[1].trim();
+          }
+          // Clean up noAtm if it captured the bracket part
+          if (extractedData.noAtm.includes('(')) {
+            extractedData.noAtm = extractedData.noAtm.split('(')[0].trim();
+          }
         }
       } else {
         // Default value for missing fields only if not already set (e.g. by composite fields)
@@ -166,7 +189,10 @@ const parseProductData = (rawText) => {
       }
     }
 
-    const cleanNumeric = (str) => str ? str.replace(/[\s\-]/g, '') : '';
+    const cleanNumeric = (str) => {
+      if (!str || str === '-') return '-';
+      return str.replace(/[\s\-\.]/g, '');
+    };
     extractedData.noHp = cleanNumeric(extractedData.noHp);
     extractedData.noRek = cleanNumeric(extractedData.noRek);
     extractedData.nik = cleanNumeric(extractedData.nik);
@@ -323,59 +349,108 @@ const processDocumentFile = async (filePath) => {
   }
 };
 
+// Helper: Normalize header untuk flexible matching
+const normalizeHeaderCell = (cell) => {
+  return String(cell)
+    .trim()
+    .toLowerCase()
+    .replace(/[-\/().\[\]:]/g, ' ')  // Replace special chars dengan space (termasuk titik dua)
+    .replace(/\s+/g, ' ')           // Normalize multiple spaces to single
+    .trim();
+};
+
+// Helper: Smart header matching dengan pattern & keywords
+const matchHeaderToField = (headerCell) => {
+  const normalized = normalizeHeaderCell(headerCell);
+  matchHeaderToField.lastMatchedIndex = 999; // Reset to a high value
+
+  // Pattern-based matching untuk fleksibilitas
+  const patterns = [
+    // ============ BRI BRIMO - Explicit patterns FIRST ============
+    { regex: /brimo\s+user|user\s+brimo|id\s+brimo|account\s+brimo/i, field: 'brimoUser' },
+    { regex: /brimo\s+(?:pass|password)|pass\s+brimo|password\s+brimo|brimo\s+pass/i, field: 'brimoPassword' },
+    { regex: /brimo\s+pin|pin\s+brimo/i, field: 'brimoPin' },
+
+    // ============ BRI QRIS/MERCHANT ============
+    { regex: /merchant\s+user|user\s+merchant|qris\s+user|user\s+qris|id\s+(?:merchant|qris)/i, field: 'briMerchantUser' },
+    { regex: /merchant\s+(?:pass|password)|(?:pass|password)\s+merchant|qris\s+(?:pass|password)|(?:pass|password)\s+qris/i, field: 'briMerchantPassword' },
+
+    // ============ BNI WONDR ============
+    { regex: /wondr\s+user|user\s+wondr|id\s+wondr/i, field: 'mobileUser' },
+    { regex: /wondr\s+(?:pass|password)|pass\s+wondr|password\s+wondr|wondr\s+pass/i, field: 'mobilePassword' },
+    { regex: /wondr\s+pin|pin\s+wondr/i, field: 'mobilePin' },
+
+    // ============ MANDIRI LIVIN ============
+    { regex: /livin\s+user|user\s+livin|id\s+livin|account\s+livin|user\s+id\s+livin|acc\s+livin/i, field: 'mobileUser' },
+    { regex: /livin\s+(?:pass|password)|pass\s+livin|password\s+livin|login\s+livin/i, field: 'mobilePassword' },
+    { regex: /livin\s+pin|pin\s+livin|transaksi\s+livin/i, field: 'mobilePin' },
+
+    // ============ OCBC NYALA ============
+    { regex: /nyala\s+user|user\s+nyala|id\s+nyala|account\s+nyala|yala\s+user|user\s+id\s+nyala/i, field: 'ocbcNyalaUser' },
+    { regex: /nyala\s+(?:pass|password)|pass\s+nyala|password\s+nyala|pass\s+login|password\s+login/i, field: 'ocbcNyalaPassword' },
+    { regex: /nyala\s+pin|pin\s+nyala|pin\s+login/i, field: 'ocbcNyalaPin' },
+
+    // ============ BCA Specific ============
+    { regex: /kode\s+akses/i, field: 'kodeAkses' },
+    { regex: /kode\s+akses\s+m\s*bca/i, field: 'kodeAkses' },
+    { regex: /pin\s+m\s*bca|pin\s+mobile\s+bca/i, field: 'pinMBca' },
+    { regex: /user\s+(bca\s*id|my\s*bca)|id\s+(bca\s*id|my\s*bca)/i, field: 'myBCAUser' },
+    { regex: /pass\s+(bca\s*id|my\s*bca)|password\s+(bca\s*id|my\s*bca)/i, field: 'myBCAPassword' },
+    { regex: /pin\s+(bca\s*id|my\s*bca|transaksi)/i, field: 'myBCAPin' },
+
+    // ============ GENERIC Mobile / IB ============
+    { regex: /user\s+(m\s*banking|mobile|id|account|m\s*bank)|(mobile|m\s*banking|acc|m\s*bank)\s+user|id\s+user/i, field: 'mobileUser' },
+    { regex: /pass\s+(m\s*banking|mobile|m\s*bank)|password\s+(mobile|m\s*banking|m\s*bank)|pin\s+login|password\s+login/i, field: 'mobilePassword' },
+    { regex: /pin\s+(mobile|m\s*bank|banking|transaksi)|pin\s+login/i, field: 'mobilePin' },
+
+    { regex: /user\s+(i\s*banking|i\s*bank|ib|internet\s+banking)/i, field: 'ibUser' },
+    { regex: /pass\s+(i\s*banking|i\s*bank|ib|internet\s+banking)|password\s+(internet\s+banking|i\s*banking|ib)/i, field: 'ibPassword' },
+    { regex: /pin\s+(i\s*banking|i\s*bank|ib|internet\s+banking)/i, field: 'ibPin' },
+
+    // Basic headers
+    { regex: /^no\s+order|nomor\s+order/i, field: 'noOrder' },
+    { regex: /code\s+agen|kode\s+(?:agen|orlap)/i, field: 'codeAgen' },
+    { regex: /^nik|nomor\s+induk\s+kependudukan/i, field: 'nik' },
+    { regex: /^nama$|nama\s+lengkap|nama\s+sesuai\s+ktp/i, field: 'nama' },
+    { regex: /(?:nama\s+)?ibu\s+kandung|nama\s+ibu\s+kandung/i, field: 'namaIbuKandung' },
+    { regex: /tempat.*(?:tgl|tanggal).*lahir/i, field: 'tempatTanggalLahir' },
+    { regex: /^bank$|nama\s+bank/i, field: 'bank' },
+    { regex: /no\s+hp|nomor\s+hp|nomor\s+handphone/i, field: 'noHp' },
+    { regex: /no\s+rek|nomor\s+rekening|rekening/i, field: 'noRek' },
+    { regex: /no\s+atm|nomor\s+atm|nomor\s+kartu/i, field: 'noAtm' },
+    { regex: /valid\s+thru|valid\s+kartu|expire|masa\s+aktif|berlaku/i, field: 'validThru' },
+    { regex: /pin\s+atm|u\s*pin|pin\s+kartu/i, field: 'pinAtm' },
+    { regex: /kcp|kantor\s+cabang|cabang/i, field: 'kcp' },
+    { regex: /pass\s+email|password\s+email/i, field: 'passEmail' },
+    { regex: /email/i, field: 'email' },
+    { regex: /foto\s+ktp|upload\s+foto\s+ktp/i, field: 'uploadFotoId' },
+    { regex: /foto\s+selfie|upload\s+foto\s+selfie/i, field: 'uploadFotoSelfie' },
+    { regex: /^grade$|grade\s+kartu/i, field: 'grade' },
+    { regex: /customer|pelanggan/i, field: 'customer' },
+    { regex: /validasi|status/i, field: 'status' },
+
+    // ============ GENERIC FALLBACKS (at the end) ============
+    { regex: /^user$|^username$|^user\s*id$|^userid$|^id\s*user$|^user\s*login$|^login\s*id$/i, field: 'mobileUser' },
+    { regex: /^pass$|^password$|^kata\s*sandi$|^sandi$|^passw$/i, field: 'mobilePassword' },
+    { regex: /^pin$/i, field: 'mobilePin' },
+  ];
+
+  for (let i = 0; i < patterns.length; i++) {
+    const pattern = patterns[i];
+    if (pattern.regex.test(normalized)) {
+      matchHeaderToField.lastMatchedIndex = i;
+      // Return field name if matched (could be null for "User M-BCA" to skip)
+      return pattern.field !== undefined ? pattern.field : null;
+    }
+  }
+
+  // Fallback: return undefined if no pattern matched (signals: not a recognized field)
+  return undefined;
+};
+
 const parseTableData = (tableData) => {
   const products = [];
   if (!tableData || tableData.length < 2) return products;
-
-  const fieldMapping = {
-    'no. order': 'noOrder', 'no order': 'noOrder', 'nomor order': 'noOrder', 'order no': 'noOrder',
-    'kode agen': 'codeAgen', 'code agen': 'codeAgen', 'kode orlap': 'codeAgen', 'code orlap': 'codeAgen',
-    'bank': 'bank', 'nama bank': 'bank', 'jenis bank': 'bank',
-    'grade': 'grade', 'kcp': 'kcp', 'kantor cabang': 'kcp', 'cabang bank': 'kcp',
-    'nik': 'nik', 'nomor induk kependudukan': 'nik',
-    'nama': 'nama', 'nama lengkap': 'nama', 'nama sesuai ktp': 'nama',
-    'nama ibu kandung': 'namaIbuKandung', 'ibu kandung': 'namaIbuKandung',
-    'tempat tanggal lahir': 'tempatTanggalLahir', 'ttl': 'tempatTanggalLahir',
-    'no. rekening': 'noRek', 'no rekening': 'noRek', 'nomor rekening': 'noRek', 'rekening': 'noRek',
-    'no. atm': 'noAtm', 'no atm': 'noAtm', 'nomor atm': 'noAtm', 'nomor kartu debit': 'noAtm',
-    'valid thru': 'validThru', 'valid kartu': 'validThru', 'valid sd': 'validThru', 'masa aktif': 'validThru',
-    'no. hp': 'noHp', 'no hp': 'noHp', 'nomor hp': 'noHp', 'nomor handphone': 'noHp',
-    'pin atm': 'pinAtm', 'pin kartu': 'pinAtm',
-    'email': 'email', 'alamat email': 'email',
-    'expired': 'expired', 'tanggal expired': 'expired',
-    'foto ktp': 'uploadFotoId', 'upload foto ktp': 'uploadFotoId',
-    'foto selfie': 'uploadFotoSelfie', 'upload foto selfie': 'uploadFotoSelfie',
-    'customer': 'customer', 'pelanggan': 'customer', 'nama customer': 'customer', 'nama pelanggan': 'customer',
-    'kode akses': 'mobilePassword', 'user m-bca': 'mobileUser', 'pin m-bca': 'mobilePin', 'bca-id': 'myBCAUser', 'pass bca-id': 'myBCAPassword',
-    'pin transaksi': 'myBCAPin', 'pin bca-id': 'myBCAPin', 'pin bca id': 'myBCAPin', 'user i-banking': 'ibUser', 'pin i-banking': 'ibPin', 'i-banking': 'ibUser', 'pass i-banking': 'ibPassword', 'password internet banking': 'ibPassword',
-    'pass i-banking': 'ibPassword', 'password i-banking': 'ibPassword', 'pin i-banking': 'ibPin',
-    'user ib': 'ibUser', 'pass ib': 'ibPassword', 'password ib': 'ibPassword', 'pin ib': 'ibPin',
-    // OCBC (Nyala)
-    'user nyala': 'mobileUser', 'id nyala': 'mobileUser', 'user id nyala': 'mobileUser',
-    'nyala id': 'mobileUser', 'nyala user': 'mobileUser',
-    'pin mobile': 'mobilePin', 'pass mobile': 'mobilePassword', 'password mobile': 'mobilePassword',
-    // Generic / Other
-    'no rek': 'noRek', 'norek': 'noRek', 'nomor rekening': 'noRek', 'rekening': 'noRek',
-    'jenis rekening': 'jenisRekening', 'tipe rekening': 'jenisRekening', 'account type': 'jenisRekening', 'jenis tabungan': 'jenisRekening',
-    'user merchant': 'merchantUser', 'id merchant': 'merchantUser', 'username merchant': 'merchantUser', 'user qris': 'merchantUser',
-    'password merchant': 'merchantPassword', 'pass merchant': 'merchantPassword', 'password qris': 'merchantPassword',
-    'no atm': 'noAtm', 'noatm': 'noAtm', 'nomor atm': 'noAtm', 'nomor kartu': 'noAtm', 'kartu debit': 'noAtm',
-    // BRI (BRIMO)
-    'user brimo': 'mobileUser', 'id brimo': 'mobileUser', 'password brimo': 'mobilePassword', 'pass brimo': 'mobilePassword', 'pin brimo': 'mobilePin',
-    'brimo id': 'mobileUser', 'brimo user': 'mobileUser', 'brimo password': 'mobilePassword', 'brimo pass': 'mobilePassword', 'brimo pin': 'mobilePin',
-    // Mandiri (Livin)
-    'user livin': 'mobileUser', 'id livin': 'mobileUser', 'password livin': 'mobilePassword', 'pass livin': 'mobilePassword', 'pin livin': 'mobilePin',
-    'livin id': 'mobileUser', 'livin user': 'mobileUser', 'livin password': 'mobilePassword', 'livin pass': 'mobilePassword', 'livin pin': 'mobilePin',
-    // BNI (Wondr)
-    'user wondr': 'mobileUser', 'id wondr': 'mobileUser', 'password wondr': 'mobilePassword', 'pass wondr': 'mobilePassword', 'pin wondr': 'mobilePin',
-    'wondr id': 'mobileUser', 'wondr user': 'mobileUser', 'wondr password': 'mobilePassword', 'wondr pass': 'mobilePassword', 'wondr pin': 'mobilePin',
-    'password transaksi wondr': 'mobilePin', 'pass transaksi wondr': 'mobilePin',
-    // Generic variations for Mobile Banking
-    'user mobile': 'mobileUser', 'id mobile': 'mobileUser', 'password mobile': 'mobilePassword', 'pass mobile': 'mobilePassword', 'pin mobile': 'mobilePin',
-    'user mbanking': 'mobileUser', 'id mbanking': 'mobileUser', 'password mbanking': 'mobilePassword', 'pass mbanking': 'mobilePassword', 'pin mbanking': 'mobilePin',
-    'kata sandi mobile': 'mobilePassword', 'login mobile': 'mobileUser', 'akun mobile': 'mobileUser',
-    'kode akses': 'mobilePassword', 'access code': 'mobilePassword'
-  };
 
   // Find header row by checking which row contains the most known headers
   let headerRowIndex = -1;
@@ -388,15 +463,30 @@ const parseTableData = (tableData) => {
 
     let matches = 0;
     const currentHeaders = [];
+    const unmappedHeaders = [];
     row.forEach(cell => {
-      const cleanCell = String(cell).trim().toLowerCase();
-      if (fieldMapping[cleanCell]) {
+      const field = matchHeaderToField(cell);
+      // Count as match if field was recognized (not undefined)
+      const isValidField = field !== undefined;
+      if (isValidField) {
         matches++;
-        currentHeaders.push(fieldMapping[cleanCell]);
-      } else {
-        currentHeaders.push(cleanCell);
+      }
+      if (field !== undefined && field !== null) {
+        currentHeaders.push(field);
+      }
+      if (field === undefined) {
+        unmappedHeaders.push(normalizeHeaderCell(cell));
       }
     });
+
+    // DEBUG: Log BCA-specific headers if detected
+    if (currentHeaders.some(h => ['mobilePassword', 'pinMBca', 'ibUser', 'ibPin', 'myBCAUser'].includes(h))) {
+      logger.info('BCA-specific headers detected in row', {
+        rowIndex: i,
+        detectedHeaders: currentHeaders,
+        unmappedHeaders
+      });
+    }
 
     if (matches > maxMatchedHeaders && matches >= 3) {
       maxMatchedHeaders = matches;
@@ -412,17 +502,43 @@ const parseTableData = (tableData) => {
 
   logger.info('Found header row', { index: headerRowIndex, matchedFields: maxMatchedHeaders });
 
+  // Build headerMap PRESERVING ORIGINAL COLUMN INDICES
   const headerMap = {};
-  detectedHeaders.forEach((field, i) => { headerMap[i] = field; });
+  const headerRow = tableData[headerRowIndex];
+  headerRow.forEach((cell, idx) => {
+    const field = matchHeaderToField(cell);
+    // Only add to map if field was recognized (not undefined)
+    if (field !== undefined && field !== null) {
+      headerMap[idx] = {
+        field: field,
+        isStrong: matchHeaderToField.lastMatchedIndex < 44
+      };
+    }
+  });
 
   for (let i = headerRowIndex + 1; i < tableData.length; i++) {
     const row = tableData[i];
     const p = {};
     if (!row) continue;
     row.forEach((cell, idx) => {
-      const field = headerMap[idx];
-      if (field) {
-        p[field] = String(cell).trim();
+      const headerInfo = headerMap[idx];
+      if (headerInfo) {
+        const field = headerInfo.field;
+        const cleanValue = String(cell).trim();
+        // Skip if empty string to avoid overwriting good values from other potentially matched columns
+        if (cleanValue === '') return;
+
+        // Is this a "strong" match or a generic fallback?
+        const isStrongMatch = headerInfo.isStrong;
+        const currentIsStrong = p[`_${field}_isStrong`] || false;
+
+        // Set if: 
+        // 1. Never set before
+        // 2. OR currently weakly set but this is a strong match
+        if (!p[field] || (!currentIsStrong && isStrongMatch)) {
+          p[field] = cleanValue;
+          p[`_${field}_isStrong`] = isStrongMatch;
+        }
       }
     });
     if (p.noHp) p.noHp = p.noHp.replace(/[\s\-]/g, '');
@@ -436,27 +552,143 @@ const parseTableData = (tableData) => {
 const validateExtractedData = (products) => {
   const errors = [];
   const validProducts = [];
+  const seenRekening = new Map();  // Track rekening numbers for duplicate detection
+
   products.forEach((product, index) => {
     const productErrors = [];
-    const mandatoryFields = ['nik', 'nama', 'noRek', 'noAtm', 'noHp', 'pinAtm', 'email'];
 
-    // DEBUG LOG
-    if (index === 0) console.log('DEBUG VALIDATION FIELDS:', mandatoryFields);
-
-    const bank = (product.bank || '').toLowerCase();
-
-    if (bank.includes('bni')) {
-      if (product.pinWondr) mandatoryFields.push('pinWondr');
+    // ========== CRITICAL VALIDATION: NO REKENING ==========
+    // 1. No Rekening MUST EXIST
+    if (!product.noRek || String(product.noRek).trim() === '' || product.noRek === '-') {
+      productErrors.push('noRek is REQUIRED - no rekening data');
+      errors.push({
+        productIndex: index,
+        errors: productErrors,
+        data: product,
+        reason: 'MISSING_REKENING'
+      });
+      return;  // Skip further validation if no rekening
     }
 
+    // 2. Clean and normalize noRek for duplicate detection
+    const noRekClean = String(product.noRek)
+      .replace(/[\s\-()]/g, '')  // Remove spaces, dashes, parentheses
+      .trim();
+
+    // 3. Check for DUPLICATE noRek
+    if (seenRekening.has(noRekClean)) {
+      const firstIndex = seenRekening.get(noRekClean);
+      productErrors.push(`Duplicate noRek: "${product.noRek}" (first seen at row ${firstIndex + 1})`);
+      errors.push({
+        productIndex: index,
+        errors: productErrors,
+        data: product,
+        reason: 'DUPLICATE_REKENING',
+        duplicateOf: firstIndex
+      });
+      return;  // Skip if duplicate
+    }
+
+    // Track this rekening as seen
+    seenRekening.set(noRekClean, index);
+    product.noRekClean = noRekClean;  // Store cleaned version
+
+    // ========== BANK SPECIFIC ALIGNMENT ==========
+    const { getBankConfig, getMandatoryFields, getDisplayLabel } = require('../config/bankFieldMapping');
+    const bankConfig = getBankConfig(product.bank);
+    const bank = bankConfig.name.toUpperCase();
+
+    // Map common mobileUser to bank-specific fields if needed
+    if (bank === 'BRI') {
+      if (!product.brimoUser && product.mobileUser) product.brimoUser = product.mobileUser;
+      if (!product.brimoPassword && product.mobilePassword) product.brimoPassword = product.mobilePassword;
+      if (!product.brimoPin && product.mobilePin) product.brimoPin = product.mobilePin;
+    }
+
+    // Align BNI Wondr (Uses generic mobileUser/mobilePassword/mobilePin)
+    // No action needed as they already use the correct fields for BNI
+
+    // ========== OTHER VALIDATIONS ==========
+    const jenisRekening = (product.jenisRekening || 'TABUNGAN').toUpperCase();
+    const mandatoryFields = getMandatoryFields(bank, jenisRekening);
+
+    // DEBUG: Log field extraction for ALL banks (untuk diagnosa field kosong)
+    logger.info(`[Bank Extract ${bank}] Product ${index}:`, {
+      productIndex: index,
+      bank: bank,
+      jenisRekening: jenisRekening,
+      noRek: product.noRek,
+      noRekClean: noRekClean,
+      // BCA - M-BCA Mobile Banking (User tidak digunakan, gunakan mobilePassword untuk Kode Akses)
+      mobilePassword: product.mobilePassword || 'KOSONG',  // Ini adalah "Kode Akses"
+      pinMBca: product.pinMBca || 'KOSONG',                // PIN untuk transaksi
+      // BCA - MyBCA / BCA-ID (Internet Banking Corporate)
+      myBCAUser: product.myBCAUser || 'KOSONG',
+      myBCAPassword: product.myBCAPassword || 'KOSONG',
+      myBCAPin: product.myBCAPin || 'KOSONG',
+      // I-Banking - HANYA User & Pin (TANPA Password!)
+      ibUser: product.ibUser || 'KOSONG',
+      ibPin: product.ibPin || 'KOSONG',
+      // BRI BRIMO Fields
+      brimoUser: product.brimoUser || 'KOSONG',
+      brimoPassword: product.brimoPassword || 'KOSONG',
+      brimoPin: product.brimoPin || 'KOSONG',
+      // BRI QRIS/Merchant Fields
+      briMerchantUser: product.briMerchantUser || 'KOSONG',
+      briMerchantPassword: product.briMerchantPassword || 'KOSONG',
+      // OCBC Fields
+      ocbcNyalaUser: product.ocbcNyalaUser || 'KOSONG',
+      ocbcNyalaPassword: product.ocbcNyalaPassword || 'KOSONG',
+      ocbcNyalaPin: product.ocbcNyalaPin || 'KOSONG',
+      // Summary
+      nonEmptyFields: Object.keys(product).filter(k => product[k] && product[k] !== '-').length,
+      totalFields: Object.keys(product).length
+    });
+
     mandatoryFields.forEach(field => {
-      if (!product[field] || String(product[field]).trim() === '') {
-        productErrors.push(`${field} is required`);
+      const value = product[field];
+      if (!value || String(value).trim() === '' || value === '-') {
+        const label = getDisplayLabel(field, bank);
+        productErrors.push(`${label} is required for ${bank}`);
       }
     });
-    if (product.nik && !/^\d{16}$/.test(product.nik)) productErrors.push('NIK must be 16 digits');
+
+    if (product.nik) {
+      const nikClean = String(product.nik).replace(/\s+/g, '');
+      if (!/^\d{16}$/.test(nikClean)) {
+        productErrors.push('NIK must be 16 digits');
+      }
+    }
+
+    // Email - trim and attempt to extract passEmail if combined
+    if (product.email) {
+      const emailValue = String(product.email).trim();
+
+      // Handle combined "email@addr.com pass email : password"
+      if (emailValue.toLowerCase().includes('pass email')) {
+        const parts = emailValue.split(/(?=pass email)/i);
+        if (parts.length > 1) {
+          product.email = parts[0].trim();
+          const passPart = parts[1].replace(/pass email\s*[:\s]*/i, '').trim();
+          if (passPart && (!product.passEmail || product.passEmail === '-')) {
+            product.passEmail = passPart;
+          }
+        }
+      }
+
+      const emailTrimmed = String(product.email).trim().toLowerCase();
+      product.email = emailTrimmed === '-' ? '' : emailTrimmed;  // Remove if just "-"
+    }
+
+    if (product.noHp) {
+      const hpClean = String(product.noHp).replace(/[\s\-+()]/g, '');
+      if (!/^\d{10,15}$/.test(hpClean)) {
+        productErrors.push('Phone number format invalid');
+      }
+    }
+
     if (productErrors.length === 0) validProducts.push(product);
-    else errors.push({ productIndex: index, errors: productErrors, data: product });
+    else errors.push({ productIndex: index, errors: productErrors, data: product, bank, jenisRekening });
   });
   return { validProducts, errors, summary: { total: products.length, valid: validProducts.length, invalid: errors.length } };
 };
@@ -466,5 +698,7 @@ module.exports = {
   processDocumentFile,
   extractTextFromPDF,
   parseProductData,
+  parseTableData,
+  matchHeaderToField,
   validateExtractedData
 };

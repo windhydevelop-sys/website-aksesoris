@@ -36,13 +36,12 @@ const generateWordTemplate = async () => {
     try {
         logger.info('Generating Word template for bulk upload');
 
-        // Define table headers (field names)
         const headers = [
             'No. Order', 'Code Agen', 'Customer', 'Bank', 'Grade', 'Kantor Cabang', 'NIK', 'Nama',
             'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
-            'Valid Kartu', 'No. HP', 'PIN ATM', 'PIN Mbanking', 'Password Mbanking', 'Email',
-            'Password Email', 'Expired', 'User Mobile', 'Password Mobile', 'PIN Mobile',
-            'I-Banking', 'Password IB'
+            'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
+            'User Mobile', 'Password Mobile', 'PIN Mobile',
+            'I-Banking', 'Password IB', 'PIN IB'
         ];
 
         // Sample data row
@@ -146,7 +145,7 @@ const generateBankSpecificTemplate = async (bankName) => {
         logger.info(`Generating ${bank} Word template in List format`);
 
         let fields = [
-            { label: 'No.ORDER', sample: `ORDER-${bank}-001` },
+            { label: 'No. Order', sample: `ORDER-${bank}-001` },
             { label: 'Code Agen', sample: 'GG' },
             { label: 'Customer', sample: 'PELANGGAN-A' },
             { label: 'Bank', sample: bank || 'BRI' },
@@ -154,45 +153,92 @@ const generateBankSpecificTemplate = async (bankName) => {
             { label: 'Kantor Cabang', sample: 'CABANG-JAKARTA' },
             { label: 'NIK', sample: '3201010101010001' },
             { label: 'Nama', sample: 'NAMA LENGKAP' },
-            { label: 'Ibu Kandung', sample: 'NAMA IBU' },
-            { label: 'Tempat Tgl Lahir', sample: 'Jakarta, 01-01-1990' },
-            { label: 'No.Rek', sample: '1234567890' },
-            { label: 'No.ATM', sample: '1234567890123456' },
+            { label: 'Nama Ibu Kandung', sample: 'NAMA IBU' },
+            { label: 'Tempat/Tanggal Lahir', sample: 'Jakarta, 01-01-1990' },
+            { label: 'No. Rekening', sample: '1234567890' },
+            { label: 'No. ATM', sample: '1234567890123456' },
             { label: 'Valid Kartu', sample: '12/29' },
-            { label: 'No.HP', sample: '081234567890' },
-            { label: 'Pin ATM', sample: '123456' },
+            { label: 'No. HP', sample: '081234567890' },
+            { label: 'PIN ATM', sample: '123456' },
             { label: 'Email', sample: 'user@gmail.com' },
-            { label: 'Pass Email', sample: 'pass123' },
+            { label: 'Password Email', sample: 'pass123' },
             { label: 'Expired', sample: '2026-12-31' }
         ];
 
         if (bank === 'BCA') {
             fields.push(
-                { label: 'Kode Akses', sample: 'BCA123' },
-                { label: 'Pin M-BCA', sample: '123456' },
+                { label: 'Kode Akses M-BCA', sample: 'kodeakses123' },
+                { label: 'Pin m-BCA', sample: '123456' },
                 { label: 'BCA-ID', sample: 'USERBCA01' },
                 { label: 'Pass BCA-ID', sample: 'PassBca123' },
                 { label: 'Pin Transaksi', sample: '123456' }
             );
+        } else if (bank === 'BRI') {
+            fields.push(
+                { label: 'User BRImo', sample: 'userbri01' },
+                { label: 'Pass BRImo', sample: 'PassBri123' },
+                { label: 'PIN BRImo', sample: '123456' },
+                { label: 'User Merchant', sample: '' },
+                { label: 'Pass Merchant', sample: '' }
+            );
+        } else if (bank === 'BNI') {
+            fields.push(
+                { label: 'User Wondr', sample: 'userwondr01' },
+                { label: 'Password Wondr', sample: 'PassWondr123' },
+                { label: 'PIN Wondr', sample: '123456' },
+                { label: 'User IB', sample: 'userib01' },
+                { label: 'Pass IB', sample: 'PassIB123' },
+                { label: 'PIN IB', sample: '123456' }
+            );
+        } else if (bank === 'MANDIRI') {
+            fields.push(
+                { label: 'User Livin', sample: 'userlivin01' },
+                { label: 'Password Livin', sample: 'PassLivin123' },
+                { label: 'PIN Livin', sample: '123456' },
+                { label: 'User IB', sample: 'userib01' },
+                { label: 'Pass IB', sample: 'PassIB123' },
+                { label: 'PIN IB', sample: '123456' }
+            );
         } else if (bank === 'OCBC' || bank === 'OCBC NISP') {
             fields.push(
-                { label: 'User Nyala', sample: 'NYALA123' },
-                { label: 'Password Mobile', sample: 'PassOCBC123' },
+                { label: 'User Nyala', sample: 'usernyala01' },
+                { label: 'Password Nyala', sample: 'PassNyala123' },
+                { label: 'PIN Nyala', sample: '123456' },
+                { label: 'User IB', sample: 'userib01' },
+                { label: 'Pass IB', sample: 'PassIB123' },
+                { label: 'PIN IB', sample: '123456' }
+            );
+        } else if (bank === 'CIMB' || bank === 'CIMB NIAGA') {
+            fields.push(
+                { label: 'User Mobile', sample: 'usercimb01' },
+                { label: 'Password Mobile', sample: 'PassCimb123' },
                 { label: 'PIN Mobile', sample: '123456' },
-                { label: 'User I-Banking', sample: 'IBOCBC123' },
-                { label: 'Password IB', sample: 'PassIB123' }
+                { label: 'User IB', sample: 'userib01' },
+                { label: 'Pass IB', sample: 'PassIB123' },
+                { label: 'PIN IB', sample: '123456' }
+            );
+        } else if (bank === 'PERMATA') {
+            fields.push(
+                { label: 'User Mobile', sample: 'userpermata01' },
+                { label: 'Password Mobile', sample: 'PassPermata123' },
+                { label: 'PIN Mobile', sample: '123456' },
+                { label: 'User IB', sample: 'userib01' },
+                { label: 'Pass IB', sample: 'PassIB123' },
+                { label: 'PIN IB', sample: '123456' }
             );
         } else {
+            // Default: BTN, DANAMON, dan bank lainnya
             fields.push(
                 { label: 'User Mobile', sample: `USER${bank}01` },
                 { label: 'Password Mobile', sample: 'Pass123!' },
                 { label: 'PIN Mobile', sample: '123456' },
-                { label: 'User I-Banking', sample: 'USERIB01' },
-                { label: 'Password IB', sample: 'PassIB123' }
+                { label: 'User IB', sample: 'USERIB01' },
+                { label: 'Pass IB', sample: 'PassIB123' },
+                { label: 'PIN IB', sample: '123456' }
             );
         }
 
-        fields.push({ label: 'Foto Ktp', sample: '' }, { label: 'Foto Selfie', sample: '' });
+        fields.push({ label: 'Foto KTP', sample: '' }, { label: 'Foto Selfie', sample: '' });
 
         const doc = new Document({
             sections: [{
@@ -358,10 +404,10 @@ const generateCorrectedWord = async (products) => {
         const bank = banks.length === 1 ? banks[0] : 'ALL';
 
         if (bank === 'BCA') {
-            specificHeaders = ['BCA-ID', 'Pass BCA-ID', 'Pin Transaksi', 'Kode Akses', 'Pin m-BCA'];
+            specificHeaders = ['BCA-ID', 'Pass BCA-ID', 'Pin Transaksi', 'Kode Akses M-BCA', 'Pin m-BCA'];
             specificFieldMap = {
                 myBCAUser: 'BCA-ID', myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi',
-                kodeAkses: 'Kode Akses', pinMBca: 'Pin m-BCA'
+                kodeAkses: 'Kode Akses M-BCA', pinMBca: 'Pin m-BCA'
             };
         } else if (bank === 'BRI') {
             specificHeaders = ['User BRImo', 'Pass BRImo', 'PIN BRImo', 'User Merchant', 'Pass Merchant'];
@@ -370,31 +416,29 @@ const generateCorrectedWord = async (products) => {
                 briMerchantUser: 'User Merchant', briMerchantPassword: 'Pass Merchant'
             };
         } else if (bank === 'BNI') {
-            specificHeaders = ['PIN Wondr', 'Pass Wondr', 'User Mobile', 'Pass Mobile'];
+            specificHeaders = ['User Wondr', 'Password Wondr', 'PIN Wondr', 'User IB', 'Pass IB', 'PIN IB'];
             specificFieldMap = {
-                pinWondr: 'PIN Wondr', passWondr: 'Pass Wondr',
-                mobileUser: 'User Mobile', mobilePassword: 'Pass Mobile'
+                mobileUser: 'User Wondr', mobilePassword: 'Password Wondr', mobilePin: 'PIN Wondr',
+                ibUser: 'User IB', ibPassword: 'Pass IB', ibPin: 'PIN IB'
+            };
+        } else if (bank === 'MANDIRI') {
+            specificHeaders = ['User Livin', 'Password Livin', 'PIN Livin', 'User IB', 'Pass IB', 'PIN IB'];
+            specificFieldMap = {
+                mobileUser: 'User Livin', mobilePassword: 'Password Livin', mobilePin: 'PIN Livin',
+                ibUser: 'User IB', ibPassword: 'Pass IB', ibPin: 'PIN IB'
             };
         } else if (bank === 'OCBC' || bank === 'OCBC NISP') {
-            specificHeaders = ['User Nyala', 'User Mobile', 'Pass Mobile', 'PIN Mobile', 'User IB', 'Pass IB', 'PIN IB'];
+            specificHeaders = ['User Nyala', 'Password Nyala', 'PIN Nyala', 'User IB', 'Pass IB', 'PIN IB'];
             specificFieldMap = {
-                ocbcNyalaUser: 'User Nyala', mobileUser: 'User Mobile', mobilePassword: 'Pass Mobile',
-                mobilePin: 'PIN Mobile', ibUser: 'User IB', ibPassword: 'Pass IB', ibPin: 'PIN IB'
+                ocbcNyalaUser: 'User Nyala', mobilePassword: 'Password Nyala', mobilePin: 'PIN Nyala',
+                ibUser: 'User IB', ibPassword: 'Pass IB', ibPin: 'PIN IB'
             };
         } else {
-            // Default/Fallback for multiple banks or unknown bank
-            specificHeaders = [
-                'User Mobile', 'Password Mobile', 'PIN Mobile',
-                'I-Banking', 'Password IB', 'PIN IB', 'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi',
-                'Kode Akses', 'Pin m-BCA', 'PIN Wondr', 'Pass Wondr',
-                'User BRImo', 'Pass BRImo', 'User Merchant', 'Pass Merchant'
-            ];
+            // Default: CIMB, PERMATA, BTN, DANAMON, and other banks
+            specificHeaders = ['User Mobile', 'Password Mobile', 'PIN Mobile', 'User IB', 'Pass IB', 'PIN IB'];
             specificFieldMap = {
                 mobileUser: 'User Mobile', mobilePassword: 'Password Mobile', mobilePin: 'PIN Mobile',
-                ibUser: 'I-Banking', ibPassword: 'Password IB', ibPin: 'PIN IB', myBCAUser: 'BCA-ID',
-                myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi', kodeAkses: 'Kode Akses', pinMBca: 'Pin m-BCA',
-                pinWondr: 'PIN Wondr', passWondr: 'Pass Wondr', brimoUser: 'User BRImo', brimoPassword: 'Pass BRImo',
-                briMerchantUser: 'User Merchant', briMerchantPassword: 'Pass Merchant'
+                ibUser: 'User IB', ibPassword: 'Pass IB', ibPin: 'PIN IB'
             };
         }
 
@@ -419,9 +463,16 @@ const generateCorrectedWord = async (products) => {
         products.forEach(p => {
             const dataCells = headers.map(header => {
                 const key = Object.keys(fieldMap).find(k => fieldMap[k] === header);
-                const val = sanitizeText(p[key] || '');
+                let val = p[key];
+
+                // If empty/null/undefined, use empty string to avoid "-"
+                if (val === undefined || val === null || val === '-') {
+                    val = '';
+                }
+
+                const sanitizedVal = sanitizeText(val);
                 return new TableCell({
-                    children: [new Paragraph({ text: val })],
+                    children: [new Paragraph({ text: sanitizedVal })],
                     width: { size: 2500, type: WidthType.DXA }
                 });
             });
@@ -512,7 +563,7 @@ const generateCorrectedWordList = async (products) => {
 
             if (bank === 'BCA') {
                 specificFields = [
-                    { key: 'kodeAkses', label: 'Kode Akses' },
+                    { key: 'kodeAkses', label: 'Kode Akses M-BCA' },
                     { key: 'pinMBca', label: 'Pin m-BCA' },
                     { key: 'myBCAUser', label: 'BCA-ID' },
                     { key: 'myBCAPassword', label: 'Pass BCA-ID' },
@@ -528,25 +579,36 @@ const generateCorrectedWordList = async (products) => {
                 ];
             } else if (bank === 'BNI') {
                 specificFields = [
-                    { key: 'pinWondr', label: 'PIN Wondr' },
-                    { key: 'passWondr', label: 'Pass Wondr' },
-                    { key: 'mobileUser', label: 'User Mobile' },
-                    { key: 'mobilePassword', label: 'Pass Mobile' }
+                    { key: 'mobileUser', label: 'User Wondr' },
+                    { key: 'mobilePassword', label: 'Password Wondr' },
+                    { key: 'mobilePin', label: 'PIN Wondr' },
+                    { key: 'ibUser', label: 'User IB' },
+                    { key: 'ibPassword', label: 'Pass IB' },
+                    { key: 'ibPin', label: 'PIN IB' }
+                ];
+            } else if (bank === 'MANDIRI') {
+                specificFields = [
+                    { key: 'mobileUser', label: 'User Livin' },
+                    { key: 'mobilePassword', label: 'Password Livin' },
+                    { key: 'mobilePin', label: 'PIN Livin' },
+                    { key: 'ibUser', label: 'User IB' },
+                    { key: 'ibPassword', label: 'Pass IB' },
+                    { key: 'ibPin', label: 'PIN IB' }
                 ];
             } else if (bank === 'OCBC' || bank === 'OCBC NISP') {
                 specificFields = [
                     { key: 'ocbcNyalaUser', label: 'User Nyala' },
-                    { key: 'mobileUser', label: 'User Mobile' },
-                    { key: 'mobilePassword', label: 'Pass Mobile' },
-                    { key: 'mobilePin', label: 'PIN Mobile' },
+                    { key: 'mobilePassword', label: 'Password Nyala' },
+                    { key: 'mobilePin', label: 'PIN Nyala' },
                     { key: 'ibUser', label: 'User IB' },
                     { key: 'ibPassword', label: 'Pass IB' },
                     { key: 'ibPin', label: 'PIN IB' }
                 ];
             } else {
+                // Default: CIMB, PERMATA, BTN, DANAMON, dan bank lainnya
                 specificFields = [
                     { key: 'mobileUser', label: 'User Mobile' },
-                    { key: 'mobilePassword', label: 'Pass Mobile' },
+                    { key: 'mobilePassword', label: 'Password Mobile' },
                     { key: 'mobilePin', label: 'PIN Mobile' },
                     { key: 'ibUser', label: 'User IB' },
                     { key: 'ibPassword', label: 'Pass IB' },
@@ -576,11 +638,16 @@ const generateCorrectedWordList = async (products) => {
                         spacing: { after: 400 },
                     }),
                     ...currentFields.map(field => {
-                        const val = sanitizeText(p[field.key] || '-');
+                        let val = p[field.key];
+                        // Render empty strings if value is missing/dash so Word document doesn't default to "-"
+                        if (val === undefined || val === null || val === '-') {
+                            val = '';
+                        }
+                        const sanitizedVal = sanitizeText(val);
                         return new Paragraph({
                             children: [
                                 new TextRun({ text: `${field.label}: `, bold: true, size: 22 }),
-                                new TextRun({ text: val, size: 22 }),
+                                new TextRun({ text: sanitizedVal, size: 22 }),
                             ],
                             spacing: { after: 120 },
                         });

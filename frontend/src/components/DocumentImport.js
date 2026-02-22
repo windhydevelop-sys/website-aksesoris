@@ -6,7 +6,7 @@ import {
     TableBody, TableCell, TableContainer, TableHead, TableRow,
     Chip, Accordion, AccordionSummary, AccordionDetails,
     Menu, MenuItem, Autocomplete, TextField, CircularProgress,
-    IconButton, Tooltip, Grid, Divider
+    IconButton, Tooltip, Grid, Divider, Backdrop
 } from '@mui/material';
 import {
     CloudUpload, ExpandMore, CheckCircle, Error, Info, Download, Description,
@@ -509,6 +509,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
         // Define all possible columns for all banks
         const allColumns = [
             { id: 'noOrder', label: 'No. Order' },
+            { id: 'codeAgen', label: 'Kode Orlap' },
             { id: 'customer', label: 'Customer' },
             { id: 'nama', label: 'Nama' },
             { id: 'nik', label: 'NIK' },
@@ -519,32 +520,49 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             { id: 'grade', label: 'Grade' },
             { id: 'kcp', label: 'Kantor Cabang' },
             { id: 'validThru', label: 'Valid Kartu' },
-            // BCA Specific
-            { id: 'mobilePassword', label: 'Kode Akses', bank: 'bca' },
-            { id: 'mobilePin', label: 'Pin Mobile', bank: 'bca' },
+            // BCA Specific - M-BCA Mobile Banking
+            { id: 'kodeAkses', label: 'Kode Akses M-BCA', bank: 'bca' },
+            { id: 'pinMBca', label: 'Pin M-BCA', bank: 'bca' },
+            // BCA Specific - Internet Banking (IB)
+            { id: 'ibUser', label: 'User I-Banking', bank: 'bca' },
+            { id: 'ibPin', label: 'Pin I-Banking', bank: 'bca' },
+            // BCA Specific - Corporate (BCA-ID)
             { id: 'myBCAUser', label: 'BCA-ID', bank: 'bca' },
             { id: 'myBCAPassword', label: 'Pass BCA-ID', bank: 'bca' },
             { id: 'myBCAPin', label: 'Pin Transaksi', bank: 'bca' },
-            // BRI Specific (using generic mobilePassword/mobilePin)
-            { id: 'mobilePassword', label: 'Pass BRIMO', bank: 'bri' },
-            { id: 'mobilePin', label: 'Pin BRIMO', bank: 'bri' },
-            { id: 'merchantUser', label: 'User Merchant', bank: 'bri' },
-            { id: 'merchantPassword', label: 'Pass Merchant', bank: 'bri' },
+            // BCA Specific - Email
+            { id: 'passEmail', label: 'Password Email', bank: 'bca' },
+            // BRI Specific
+            { id: 'brimoUser', label: 'User BRIMO', bank: 'bri' },
+            { id: 'brimoPassword', label: 'Pass BRIMO', bank: 'bri' },
+            { id: 'brimoPin', label: 'Pin BRIMO', bank: 'bri' },
+            { id: 'briMerchantUser', label: 'User Merchant', bank: 'bri' },
+            { id: 'briMerchantPassword', label: 'Pass Merchant', bank: 'bri' },
             // Mandiri Specific
+            { id: 'mobileUser', label: 'User Livin', bank: 'mandiri' },
             { id: 'mobilePassword', label: 'Pass Livin', bank: 'mandiri' },
             { id: 'mobilePin', label: 'Pin Livin', bank: 'mandiri' },
             // BNI Specific
+            { id: 'mobileUser', label: 'User Wondr', bank: 'bni' },
             { id: 'mobilePassword', label: 'Password Wondr', bank: 'bni' },
             { id: 'mobilePin', label: 'Pin Wondr', bank: 'bni' },
             // OCBC Specific
-            { id: 'mobileUser', label: 'User Nyala', bank: 'ocbc' },
+            { id: 'ocbcNyalaUser', label: 'User Nyala', bank: 'ocbc' },
+            { id: 'mobileUser', label: 'User M-Bank', bank: 'ocbc' },
+            { id: 'ocbcNyalaPassword', label: 'Password Login', bank: 'ocbc' },
+            { id: 'ocbcNyalaPin', label: 'Pin Login', bank: 'ocbc' },
+            { id: 'ibUser', label: 'User I-Banking', bank: 'ocbc' },
+            { id: 'ibPassword', label: 'Pass I-Banking', bank: 'ocbc' },
             // Common
+            { id: 'mobileUser', label: 'User Mobile / M-Bank' },
+            { id: 'mobilePassword', label: 'Pass Mobile / M-Bank' },
+            { id: 'mobilePin', label: 'Pin Mobile / M-Bank' },
             { id: 'ibUser', label: 'User IB' },
             { id: 'ibPassword', label: 'Pass IB' },
             { id: 'ibPin', label: 'Pin IB' },
             { id: 'pinAtm', label: 'Pin ATM' },
             { id: 'email', label: 'Email' },
-            { id: 'passEmail', label: 'Pass Email' },
+            { id: 'passEmail', label: 'Password Email' },
             { id: 'status', label: 'Validasi' }
         ];
 
@@ -815,10 +833,20 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 </Box>
 
                 {uploading && (
-                    <Box sx={{ mb: 2 }}>
-                        <LinearProgress />
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                            Memproses file...
+                    <Box sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        my: 4,
+                        gap: 2
+                    }}>
+                        <CircularProgress size={60} thickness={4} />
+                        <Typography variant="h6" color="primary" sx={{ animate: 'pulse 1.5s infinite' }}>
+                            Memproses Dokumen...
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Mohon jangan tutup jendela ini
                         </Typography>
                     </Box>
                 )}
@@ -1197,8 +1225,9 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                         onClick={handlePreview}
                         variant="outlined"
                         disabled={uploading}
+                        startIcon={uploading && <CircularProgress size={20} color="inherit" />}
                     >
-                        Preview Data
+                        {uploading ? 'Memproses...' : 'Preview Data'}
                     </Button>
                 )}
 
@@ -1208,11 +1237,23 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                         variant="contained"
                         color="primary"
                         disabled={uploading}
+                        startIcon={uploading && <CircularProgress size={20} color="inherit" />}
                     >
-                        Import Data ({previewData.validation.valid})
+                        {uploading ? 'Mengimport...' : `Import Data (${previewData.validation.valid})`}
                     </Button>
                 )}
             </DialogActions>
+
+            <Backdrop
+                sx={{ color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1000 }}
+                open={uploading}
+            >
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <CircularProgress color="inherit" />
+                    <Typography variant="h6">Sedang Memproses...</Typography>
+                    <Typography variant="body2">Mohon tunggu sebentar.</Typography>
+                </Box>
+            </Backdrop>
             {/* Quick Add Dialog */}
             <Dialog open={!!quickAddType} onClose={() => setQuickAddType(null)} maxWidth="xs" fullWidth>
                 <DialogTitle>Tambah {quickAddType === 'customer' ? 'Customer' : quickAddType === 'order' ? 'Order' : 'Orlap'} Baru</DialogTitle>

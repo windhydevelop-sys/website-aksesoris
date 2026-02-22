@@ -273,8 +273,6 @@ const getProducts = async (req, res) => {
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate('handphoneId', 'merek tipe imei spesifikasi kepemilikan');
-    console.log('ProductDetail - Product found:', product);
-    console.log('ProductDetail - PhoneId:', product.phoneId);
 
     if (!product) {
       return res.status(404).json({
@@ -289,7 +287,6 @@ const getProductById = async (req, res) => {
       try {
         const order = await Order.findOne({ noOrder: product.noOrder });
         orderStatus = order ? order.status : null;
-        console.log('ProductDetail - Order found:', order ? 'YES' : 'NO', 'Status:', orderStatus);
       } catch (error) {
         console.error('Error fetching order status:', error);
         orderStatus = null;
@@ -304,6 +301,16 @@ const getProductById = async (req, res) => {
     }, req);
 
     const decryptedData = product.getDecryptedData();
+    
+    // Log sensitive fields to verify decryption
+    console.log('[PRODUCT_DETAIL] Decryption check:');
+    ['mobileUser', 'mobilePassword', 'mobilePin', 'kodeAkses', 'myBCAUser', 'myBCAPassword'].forEach(field => {
+      if (product[field]) {
+        const isEncrypted = String(product[field]).startsWith('U2FsdGVkX1');
+        const decrypted = String(decryptedData[field] || '').startsWith('U2FsdGVkX1');
+        console.log(`  ${field}: was_encrypted=${isEncrypted}, still_encrypted=${decrypted}`);
+      }
+    });
 
     // Add order status to the response
     decryptedData.status = orderStatus;

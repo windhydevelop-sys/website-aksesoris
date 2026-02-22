@@ -1110,16 +1110,51 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
     const dataRows = rows.slice(1);
 
     const fieldMap = {
-      'No. Order': 'noOrder', 'Code Agen': 'codeAgen', 'Customer': 'customer', 'Bank': 'bank',
-      'Jenis Rekening': 'jenisRekening', 'Grade': 'grade', 'Kantor Cabang': 'kcp', 'NIK': 'nik', 'Nama': 'nama',
-      'Nama Ibu Kandung': 'namaIbuKandung', 'Tempat/Tanggal Lahir': 'tempatTanggalLahir',
-      'No. Rekening': 'noRek', 'Sisa Saldo': 'sisaSaldo', 'No. ATM': 'noAtm', 'Valid Kartu': 'validThru', 'No. HP': 'noHp',
-      'PIN ATM': 'pinAtm', 'Email': 'email', 'Password Email': 'passEmail', 'Expired': 'expired',
-      'User Mobile': 'mobileUser', 'Password Mobile': 'mobilePassword', 'PIN Mobile': 'mobilePin',
-      'I-Banking': 'ibUser', 'Password IB': 'ibPassword', 'PIN IB': 'ibPin', 'BCA-ID': 'myBCAUser',
-      'Pass BCA-ID': 'myBCAPassword', 'Pin Transaksi': 'myBCAPin', 'Kode Akses': 'kodeAkses', 'Pin m-BCA': 'pinMBca',
-      'PIN Wondr': 'pinWondr', 'Pass Wondr': 'passWondr', 'User BRImo': 'brimoUser', 'Pass BRImo': 'brimoPassword',
-      'User Merchant': 'briMerchantUser', 'Pass Merchant': 'briMerchantPassword'
+      'no. order': 'noOrder', 'no order': 'noOrder', 'code agen': 'codeAgen', 'kode orlap': 'codeAgen', 'customer': 'customer', 'bank': 'bank',
+      'jenis rekening': 'jenisRekening', 'grade': 'grade', 'kantor cabang': 'kcp', 'nik': 'nik', 'nama': 'nama',
+      'nama ibu kandung': 'namaIbuKandung', 'tempat/tanggal lahir': 'tempatTanggalLahir', 'tempat tanggal lahir': 'tempatTanggalLahir',
+      'no. rekening': 'noRek', 'no rek': 'noRek', 'sisa saldo': 'sisaSaldo', 'no. atm': 'noAtm', 'valid kartu': 'validThru', 'no. hp': 'noHp',
+      'pin atm': 'pinAtm', 'email': 'email', 'password email': 'passEmail', 'expired': 'expired',
+      // Generic mobile banking
+      'user mobile': 'mobileUser', 'password mobile': 'mobilePassword', 'pass mobile': 'mobilePassword', 'pin mobile': 'mobilePin',
+      'mobile password': 'mobilePassword', 'mobile pass': 'mobilePassword', 'mobile pin': 'mobilePin',
+      'mobile pin livin': 'mobilePin',
+      // Generic IB (canonical)
+      'user ib': 'ibUser', 'pass ib': 'ibPassword', 'pin ib': 'ibPin',
+      // Legacy IB labels
+      'i-banking': 'ibUser', 'password ib': 'ibPassword',
+      // BCA
+      'bca-id': 'myBCAUser', 'pass bca-id': 'myBCAPassword', 'pin transaksi': 'myBCAPin',
+      'kode akses': 'kodeAkses', 'kode akses m-bca': 'kodeAkses', 'pin m-bca': 'pinMBca',
+      // BRI
+      'user brimo': 'brimoUser', 'id brimo': 'brimoUser', 'user mobile': 'brimoUser', 'mobile user': 'brimoUser',
+      'pass brimo': 'brimoPassword', 'brimo pass': 'brimoPassword', 'brimo password': 'brimoPassword', 'password mobile': 'brimoPassword',
+      'pin brimo': 'brimoPin', 'brimo pin': 'brimoPin', 'pin mobile': 'brimoPin',
+      'user merchant': 'briMerchantUser', 'pass merchant': 'briMerchantPassword',
+      // BNI Wondr  → stored in mobileUser/mobilePassword/mobilePin
+      'user wondr': 'mobileUser', 'id wondr': 'mobileUser', 'user mobile': 'mobileUser', 'mobile user': 'mobileUser',
+      'password wondr': 'mobilePassword', 'pass wondr': 'mobilePassword', 'wondr pass': 'mobilePassword', 'wondr password': 'mobilePassword', 'password mobile': 'mobilePassword',
+      'cabang bank': 'kcp', 'kantor cabang': 'kcp', 'cabang': 'kcp', 'kcp': 'kcp', 'customer': 'customer',
+      // Mandiri Livin → stored in mobileUser/mobilePassword/mobilePin
+      'user livin': 'mobileUser', 'password livin': 'mobilePassword', 'pass livin': 'mobilePassword', 'pin livin': 'mobilePin',
+      // Generic Fallbacks for all banks (will be aligned below based on detected bank)
+      'user': 'mobileUser', 'user id': 'mobileUser', 'username': 'mobileUser', 'id user': 'mobileUser',
+      'user m bank': 'mobileUser', 'user mobile': 'mobileUser', 'mobile user': 'mobileUser',
+      'id login': 'mobileUser', 'user login': 'mobileUser', 'account user': 'mobileUser',
+      'password': 'mobilePassword', 'sandi': 'mobilePassword', 'pass': 'mobilePassword',
+      'kata sandi': 'mobilePassword', 'login password': 'mobilePassword', 'pass login': 'mobilePassword',
+      'pin': 'mobilePin', 'pin login': 'mobilePin', 'pin m bank': 'mobilePin', 'pin mobile': 'mobilePin',
+      'pin transaksi': 'mobilePin',
+      // Bank Specific Overwrites (Should be LAST to take precedence)
+      'user nyala': 'ocbcNyalaUser', 'id nyala': 'ocbcNyalaUser', 'yala user': 'ocbcNyalaUser', 'user id nyala': 'ocbcNyalaUser',
+      'password nyala': 'ocbcNyalaPassword', 'pass nyala': 'ocbcNyalaPassword', 'password login': 'ocbcNyalaPassword', 'pass login': 'ocbcNyalaPassword',
+      'pin nyala': 'ocbcNyalaPin', 'pin login': 'ocbcNyalaPin',
+      'user i banking': 'ibUser', 'pass i banking': 'ibPassword', 'pin i banking': 'ibPin',
+      'user ib': 'ibUser', 'pass ib': 'ibPassword', 'pin ib': 'ibPin',
+      // IB Global mappings
+      'user internet banking': 'ibUser', 'pass email': 'passEmail', 'password email': 'passEmail',
+      'password internet banking': 'ibPassword',
+      'pin internet banking': 'ibPin',
     };
 
     let updatedCount = 0;
@@ -1127,11 +1162,29 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
     for (const row of dataRows) {
       const rowData = {};
       headers.forEach((header, idx) => {
-        const key = fieldMap[header];
-        if (key) rowData[key] = row[idx];
+        const normalizedHeader = String(header).trim().toLowerCase().replace(/-/g, ' ');
+        const key = fieldMap[normalizedHeader];
+        if (key) {
+          rowData[key] = String(row[idx] || '').trim();
+        }
       });
 
-      if (!rowData.nik && !rowData.noRek) continue;
+      // Field Alignment (Consistency with pdfParser)
+      const { getBankConfig } = require('../config/bankFieldMapping');
+      const bankConfig = getBankConfig(rowData.bank);
+      const bank = bankConfig.name.toUpperCase();
+
+      if (bank === 'BRI') {
+        if (!rowData.brimoUser && rowData.mobileUser) rowData.brimoUser = rowData.mobileUser;
+        if (!rowData.brimoPassword && rowData.mobilePassword) rowData.brimoPassword = rowData.mobilePassword;
+        if (!rowData.brimoPin && rowData.mobilePin) rowData.brimoPin = rowData.mobilePin;
+      } else if (bank === 'OCBC NYALA') {
+        // Use generic password/pin if specific ones are missing (shared login)
+        if (!rowData.ocbcNyalaPassword && rowData.mobilePassword) rowData.ocbcNyalaPassword = rowData.mobilePassword;
+        if (!rowData.ocbcNyalaPin && rowData.mobilePin) rowData.ocbcNyalaPin = rowData.mobilePin;
+      }
+
+      if (Object.keys(rowData).length === 0) continue;
 
       // 1. Check in TelegramSubmission (Staging)
       const submissionQuery = { $or: [] };
@@ -1165,8 +1218,9 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
         }
       } else if (submission) {
         // Promote from Submission to Product
+        const decryptedSubmission = submission.getDecryptedData ? submission.getDecryptedData() : submission.toObject();
         const newProductData = {
-          ...submission.toObject(),
+          ...decryptedSubmission,
           ...rowData,
           source: 'telegram',
           status: 'pending' // Default product status

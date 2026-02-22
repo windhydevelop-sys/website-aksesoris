@@ -129,15 +129,26 @@ const ProductDetail = () => {
     passEmail: 'Password Email',
     expired: 'Expired',
     mobileUser: 'User Mobile',
-    mobilePassword: 'Password Mobile',
+    mobilePassword: 'Password Mobile', // Will be overridden for BCA
     mobilePin: 'Pin Mobile',
     ibUser: 'User IB',
+    ibPassword: 'Password IB',
     ibPin: 'Pin IB',
     myBCAUser: 'BCA-ID',
     myBCAPassword: 'Pass BCA-ID',
     myBCAPin: 'Pin Transaksi',
+    kodeAkses: 'Kode Akses M-BCA', // LEGACY - no longer used but kept for compatibility
+    pinMBca: 'Pin M-BCA',
     merchantUser: 'User Merchant',
-    merchantPassword: 'Password Merchant'
+    merchantPassword: 'Password Merchant',
+    brimoUser: 'User Brimo',
+    brimoPassword: 'Password Brimo',
+    brimoPin: 'Pin Brimo',
+    briMerchantUser: 'User Merchant QRIS',
+    briMerchantPassword: 'Password Merchant QRIS',
+    ocbcNyalaUser: 'User Nyala',
+    ocbcNyalaPassword: 'Password Nyala',
+    ocbcNyalaPin: 'Pin Nyala'
   };
 
   const fieldOrder = [
@@ -167,16 +178,127 @@ const ProductDetail = () => {
     'passEmail',
     'expired',
     'mobileUser',
-    'mobilePassword',
+    'mobilePassword', // For BCA: Kode Akses M-BCA, For others: Brimo/Livin/Wondr password
     'mobilePin',
     'ibUser',
     'ibPin',
     'myBCAUser',
     'myBCAPassword',
     'myBCAPin',
+    'kodeAkses',
+    'pinMBca',
+    'brimoUser',
+    'brimoPassword',
+    'brimoPin',
+    'briMerchantUser',
+    'briMerchantPassword',
+    'ocbcNyalaUser',
+    'ocbcNyalaPassword',
+    'ocbcNyalaPin',
     'merchantUser',
     'merchantPassword'
   ];
+
+  // Helper function: Determine if a field should be displayed based on bank and jenisRekening
+  const shouldDisplayField = (key, product) => {
+    const bank = product.bank?.toUpperCase() || '';
+    const jenisRekening = product.jenisRekening?.toUpperCase() || '';
+
+    // BCA-exclusive fields
+    if (['pinMBca', 'kodeAkses', 'myBCAUser', 'myBCAPassword', 'myBCAPin'].includes(key)) {
+      return bank.includes('BCA');
+    }
+
+    // mobilePassword is used by all banks EXCEPT BCA (BCA uses kodeAkses instead)
+    if (key === 'mobilePassword') {
+      return !bank.includes('BCA');
+    }
+
+    // mobileUser is used by most banks; BCA uses ibUser for internet banking instead
+    if (key === 'mobileUser') {
+      return !bank.includes('BCA');
+    }
+
+    // mobilePin is used by all banks except BCA
+    if (key === 'mobilePin') {
+      return !bank.includes('BCA');
+    }
+
+    // IB fields (ibUser, ibPin, ibPassword) - show for all banks that have internet banking
+    if (['ibUser', 'ibPassword', 'ibPin'].includes(key)) {
+      // BRI doesn't use ibUser style IB; OCBC has its own
+      return !bank.includes('BRI');
+    }
+
+    // BRI BRImo-specific fields
+    if (['brimoUser', 'brimoPassword'].includes(key)) {
+      return bank.includes('BRI') && !jenisRekening.includes('QRIS');
+    }
+
+    // BRI MERCHANT QRIS fields
+    if (['briMerchantUser', 'briMerchantPassword'].includes(key)) {
+      return bank.includes('BRI') && jenisRekening.includes('QRIS');
+    }
+
+    // OCBC Nyala user field
+    if (['ocbcNyalaUser', 'ocbcNyalaPassword', 'ocbcNyalaPin'].includes(key)) {
+      return bank.includes('OCBC') || bank.includes('NISP');
+    }
+
+    // Generic merchant fields for non-BRI
+    if (['merchantUser', 'merchantPassword'].includes(key)) {
+      return false; // Deprecated, use briMerchantUser/briMerchantPassword instead
+    }
+
+    return true;
+  };
+
+  // Helper function: Get the correct label for a field based on bank type
+  // List of encrypted fields that should already be decrypted by backend
+  const encryptedFields = [
+    'pinAtm', 'pinWondr', 'passWondr', 'passEmail',
+    'myBCAUser', 'myBCAPassword', 'myBCAPin',
+    'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword',
+    'kodeAkses', 'pinMBca',
+    'mobileUser', 'mobilePassword', 'mobilePin',
+    'ibUser', 'ibPassword', 'ibPin',
+    'merchantUser', 'merchantPassword',
+    'ocbcNyalaUser', 'ocbcNyalaPassword', 'ocbcNyalaPin'
+  ];
+
+  // Helper to detect if a field contains encrypted data (starts with "U2FsdGVkX1")
+  const isStillEncrypted = (value) => {
+    return typeof value === 'string' && value.startsWith('U2FsdGVkX1');
+  };
+
+  const getDynamicLabel = (key, product) => {
+    const bank = product.bank?.toUpperCase() || '';
+
+    if (key === 'mobilePassword') {
+      // BCA M-BCA uses "Kode Akses M-BCA" (not regular password)
+      if (bank.includes('BCA')) return 'Kode Akses M-BCA';
+      // Other banks use their own mobile banking names
+      if (bank.includes('BNI')) return 'Password Wondr';
+      if (bank.includes('MANDIRI')) return 'Password Livin';
+      if (bank.includes('BRI')) return 'Password Brimo';
+      return 'Password Mobile';
+    } else if (key === 'mobileUser') {
+      if (bank.includes('BNI')) return 'User Wondr';
+      if (bank.includes('MANDIRI')) return 'User Livin';
+      if (bank.includes('BRI')) return 'User Brimo';
+      if (bank.includes('OCBC') || bank.includes('NISP')) return 'User Nyala';
+    } else if (key === 'mobilePin') {
+      if (bank.includes('BNI')) return 'Pin Wondr';
+      if (bank.includes('MANDIRI')) return 'Pin Livin';
+      if (bank.includes('BRI')) return 'Pin Brimo';
+    } else if (key === 'ibUser') {
+      if (bank.includes('BCA')) return 'User Internet Banking';
+    } else if (key === 'ibPin') {
+      if (bank.includes('BCA')) return 'Pin Internet Banking';
+    }
+
+    return fieldLabels[key] || key;
+  };
 
   return (
     <SidebarLayout onLogout={handleLogout}>
@@ -228,6 +350,9 @@ const ProductDetail = () => {
                 <Table size="small">
                   <TableBody>
                     {fieldOrder.map((key) => {
+                      // First check if field should be displayed based on bank/jenisRekening
+                      if (!shouldDisplayField(key, product)) return null;
+
                       let value = product[key];
 
                       // Handle handphone data - use direct fields stored in product
@@ -247,43 +372,38 @@ const ProductDetail = () => {
                         }
                       }
 
-                      if (value === undefined || value === null || value === '') return null;
+                      // Filter: Skip completely empty/undefined/null or "-" values
+                      if (value === undefined || value === null || value === '' || value === '-') return null;
 
-                      let label = fieldLabels[key] || key;
-
-                      // Dynamic Labeling for Bank Credentials
-                      if (product.bank) {
-                        const bank = product.bank.toUpperCase();
-                        if (key === 'mobileUser') {
-                          if (bank.includes('BNI')) label = 'User Wondr';
-                          if (bank.includes('MANDIRI')) label = 'User Livin';
-                          if (bank.includes('BRI')) label = 'User Brimo';
-                          if (bank.includes('OCBC')) label = 'User Nyala';
-                        } else if (key === 'mobilePassword') {
-                          if (bank.includes('BNI')) label = 'Password Wondr';
-                          if (bank.includes('MANDIRI')) label = 'Password Livin';
-                          if (bank.includes('BRI')) label = 'Password Brimo';
-                          if (bank.includes('BCA')) label = 'Kode Akses';
-                        } else if (key === 'mobilePin') {
-                          if (bank.includes('BNI')) label = 'Pin Wondr';
-                          if (bank.includes('MANDIRI')) label = 'Pin Livin';
-                          if (bank.includes('BRI')) label = 'Pin Brimo';
-                        }
+                      // Mask corrupted/undecrypted data
+                      if (isStillEncrypted(value)) {
+                        value = '[Data Corrupted/Kunci Salah]';
                       }
 
-                      // Conditional display for Merchant fields on BRI
-                      if (product.bank?.toUpperCase().includes('BRI') &&
-                        (key === 'merchantUser' || key === 'merchantPassword')) {
-                        const jenisRekening = product.jenisRekening || '';
-                        if (!jenisRekening.toLowerCase().includes('qris')) {
-                          return null;
-                        }
+                      // Get the correct label using getDynamicLabel helper
+                      const label = getDynamicLabel(key, product);
+
+                      // Check if value is still encrypted (shouldn't happen if backend is working)
+                      const stillEncrypted = encryptedFields.includes(key) && isStillEncrypted(value);
+
+                      // Display logic with warnings for encrypted fields
+                      let displayValue;
+                      if (key === 'expired' && value) {
+                        displayValue = new Date(value).toLocaleDateString('id-ID');
+                      } else if (stillEncrypted) {
+                        // This shouldn't happen - backend should have decrypted
+                        displayValue = '[Decrypted data not available]';
+                        console.warn(`Field ${key} is still encrypted in response`);
+                      } else {
+                        displayValue = value ? String(value) : '-';
                       }
 
                       return (
                         <TableRow key={key}>
                           <TableCell component="th" scope="row" sx={{ fontWeight: 'bold', width: '35%' }}>{label}</TableCell>
-                          <TableCell>{key === 'expired' ? new Date(value).toLocaleDateString('id-ID') : String(value)}</TableCell>
+                          <TableCell sx={{ color: stillEncrypted ? 'warning.main' : 'inherit' }}>
+                            {displayValue}
+                          </TableCell>
                         </TableRow>
                       );
                     })}

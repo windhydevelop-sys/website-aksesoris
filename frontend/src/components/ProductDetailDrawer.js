@@ -108,22 +108,30 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     myBCAUser: { label: 'BCA-ID', icon: <AccountCircle /> },
     myBCAPassword: { label: 'Pass BCA-ID', icon: <VpnKey /> },
     myBCAPin: { label: 'Pin Transaksi', icon: <VpnKey /> },
+    kodeAkses: { label: 'Kode Akses M-BCA', icon: <VpnKey /> },
+    pinMBca: { label: 'Pin m-BCA', icon: <VpnKey /> },
     email: { label: 'Email', icon: <Email /> },
     passEmail: { label: 'Pass Email', icon: <VpnKey /> },
     merchantUser: { label: 'User Merchant', icon: <Store /> },
-    merchantPassword: { label: 'Password Merchant', icon: <VpnKey /> }
+    merchantPassword: { label: 'Password Merchant', icon: <VpnKey /> },
+    // BRI Specific
+    brimoUser: { label: 'User BRImo', icon: <AccountCircle /> },
+    brimoPassword: { label: 'Password BRImo', icon: <VpnKey /> },
+    brimoPin: { label: 'Pin BRImo', icon: <VpnKey /> },
+    briMerchantUser: { label: 'User Merchant QRIS', icon: <Store /> },
+    briMerchantPassword: { label: 'Password Merchant QRIS', icon: <VpnKey /> }
   };
 
   // Bank-specific credential fields mapping
   // Using generic fields (mobileUser, mobilePassword, etc) for most banks
   // Only use specific fields if the bank has unique requirements (e.g., BCA)
   const bankSpecificFields = {
-    'BCA': ['myBCAUser', 'myBCAPassword', 'myBCAPin', 'mobilePassword', 'mobileUser', 'mobilePin'],
-    'BRI': ['jenisRekening', 'mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin', 'merchantUser', 'merchantPassword'],
-    'BNI': ['mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
+    'BCA': ['myBCAUser', 'myBCAPassword', 'myBCAPin', 'kodeAkses', 'pinMBca', 'ibUser', 'ibPassword', 'ibPin'],
+    'BRI': ['jenisRekening', 'brimoUser', 'brimoPassword', 'brimoPin', 'briMerchantUser', 'briMerchantPassword'],
+    'BNI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'MANDIRI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'CIMB': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
-    'OCBC': ['mobileUser', 'mobilePassword', 'mobilePin'],
+    'OCBC': ['ocbcNyalaUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'PERMATA': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'DANAMON': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'BTN': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin']
@@ -137,26 +145,38 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     if (key === 'mobileUser') {
       if (bank.includes('BNI')) return 'User Wondr';
       if (bank.includes('MANDIRI')) return 'User Livin';
-      if (bank.includes('BRI')) return 'User Brimo';
+      if (bank.includes('BRI')) return 'User BRImo';
       if (bank.includes('OCBC')) return 'User Nyala';
-      if (bank.includes('BCA')) return 'User M-BCA';
     }
 
     if (key === 'mobilePassword') {
       if (bank.includes('BNI')) return 'Password Wondr';
       if (bank.includes('MANDIRI')) return 'Password Livin';
-      if (bank.includes('BRI')) return 'Password Brimo';
-      if (bank.includes('OCBC')) return 'Password Mobile';
-      if (bank.includes('BCA')) return 'Kode Akses';
-      // Default fallback
+      if (bank.includes('BRI')) return 'Password BRImo';
+      if (bank.includes('OCBC')) return 'Password Nyala';
       return 'Password Mobile';
     }
 
     if (key === 'mobilePin') {
       if (bank.includes('BNI')) return 'PIN Wondr';
       if (bank.includes('MANDIRI')) return 'PIN Livin';
-      if (bank.includes('BRI')) return 'PIN Brimo';
+      if (bank.includes('BRI')) return 'PIN BRImo';
+      if (bank.includes('OCBC')) return 'PIN Nyala';
+      return 'PIN Mobile';
     }
+
+    if (key === 'ocbcNyalaUser') return 'User Nyala';
+    if (key === 'brimoUser') return 'User BRImo';
+    if (key === 'brimoPassword') return 'Password BRImo';
+    if (key === 'briMerchantUser') return 'User Merchant';
+    if (key === 'briMerchantPassword') return 'Password Merchant';
+    if (key === 'kodeAkses') return 'Kode Akses M-BCA';
+    if (key === 'pinMBca') return 'Pin m-BCA';
+    if (key === 'myBCAUser') return 'BCA-ID';
+    if (key === 'myBCAPassword') return 'Pass BCA-ID';
+    if (key === 'myBCAPin') return 'Pin Transaksi';
+    if (key === 'ibUser' && bank.includes('BCA')) return 'User Internet Banking';
+    if (key === 'ibPin' && bank.includes('BCA')) return 'PIN Internet Banking';
 
     return originalLabel;
   };
@@ -316,6 +336,11 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
                     }
                     return true;
                   })
+                  .filter(([key]) => {
+                    // Hide empty fields
+                    const value = product[key];
+                    return value !== undefined && value !== null && value !== '' && value !== '-';
+                  })
                   .map(([key, config]) => {
                     let value = product[key] || '-';
 
@@ -327,6 +352,11 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
                     // Mask sensitive fields
                     if (sensitiveFields.includes(key) && value) {
                       value = '••••••••';
+                    }
+
+                    // Mask corrupted/undecrypted data
+                    if (typeof value === 'string' && value.startsWith('U2FsdGVkX1')) {
+                      value = '[Data Corrupted/Kunci Salah]';
                     }
 
                     return (
