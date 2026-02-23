@@ -94,6 +94,8 @@ const parseListFormat = (text) => {
       'kata sandi': 'Password Mobile', 'passw': 'Password Mobile',
       'pin': 'PIN Mobile', 'pin transaksi': 'PIN Mobile',
       // IB Generic
+      'user ib': 'User IB', 'user internet banking': 'User IB', 'user i banking': 'User IB', 'user i-banking': 'User IB',
+      'pass ib': 'Pass IB', 'password ib': 'Pass IB', 'password internet banking': 'Pass IB', 'password i-banking': 'Pass IB', 'pass i banking': 'Pass IB',
       'pin ib': 'PIN IB', 'pin internet banking': 'PIN IB', 'pin i-banking': 'PIN IB', 'pin i banking': 'PIN IB',
       'i-banking': 'User IB', 'i banking': 'User IB', 'ib': 'User IB',
       'pass email': 'Password Email', 'password email': 'Password Email',

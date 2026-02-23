@@ -65,6 +65,7 @@ console.log('NODE_ENV:', process.env.NODE_ENV);
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
+    console.log('CORS origin check:', origin);
     if (!origin) return callback(null, true);
 
     const allowedOrigins = [
@@ -161,6 +162,21 @@ app.use('/api/handphones', handphoneRoutes);
 app.use('/api/backup', backupRoutes);
 app.use('/api/menu-permissions', menuPermissionRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('GLOBAL ERROR HANDLER:', err.message);
+  console.error(err.stack);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  res.status(err.status || 500).json({
+    success: false,
+    error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message
+  });
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
