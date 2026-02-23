@@ -597,6 +597,22 @@ const validateExtractedData = (products) => {
     const { getBankConfig, getMandatoryFields, getDisplayLabel } = require('../config/bankFieldMapping');
     const bankConfig = getBankConfig(product.bank);
     const bank = bankConfig.name.toUpperCase();
+    const jenisRekening = (product.jenisRekening || 'TABUNGAN').toUpperCase();
+
+    // Smart ATM Expiry Extraction: "7788 8899 6677 5566 (02/32)" -> noAtm: 7788..., validThru: 02/32
+    if (product.noAtm) {
+      const atmValue = String(product.noAtm).trim();
+      const expiryMatch = atmValue.match(/\(([\d\/\s]+)\)/); // Matches (02/32) or (02 / 32)
+      if (expiryMatch) {
+        const extractedExpiry = expiryMatch[1].trim();
+        // Set validThru if not already explicitly set
+        if (!product.validThru || product.validThru === '-') {
+          product.validThru = extractedExpiry;
+        }
+        // Clean noAtm by removing the parentheses part
+        product.noAtm = atmValue.replace(expiryMatch[0], '').trim();
+      }
+    }
 
     // Map common mobileUser to bank-specific fields if needed
     if (bank === 'BRI') {
@@ -609,7 +625,6 @@ const validateExtractedData = (products) => {
     // No action needed as they already use the correct fields for BNI
 
     // ========== OTHER VALIDATIONS ==========
-    const jenisRekening = (product.jenisRekening || 'TABUNGAN').toUpperCase();
     const mandatoryFields = getMandatoryFields(bank, jenisRekening);
 
     // DEBUG: Log field extraction for ALL banks (untuk diagnosa field kosong)

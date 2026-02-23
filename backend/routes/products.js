@@ -1174,6 +1174,19 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
       const bankConfig = getBankConfig(rowData.bank);
       const bank = bankConfig.name.toUpperCase();
 
+      // Smart ATM Expiry Extraction in Word import
+      if (rowData.noAtm) {
+        const atmValue = String(rowData.noAtm).trim();
+        const expiryMatch = atmValue.match(/\(([\d\/\s]+)\)/);
+        if (expiryMatch) {
+          const extractedExpiry = expiryMatch[1].trim();
+          if (!rowData.validThru || rowData.validThru === '') {
+            rowData.validThru = extractedExpiry;
+          }
+          rowData.noAtm = atmValue.replace(expiryMatch[0], '').trim();
+        }
+      }
+
       if (bank === 'BRI') {
         if (!rowData.brimoUser && rowData.mobileUser) rowData.brimoUser = rowData.mobileUser;
         if (!rowData.brimoPassword && rowData.mobilePassword) rowData.brimoPassword = rowData.mobilePassword;
