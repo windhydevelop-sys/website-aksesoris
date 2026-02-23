@@ -614,6 +614,19 @@ const validateExtractedData = (products) => {
       }
     }
 
+    // Smart Bank Grade Extraction: "BCA (grade B)" -> bank: BCA, grade: B
+    if (product.bank) {
+      const bankValue = String(product.bank).trim();
+      const gradeMatch = bankValue.match(/\(grade\s+([A-Za-z0-9]+)\)/i);
+      if (gradeMatch) {
+        const extractedGrade = gradeMatch[1].trim().toUpperCase();
+        if (!product.grade || product.grade === '-' || product.grade === '') {
+          product.grade = extractedGrade;
+        }
+        product.bank = bankValue.replace(gradeMatch[0], '').trim();
+      }
+    }
+
     // Map common mobileUser to bank-specific fields if needed
     if (bank === 'BRI') {
       if (!product.brimoUser && product.mobileUser) product.brimoUser = product.mobileUser;

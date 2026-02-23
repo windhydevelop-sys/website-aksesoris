@@ -1187,6 +1187,19 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
         }
       }
 
+      // Smart Bank Grade Extraction in Word import
+      if (rowData.bank) {
+        const bankValue = String(rowData.bank).trim();
+        const gradeMatch = bankValue.match(/\(grade\s+([A-Za-z0-9]+)\)/i);
+        if (gradeMatch) {
+          const extractedGrade = gradeMatch[1].trim().toUpperCase();
+          if (!rowData.grade || rowData.grade === '') {
+            rowData.grade = extractedGrade;
+          }
+          rowData.bank = bankValue.replace(gradeMatch[0], '').trim();
+        }
+      }
+
       if (bank === 'BRI') {
         if (!rowData.brimoUser && rowData.mobileUser) rowData.brimoUser = rowData.mobileUser;
         if (!rowData.brimoPassword && rowData.mobilePassword) rowData.brimoPassword = rowData.mobilePassword;
