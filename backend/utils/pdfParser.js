@@ -391,21 +391,20 @@ const matchHeaderToField = (headerCell) => {
     { regex: /nyala\s+pin|pin\s+nyala|pin\s+login/i, field: 'ocbcNyalaPin' },
 
     // ============ BCA Specific ============
-    { regex: /kode\s+akses/i, field: 'kodeAkses' },
     { regex: /kode\s+akses\s+m\s*bca/i, field: 'kodeAkses' },
     { regex: /pin\s+m\s*bca|pin\s+mobile\s+bca/i, field: 'pinMBca' },
-    { regex: /user\s+(bca\s*id|my\s*bca)|id\s+(bca\s*id|my\s*bca)/i, field: 'myBCAUser' },
-    { regex: /pass\s+(bca\s*id|my\s*bca)|password\s+(bca\s*id|my\s*bca)/i, field: 'myBCAPassword' },
-    { regex: /pin\s+(bca\s*id|my\s*bca|transaksi)/i, field: 'myBCAPin' },
+    { regex: /(?:pass|password)\s+(?:bca\s*id|my\s*bca)/i, field: 'myBCAPassword' },
+    { regex: /pin\s+(?:bca\s*id|my\s*bca|transaksi)/i, field: 'myBCAPin' },
+    { regex: /(?:user\s+)?(?:bca\s*id|my\s*bca)|id\s+(?:bca\s*id|my\s*bca)/i, field: 'myBCAUser' },
 
     // ============ GENERIC Mobile / IB ============
     { regex: /user\s+(m\s*banking|mobile|id|account|m\s*bank)|(mobile|m\s*banking|acc|m\s*bank)\s+user|id\s+user/i, field: 'mobileUser' },
     { regex: /pass\s+(m\s*banking|mobile|m\s*bank)|password\s+(mobile|m\s*banking|m\s*bank)|pin\s+login|password\s+login/i, field: 'mobilePassword' },
     { regex: /pin\s+(mobile|m\s*bank|banking|transaksi)|pin\s+login/i, field: 'mobilePin' },
 
-    { regex: /user\s+(i\s*banking|i\s*bank|ib|internet\s+banking)/i, field: 'ibUser' },
-    { regex: /pass\s+(i\s*banking|i\s*bank|ib|internet\s+banking)|password\s+(internet\s+banking|i\s*banking|ib)/i, field: 'ibPassword' },
-    { regex: /pin\s+(i\s*banking|i\s*bank|ib|internet\s+banking)/i, field: 'ibPin' },
+    { regex: /(?:pass|password)\s+(?:i\s*banking|i\s*bank|ib|internet\s+banking)|password\s+(?:internet\s+banking|i\s*banking|ib)/i, field: 'ibPassword' },
+    { regex: /pin\s+(?:i\s*banking|i\s*bank|ib|internet\s+banking)/i, field: 'ibPin' },
+    { regex: /(?:user\s+)?(?:i\s*banking|i\s*bank|ib|internet\s+banking)/i, field: 'ibUser' },
 
     // Basic headers
     { regex: /^no\s+order|nomor\s+order/i, field: 'noOrder' },

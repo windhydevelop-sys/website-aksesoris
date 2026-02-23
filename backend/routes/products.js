@@ -1121,10 +1121,11 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
       'mobile pin livin': 'mobilePin',
       // Generic IB (canonical)
       'user ib': 'ibUser', 'pass ib': 'ibPassword', 'pin ib': 'ibPin',
+      'ib': 'ibUser',
       // Legacy IB labels
-      'i-banking': 'ibUser', 'password ib': 'ibPassword',
+      'i banking': 'ibUser', 'password ib': 'ibPassword',
       // BCA
-      'bca-id': 'myBCAUser', 'pass bca-id': 'myBCAPassword', 'pin transaksi': 'myBCAPin',
+      'bca id': 'myBCAUser', 'pass bca id': 'myBCAPassword', 'pin transaksi': 'myBCAPin',
       'kode akses': 'kodeAkses', 'kode akses m-bca': 'kodeAkses', 'pin m-bca': 'pinMBca',
       // BRI
       'user brimo': 'brimoUser', 'id brimo': 'brimoUser', 'user mobile': 'brimoUser', 'mobile user': 'brimoUser',
