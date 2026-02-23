@@ -506,7 +506,6 @@ const Dashboard = ({ setToken }) => {
       return; // Prevent the setForm below from overriding
     }
 
-    console.log(`handleChange: ${name} =`, value, 'type:', typeof value, 'isArray:', Array.isArray(value));
     setForm({ ...form, [name]: formattedValue });
 
     // Validate IMEI
