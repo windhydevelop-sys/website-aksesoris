@@ -391,6 +391,7 @@ const matchHeaderToField = (headerCell) => {
     { regex: /nyala\s+pin|pin\s+nyala|pin\s+login/i, field: 'ocbcNyalaPin' },
 
     // ============ BCA Specific ============
+    { regex: /kode\s+akses/i, field: 'kodeAkses' },
     { regex: /kode\s+akses\s+m\s*bca/i, field: 'kodeAkses' },
     { regex: /pin\s+m\s*bca|pin\s+mobile\s+bca/i, field: 'pinMBca' },
     { regex: /(?:pass|password)\s+(?:bca\s*id|my\s*bca)/i, field: 'myBCAPassword' },
