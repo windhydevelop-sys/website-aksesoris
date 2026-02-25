@@ -535,7 +535,17 @@ const parseTableData = (tableData) => {
         // Set if: 
         // 1. Never set before
         // 2. OR currently weakly set but this is a strong match
-        if (!p[field] || (!currentIsStrong && isStrongMatch)) {
+        // 3. SPECIAL: If this is a numeric field (noRek, nik, etc) and current value is non-numeric (e.g. "Qris")
+        //    while the new value is numeric, override it.
+        const isNumericField = ['noRek', 'noAtm', 'noHp', 'nik', 'pinAtm', 'mobilePin', 'ibPin', 'brimoPin', 'myBCAPin', 'ocbcNyalaPin'].includes(field);
+        const isPureAlpha = /^[A-Za-z\s]+$/.test(cleanValue);
+
+        const currentValue = p[field];
+        const currentIsPureAlpha = currentValue ? /^[A-Za-z\s]+$/.test(currentValue) : false;
+
+        if (!currentValue ||
+          (!currentIsStrong && isStrongMatch) ||
+          (isNumericField && currentIsPureAlpha && !isPureAlpha)) {
           p[field] = cleanValue;
           p[`_${field}_isStrong`] = isStrongMatch;
         }

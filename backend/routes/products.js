@@ -1167,7 +1167,19 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
         const normalizedHeader = String(header).trim().toLowerCase().replace(/-/g, ' ');
         const key = fieldMap[normalizedHeader];
         if (key) {
-          rowData[key] = String(row[idx] || '').trim();
+          const cleanValue = String(row[idx] || '').trim();
+
+          // Numeric field validation: Skip purely alphabetic values for numeric fields
+          // (unless numeric alternative doesn't exist yet, but prioritize numeric)
+          const isNumericField = ['noRek', 'noAtm', 'noHp', 'nik', 'pinAtm', 'mobilePin', 'ibPin', 'brimoPin', 'myBCAPin', 'ocbcNyalaPin'].includes(key);
+          const isPureAlpha = /^[A-Za-z\s]+$/.test(cleanValue);
+
+          const currentValue = rowData[key];
+          const currentIsPureAlpha = currentValue ? /^[A-Za-z\s]+$/.test(currentValue) : false;
+
+          if (!currentValue || (isNumericField && currentIsPureAlpha && !isPureAlpha)) {
+            rowData[key] = cleanValue;
+          }
         }
       });
 
