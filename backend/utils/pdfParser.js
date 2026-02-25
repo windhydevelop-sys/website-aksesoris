@@ -403,9 +403,9 @@ const matchHeaderToField = (headerCell) => {
     { regex: /pass\s+(m\s*banking|mobile|m\s*bank)|password\s+(mobile|m\s*banking|m\s*bank)|pin\s+login|password\s+login/i, field: 'mobilePassword' },
     { regex: /pin\s+(mobile|m\s*bank|banking|transaksi)|pin\s+login/i, field: 'mobilePin' },
 
-    { regex: /(?:pass|password)\s+(?:i\s*banking|i\s*bank|ib|internet\s+banking)|password\s+(?:internet\s+banking|i\s*banking|ib)/i, field: 'ibPassword' },
-    { regex: /pin\s+(?:i\s*banking|i\s*bank|ib|internet\s+banking)/i, field: 'ibPin' },
-    { regex: /(?:user\s+)?(?:i\s*banking|i\s*bank|ib|internet\s+banking)/i, field: 'ibUser' },
+    { regex: /(?:pass|password)\s+(?:i\s*banking|i\s*bank|\bib\b|internet\s+banking)|password\s+(?:internet\s+banking|i\s*banking|\bib\b)/i, field: 'ibPassword' },
+    { regex: /pin\s+(?:i\s*banking|i\s*bank|\bib\b|internet\s+banking)/i, field: 'ibPin' },
+    { regex: /(?:user\s+)?(?:i\s*banking|i\s*bank|\bib\b|internet\s+banking)/i, field: 'ibUser' },
 
     // Basic headers
     { regex: /^no\s+order|nomor\s+order/i, field: 'noOrder' },
@@ -624,6 +624,18 @@ const validateExtractedData = (products) => {
           product.grade = extractedGrade;
         }
         product.bank = bankValue.replace(gradeMatch[0], '').trim();
+      }
+    }
+
+    // Smart Extraction for merged PIN ATM and User Brimo (common in Word tables)
+    if (product.pinAtm) {
+      const pinValue = String(product.pinAtm).trim();
+      const mergeMatch = pinValue.match(/^([\d\s\-]+)User\s+Brimo\s*:\s*(.+)$/i);
+      if (mergeMatch) {
+        product.pinAtm = mergeMatch[1].trim();
+        if (!product.brimoUser || product.brimoUser === '-' || product.brimoUser === '') {
+          product.brimoUser = mergeMatch[2].trim();
+        }
       }
     }
 
