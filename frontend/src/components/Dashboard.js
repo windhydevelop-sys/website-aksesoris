@@ -1455,7 +1455,7 @@ const Dashboard = ({ setToken }) => {
                     console.log('Autocomplete orderNumber onInputChange:', newInputValue, '->', safeValue);
                     setForm({ ...form, orderNumber: safeValue });
                   }}
-                  renderInput={(params) => <TextField {...params} label="Order Number" name="orderNumber" placeholder="Pilih nomor order dari daftar atau ketik baru" margin="normal" required />}
+                  renderInput={(params) => <TextField {...params} label="Order Number" name="orderNumber" placeholder="Pilih nomor order dari daftar atau ketik baru" margin="normal" />}
                 />
                 <Autocomplete
                   fullWidth
@@ -1464,7 +1464,7 @@ const Dashboard = ({ setToken }) => {
                   freeSolo
                   onChange={(event, newValue) => { setForm({ ...form, customer: newValue || '' }); }}
                   onInputChange={(event, newInputValue) => { setForm({ ...form, customer: newInputValue || '' }); }}
-                  renderInput={(params) => <TextField {...params} label="Customer" name="customer" placeholder="Pilih customer dari daftar atau ketik baru" margin="normal" required />}
+                  renderInput={(params) => <TextField {...params} label="Customer" name="customer" placeholder="Pilih customer dari daftar atau ketik baru" margin="normal" />}
                 />
                 <Autocomplete
                   fullWidth
@@ -1484,7 +1484,7 @@ const Dashboard = ({ setToken }) => {
                   renderInput={(params) => <TextField {...params} label="Orang Lapangan" name="fieldStaff" placeholder="Pilih orang lapangan dari daftar atau ketik baru" margin="normal" />}
                 />
 
-                <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="Bank" name="bank" placeholder="Bebas, contoh: BCA, Mandiri, BNI, BRI" value={form.bank} onChange={handleChange} margin="normal" />
                 {form.bank && form.bank.toUpperCase() === 'BCA' && (
                   <>
                     <TextField
@@ -1703,21 +1703,21 @@ const Dashboard = ({ setToken }) => {
                     />
                   </>
                 )}
-                <TextField fullWidth label="Grade" name="grade" placeholder="Bebas, contoh: A, VIP, PREMIUM, GOLD" value={form.grade} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Kantor Cabang" name="kcp" placeholder="Bebas, contoh: KCP001 atau CABANG-JAKARTA" value={form.kcp} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="NIK" name="nik" placeholder="16 digit angka, contoh: 3201010101010001" value={form.nik} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Nama" name="nama" placeholder="Bebas, contoh: Ahmad Susanto" value={form.nama} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Nama Ibu Kandung" name="namaIbuKandung" placeholder="Bebas, contoh: Siti Aminah" value={form.namaIbuKandung} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Tempat / Tanggal Lahir" name="tempatTanggalLahir" placeholder="Bebas, contoh: Jakarta, 01 Januari 1990" value={form.tempatTanggalLahir} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="No. Rekening" name="noRek" placeholder="10-18 digit angka, contoh: 123456789012" value={form.noRek} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="Grade" name="grade" placeholder="Bebas, contoh: A, VIP, PREMIUM, GOLD" value={form.grade} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="Kantor Cabang" name="kcp" placeholder="Bebas, contoh: KCP001 atau CABANG-JAKARTA" value={form.kcp} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="NIK" name="nik" placeholder="16 digit angka, contoh: 3201010101010001" value={form.nik} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="Nama" name="nama" placeholder="Bebas, contoh: Ahmad Susanto" value={form.nama} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="Nama Ibu Kandung" name="namaIbuKandung" placeholder="Bebas, contoh: Siti Aminah" value={form.namaIbuKandung} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="Tempat / Tanggal Lahir" name="tempatTanggalLahir" placeholder="Bebas, contoh: Jakarta, 01 Januari 1990" value={form.tempatTanggalLahir} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="No. Rekening" name="noRek" placeholder="10-18 digit angka, contoh: 123456789012" value={form.noRek} onChange={handleChange} margin="normal" />
 
-                <TextField fullWidth label="No. ATM" name="noAtm" placeholder="16 digit angka, contoh: 1234567890123456" value={form.noAtm} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Valid Kartu" name="validThru" placeholder="Bebas, contoh: 12/25 atau Dec 2025" value={form.validThru} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="No. HP" name="noHp" placeholder="Format Indonesia, contoh: 081234567890" value={form.noHp} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="PIN ATM" name="pinAtm" placeholder="4-6 digit angka, contoh: 1234" value={form.pinAtm} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="No. ATM" name="noAtm" placeholder="16 digit angka, contoh: 1234567890123456" value={form.noAtm} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="Valid Kartu" name="validThru" placeholder="Bebas, contoh: 12/25 atau Dec 2025" value={form.validThru} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="No. HP" name="noHp" placeholder="Format Indonesia, contoh: 081234567890" value={form.noHp} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="PIN ATM" name="pinAtm" placeholder="4-6 digit angka, contoh: 1234" value={form.pinAtm} onChange={handleChange} margin="normal" />
 
-                <TextField fullWidth label="Email" name="email" placeholder="Format email valid, contoh: user@example.com" value={form.email} onChange={handleChange} margin="normal" required />
-                <TextField fullWidth label="Password Email" name="passEmail" placeholder="Minimal 6 karakter, contoh: emailpass123" value={form.passEmail} onChange={handleChange} margin="normal" required />
+                <TextField fullWidth label="Email" name="email" placeholder="Format email valid, contoh: user@example.com" value={form.email} onChange={handleChange} margin="normal" />
+                <TextField fullWidth label="Password Email" name="passEmail" placeholder="Minimal 6 karakter, contoh: emailpass123" value={form.passEmail} onChange={handleChange} margin="normal" />
 
                 <TextField
                   fullWidth
