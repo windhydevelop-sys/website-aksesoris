@@ -428,6 +428,17 @@ const initialFormState = {
   ibPassword: '',
   merchantUser: '',
   merchantPassword: '',
+  ocbcNyalaUser: '',
+  ocbcNyalaPassword: '',
+  ocbcNyalaPin: '',
+  pinWondr: '',
+  passWondr: '',
+  kodeAkses: '',
+  pinMBca: '',
+  briMerchantUser: '',
+  briMerchantPassword: '',
+  jenisRekening: '',
+  sisaSaldo: '',
   grade: '',
   kcp: '',
   expired: '',
@@ -722,6 +733,17 @@ const Dashboard = ({ setToken }) => {
         ibPassword: product.ibPassword || '',
         merchantUser: product.merchantUser || '',
         merchantPassword: product.merchantPassword || '',
+        ocbcNyalaUser: product.ocbcNyalaUser || '',
+        ocbcNyalaPassword: product.ocbcNyalaPassword || '',
+        ocbcNyalaPin: product.ocbcNyalaPin || '',
+        pinWondr: product.pinWondr || '',
+        passWondr: product.passWondr || '',
+        kodeAkses: product.kodeAkses || '',
+        pinMBca: product.pinMBca || '',
+        briMerchantUser: product.briMerchantUser || '',
+        briMerchantPassword: product.briMerchantPassword || '',
+        jenisRekening: product.jenisRekening || '',
+        sisaSaldo: product.sisaSaldo || '',
         grade: product.grade || '',
         kcp: product.kcp || '',
         nik: product.nik ? formatCardNumber(product.nik) : '',
@@ -1497,8 +1519,8 @@ const Dashboard = ({ setToken }) => {
                     <TextField
                       fullWidth
                       label="Kode Akses"
-                      name="mobilePassword"
-                      value={form.mobilePassword}
+                      name="kodeAkses"
+                      value={form.kodeAkses}
                       onChange={handleChange}
                       margin="normal"
                       required
@@ -1507,8 +1529,8 @@ const Dashboard = ({ setToken }) => {
                     <TextField
                       fullWidth
                       label="Pin Mobile BCA"
-                      name="mobilePin"
-                      value={form.mobilePin}
+                      name="pinMBca"
+                      value={form.pinMBca}
                       onChange={handleChange}
                       margin="normal"
                       required
@@ -1565,8 +1587,20 @@ const Dashboard = ({ setToken }) => {
                             form.bank && form.bank.toUpperCase() === 'BNI' ? 'Password Wondr' :
                               'Password Mobile'
                       }
-                      name={form.bank && form.bank.toUpperCase() === 'BRI' ? 'brimoPassword' : 'mobilePassword'}
-                      value={form.bank && form.bank.toUpperCase() === 'BRI' ? form.brimoPassword : form.mobilePassword}
+                      name={
+                        form.bank && form.bank.toUpperCase() === 'MANDIRI' ? 'mobilePassword' :
+                          form.bank && form.bank.toUpperCase() === 'BRI' ? 'brimoPassword' :
+                            form.bank && form.bank.toUpperCase() === 'BNI' ? 'passWondr' :
+                              form.bank && form.bank.toUpperCase() === 'OCBC NISP' ? 'ocbcNyalaPassword' :
+                                'mobilePassword'
+                      }
+                      value={
+                        form.bank && form.bank.toUpperCase() === 'MANDIRI' ? form.mobilePassword :
+                          form.bank && form.bank.toUpperCase() === 'BRI' ? form.brimoPassword :
+                            form.bank && form.bank.toUpperCase() === 'BNI' ? form.passWondr :
+                              form.bank && form.bank.toUpperCase() === 'OCBC NISP' ? form.ocbcNyalaPassword :
+                                form.mobilePassword
+                      }
                       onChange={handleChange}
                       margin="normal"
                       required
@@ -1600,8 +1634,8 @@ const Dashboard = ({ setToken }) => {
                       <TextField
                         fullWidth
                         label="Pin Wondr"
-                        name="mobilePin"
-                        value={form.mobilePin}
+                        name="pinWondr"
+                        value={form.pinWondr}
                         onChange={handleChange}
                         margin="normal"
                         required
@@ -1611,9 +1645,9 @@ const Dashboard = ({ setToken }) => {
                     {form.bank && form.bank.toUpperCase() === 'OCBC NISP' && (
                       <TextField
                         fullWidth
-                        label="Pin"
-                        name="mobilePin"
-                        value={form.mobilePin}
+                        label="Pin Nyala"
+                        name="ocbcNyalaPin"
+                        value={form.ocbcNyalaPin}
                         onChange={handleChange}
                         margin="normal"
                         required
@@ -1653,16 +1687,16 @@ const Dashboard = ({ setToken }) => {
                     <TextField
                       fullWidth
                       label="User Merchant (opsional)"
-                      name="merchantUser"
-                      value={form.merchantUser}
+                      name={form.bank && form.bank.toUpperCase() === 'BRI' ? 'briMerchantUser' : 'merchantUser'}
+                      value={form.bank && form.bank.toUpperCase() === 'BRI' ? form.briMerchantUser : form.merchantUser}
                       onChange={handleChange}
                       margin="normal"
                     />
                     <TextField
                       fullWidth
                       label="Password Merchant (opsional)"
-                      name="merchantPassword"
-                      value={form.merchantPassword}
+                      name={form.bank && form.bank.toUpperCase() === 'BRI' ? 'briMerchantPassword' : 'merchantPassword'}
+                      value={form.bank && form.bank.toUpperCase() === 'BRI' ? form.briMerchantPassword : form.merchantPassword}
                       onChange={handleChange}
                       margin="normal"
                       type="text"
