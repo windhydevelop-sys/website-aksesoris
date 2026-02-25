@@ -103,8 +103,8 @@ const parseProductData = (rawText) => {
       // brimoPin is mapped to mobilePin below for consistency
 
       // 2. BRI MERCHANT QRIS
-      briMerchantUser: /(?:User|ID|Username|Account)\s*(?:Merchant|Qris|QRIS)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      briMerchantPassword: /(?:Pass(?:word)?|Kata\s*Sandi)\s*(?:Merchant|Qris|QRIS)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      briMerchantUser: /(?:User|ID|Username|Account)\s*(?:BRI\s*)?(?:Merchant|Qris|QRIS)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
+      briMerchantPassword: /(?:Pass(?:word)?|Kata\s*Sandi|Password)\s*(?:BRI\s*)?(?:Merchant|Qris|QRIS)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
 
       // 3. BCA Specific Fields
       kodeAkses: /Kode\s+Akses[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
@@ -596,8 +596,21 @@ const validateExtractedData = (products) => {
     // ========== BANK SPECIFIC ALIGNMENT ==========
     const { getBankConfig, getMandatoryFields, getDisplayLabel } = require('../config/bankFieldMapping');
     const bankConfig = getBankConfig(product.bank);
-    const bank = bankConfig.name.toUpperCase();
-    const jenisRekening = (product.jenisRekening || 'TABUNGAN').toUpperCase();
+    let bank = bankConfig.name.toUpperCase();
+
+    // Smart Subtype Detection for BRI
+    let jenisRekening = product.jenisRekening ? product.jenisRekening.toUpperCase() : null;
+    if (bank === 'BRI' && !jenisRekening) {
+      const isQris =
+        (product.briMerchantUser && product.briMerchantUser !== '-') ||
+        (product.briMerchantPassword && product.briMerchantPassword !== '-') ||
+        (product.noRek && String(product.noRek).toUpperCase().includes('QRIS'));
+
+      jenisRekening = isQris ? 'QRIS' : 'TABUNGAN';
+      product.jenisRekening = jenisRekening;
+    } else if (!jenisRekening) {
+      jenisRekening = 'TABUNGAN';
+    }
 
     // Smart ATM Expiry Extraction: "7788 8899 6677 5566 (02/32)" -> noAtm: 7788..., validThru: 02/32
     if (product.noAtm) {

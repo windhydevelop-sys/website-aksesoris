@@ -1131,7 +1131,8 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
       'user brimo': 'brimoUser', 'id brimo': 'brimoUser', 'user mobile': 'brimoUser', 'mobile user': 'brimoUser',
       'pass brimo': 'brimoPassword', 'brimo pass': 'brimoPassword', 'brimo password': 'brimoPassword', 'password mobile': 'brimoPassword',
       'pin brimo': 'brimoPin', 'brimo pin': 'brimoPin', 'pin mobile': 'brimoPin',
-      'user merchant': 'briMerchantUser', 'pass merchant': 'briMerchantPassword',
+      'user merchant': 'briMerchantUser', 'user bri merchant': 'briMerchantUser', 'merchant user': 'briMerchantUser',
+      'pass merchant': 'briMerchantPassword', 'password bri merchant': 'briMerchantPassword', 'password merchant': 'briMerchantPassword', 'merchant password': 'briMerchantPassword',
       // BNI Wondr  → stored in mobileUser/mobilePassword/mobilePin
       'user wondr': 'mobileUser', 'id wondr': 'mobileUser', 'user mobile': 'mobileUser', 'mobile user': 'mobileUser',
       'password wondr': 'mobilePassword', 'pass wondr': 'mobilePassword', 'wondr pass': 'mobilePassword', 'wondr password': 'mobilePassword', 'password mobile': 'mobilePassword',
@@ -1174,6 +1175,16 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
       const { getBankConfig } = require('../config/bankFieldMapping');
       const bankConfig = getBankConfig(rowData.bank);
       const bank = bankConfig.name.toUpperCase();
+
+      // Smart Subtype Detection for BRI
+      if (bank === 'BRI' && (!rowData.jenisRekening || rowData.jenisRekening === '')) {
+        const isQris =
+          (rowData.briMerchantUser && rowData.briMerchantUser !== '') ||
+          (rowData.briMerchantPassword && rowData.briMerchantPassword !== '') ||
+          (rowData.noRek && String(rowData.noRek).toUpperCase().includes('QRIS'));
+
+        rowData.jenisRekening = isQris ? 'QRIS' : 'TABUNGAN';
+      }
 
       // Smart ATM Expiry Extraction in Word import
       if (rowData.noAtm) {

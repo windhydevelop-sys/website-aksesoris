@@ -70,12 +70,15 @@ const BANK_CONFIG = {
       'brimo pin': 'brimoPin',
       'pin mobile': 'brimoPin',
       'user merchant': 'briMerchantUser',
+      'user bri merchant': 'briMerchantUser',
       'id merchant': 'briMerchantUser',
       'merchant id': 'briMerchantUser',
       'merchant user': 'briMerchantUser',
       'password merchant': 'briMerchantPassword',
+      'password bri merchant': 'briMerchantPassword',
       'pass merchant': 'briMerchantPassword',
-      'merchant password': 'briMerchantPassword'
+      'merchant password': 'briMerchantPassword',
+      'kata sandi merchant': 'briMerchantPassword'
     },
     displayConfig: {
       'brimoUser': 'User Brimo',
