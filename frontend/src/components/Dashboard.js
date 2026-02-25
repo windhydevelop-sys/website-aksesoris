@@ -417,6 +417,9 @@ const initialFormState = {
   myBCAUser: '',
   myBCAPassword: '',
   myBCAPin: '',
+  brimoUser: '',
+  brimoPassword: '',
+  brimoPin: '',
   ibPin: '',
   mobileUser: '',
   mobilePassword: '',
@@ -709,6 +712,9 @@ const Dashboard = ({ setToken }) => {
         bank: product.bank || '',
         myBCAUser: product.myBCAUser || '',
         myBCAPassword: product.myBCAPassword || '',
+        brimoUser: product.brimoUser || '',
+        brimoPassword: product.brimoPassword || '',
+        brimoPin: product.brimoPin || '',
         mobileUser: product.mobileUser || '',
         mobilePassword: product.mobilePassword || '',
         ibPin: product.ibPin || '',
@@ -1544,8 +1550,8 @@ const Dashboard = ({ setToken }) => {
                       <TextField
                         fullWidth
                         label={form.bank && form.bank.toUpperCase() === 'BRI' ? 'User BRIMO' : 'User Mobile'}
-                        name="mobileUser"
-                        value={form.mobileUser}
+                        name={form.bank && form.bank.toUpperCase() === 'BRI' ? 'brimoUser' : 'mobileUser'}
+                        value={form.bank && form.bank.toUpperCase() === 'BRI' ? form.brimoUser : form.mobileUser}
                         onChange={handleChange}
                         margin="normal"
                         required
@@ -1559,8 +1565,8 @@ const Dashboard = ({ setToken }) => {
                             form.bank && form.bank.toUpperCase() === 'BNI' ? 'Password Wondr' :
                               'Password Mobile'
                       }
-                      name="mobilePassword"
-                      value={form.mobilePassword}
+                      name={form.bank && form.bank.toUpperCase() === 'BRI' ? 'brimoPassword' : 'mobilePassword'}
+                      value={form.bank && form.bank.toUpperCase() === 'BRI' ? form.brimoPassword : form.mobilePassword}
                       onChange={handleChange}
                       margin="normal"
                       required
@@ -1582,8 +1588,8 @@ const Dashboard = ({ setToken }) => {
                       <TextField
                         fullWidth
                         label="Pin BRIMO"
-                        name="mobilePin"
-                        value={form.mobilePin}
+                        name="brimoPin"
+                        value={form.brimoPin}
                         onChange={handleChange}
                         margin="normal"
                         required
