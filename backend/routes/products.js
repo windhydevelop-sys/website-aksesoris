@@ -1117,6 +1117,7 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
       'pin atm': 'pinAtm', 'email': 'email', 'password email': 'passEmail', 'expired': 'expired',
       // Generic mobile banking
       'user mobile': 'mobileUser', 'password mobile': 'mobilePassword', 'pass mobile': 'mobilePassword', 'pin mobile': 'mobilePin',
+      'user mobile / m bank': 'mobileUser', 'pass mobile / m bank': 'mobilePassword', 'pin mobile / m bank': 'mobilePin',
       'mobile password': 'mobilePassword', 'mobile pass': 'mobilePassword', 'mobile pin': 'mobilePin',
       'mobile pin livin': 'mobilePin',
       // Generic IB (canonical)
@@ -1157,6 +1158,7 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
       'user internet banking': 'ibUser', 'pass email': 'passEmail', 'password email': 'passEmail',
       'password internet banking': 'ibPassword',
       'pin internet banking': 'ibPin',
+      'validasi': 'status',
     };
 
     let updatedCount = 0;
@@ -1221,6 +1223,20 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
             rowData.grade = extractedGrade;
           }
           rowData.bank = bankValue.replace(gradeMatch[0], '').trim();
+        }
+      }
+
+      // SPECIAL FIX: If Grade contains "Code Agen", split it
+      if (rowData.grade && String(rowData.grade).toUpperCase().includes('CODE AGEN')) {
+        const gradeValue = String(rowData.grade);
+        const parts = gradeValue.split(':');
+        if (parts.length > 1) {
+          const extractedGrade = parts[0].replace(/Code Agen/i, '').trim().substring(0, 1);
+          const extractedCode = parts[1].trim();
+          rowData.grade = extractedGrade;
+          if (!rowData.codeAgen || rowData.codeAgen === '' || rowData.codeAgen === '-') {
+            rowData.codeAgen = extractedCode;
+          }
         }
       }
 

@@ -400,8 +400,8 @@ const matchHeaderToField = (headerCell) => {
 
     // ============ GENERIC Mobile / IB ============
     { regex: /user\s+(m\s*banking|mobile|id|account|m\s*bank)|(mobile|m\s*banking|acc|m\s*bank)\s+user|id\s+user/i, field: 'mobileUser' },
-    { regex: /pass\s+(m\s*banking|mobile|m\s*bank)|password\s+(mobile|m\s*banking|m\s*bank)|pin\s+login|password\s+login/i, field: 'mobilePassword' },
-    { regex: /pin\s+(mobile|m\s*bank|banking|transaksi)|pin\s+login/i, field: 'mobilePin' },
+    { regex: /pass\s+(m\s*banking|mobile|m\s*bank)|password\s+(mobile|m\s*banking|m\s*bank)|pin\s+login|password\s+login|pass\s+mobile\s+m\s*bank/i, field: 'mobilePassword' },
+    { regex: /pin\s+(mobile|m\s*bank|banking|transaksi)|pin\s+login|pin\s+mobile\s+m\s*bank/i, field: 'mobilePin' },
 
     { regex: /(?:pass|password)\s+(?:i\s*banking|i\s*bank|\bib\b|internet\s+banking)|password\s+(?:internet\s+banking|i\s*banking|\bib\b)/i, field: 'ibPassword' },
     { regex: /pin\s+(?:i\s*banking|i\s*bank|\bib\b|internet\s+banking)/i, field: 'ibPin' },
@@ -428,6 +428,7 @@ const matchHeaderToField = (headerCell) => {
     { regex: /^grade$|grade\s+kartu/i, field: 'grade' },
     { regex: /customer|pelanggan/i, field: 'customer' },
     { regex: /validasi|status/i, field: 'status' },
+    { regex: /user\s+mobile\s+m\s*bank/i, field: 'mobileUser' },
 
     // ============ GENERIC FALLBACKS (at the end) ============
     { regex: /^user$|^username$|^user\s*id$|^userid$|^id\s*user$|^user\s*login$|^login\s*id$/i, field: 'mobileUser' },
@@ -548,6 +549,19 @@ const parseTableData = (tableData) => {
           (isNumericField && currentIsPureAlpha && !isPureAlpha)) {
           p[field] = cleanValue;
           p[`_${field}_isStrong`] = isStrongMatch;
+
+          // SPECIAL FIX: If we just set Grade and it contains "Code Agen", split it
+          if (field === 'grade' && cleanValue.toUpperCase().includes('CODE AGEN')) {
+            const parts = cleanValue.split(':');
+            if (parts.length > 1) {
+              const extractedGrade = parts[0].replace(/Code Agen/i, '').trim().substring(0, 1);
+              const extractedCode = parts[1].trim();
+              p['grade'] = extractedGrade;
+              if (!p['codeAgen'] || p['codeAgen'] === '-') {
+                p['codeAgen'] = extractedCode;
+              }
+            }
+          }
         }
       }
     });
