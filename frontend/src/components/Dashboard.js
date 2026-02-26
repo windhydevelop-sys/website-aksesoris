@@ -1494,7 +1494,6 @@ const Dashboard = ({ setToken }) => {
                       value={form.myBCAUser}
                       onChange={handleChange}
                       margin="normal"
-                      required
                     />
                     <TextField
                       fullWidth
@@ -1503,7 +1502,6 @@ const Dashboard = ({ setToken }) => {
                       value={form.myBCAPassword}
                       onChange={handleChange}
                       margin="normal"
-                      required
                       type="text"
                     />
                     <TextField
@@ -1513,7 +1511,6 @@ const Dashboard = ({ setToken }) => {
                       value={form.myBCAPin}
                       onChange={handleChange}
                       margin="normal"
-                      required
                       type="text"
                     />
                     <TextField
@@ -1523,7 +1520,6 @@ const Dashboard = ({ setToken }) => {
                       value={form.kodeAkses}
                       onChange={handleChange}
                       margin="normal"
-                      required
                       type="text"
                     />
                     <TextField
@@ -1533,7 +1529,6 @@ const Dashboard = ({ setToken }) => {
                       value={form.pinMBca}
                       onChange={handleChange}
                       margin="normal"
-                      required
                       type="text"
                     />
                     <TextField
@@ -1543,7 +1538,6 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibUser}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI' && form.bank.toUpperCase() !== 'BCA'}
                     />
                     <TextField
                       fullWidth
@@ -1552,7 +1546,6 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibPassword}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI' && form.bank.toUpperCase() !== 'BCA'}
                       type="text"
                     />
                     <TextField
@@ -1576,7 +1569,6 @@ const Dashboard = ({ setToken }) => {
                         value={form.bank && form.bank.toUpperCase() === 'BRI' ? form.brimoUser : form.mobileUser}
                         onChange={handleChange}
                         margin="normal"
-                        required
                       />
                     )}
                     <TextField
@@ -1603,7 +1595,6 @@ const Dashboard = ({ setToken }) => {
                       }
                       onChange={handleChange}
                       margin="normal"
-                      required
                       type="text"
                     />
                     {form.bank && form.bank.toUpperCase() === 'MANDIRI' && (
@@ -1614,7 +1605,6 @@ const Dashboard = ({ setToken }) => {
                         value={form.mobilePin}
                         onChange={handleChange}
                         margin="normal"
-                        required
                         type="text"
                       />
                     )}
@@ -1626,7 +1616,6 @@ const Dashboard = ({ setToken }) => {
                         value={form.brimoPin}
                         onChange={handleChange}
                         margin="normal"
-                        required
                         type="text"
                       />
                     )}
@@ -1638,7 +1627,6 @@ const Dashboard = ({ setToken }) => {
                         value={form.pinWondr}
                         onChange={handleChange}
                         margin="normal"
-                        required
                         type="text"
                       />
                     )}
@@ -1650,7 +1638,6 @@ const Dashboard = ({ setToken }) => {
                         value={form.ocbcNyalaPin}
                         onChange={handleChange}
                         margin="normal"
-                        required
                         type="text"
                       />
                     )}
@@ -1661,7 +1648,6 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibUser}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI' && form.bank.toUpperCase() !== 'BNI'}
                     />
                     <TextField
                       fullWidth
@@ -1670,7 +1656,6 @@ const Dashboard = ({ setToken }) => {
                       value={form.ibPassword}
                       onChange={handleChange}
                       margin="normal"
-                      required={form.bank && form.bank.toUpperCase() !== 'MANDIRI' && form.bank.toUpperCase() !== 'BRI' && form.bank.toUpperCase() !== 'BNI'}
                       type="text"
                     />
                     {form.bank && form.bank.toUpperCase() === 'OCBC NISP' && (
@@ -1681,7 +1666,6 @@ const Dashboard = ({ setToken }) => {
                         value={form.ocbcNyalaUser}
                         onChange={handleChange}
                         margin="normal"
-                        required
                       />
                     )}
                     <TextField
@@ -1735,7 +1719,6 @@ const Dashboard = ({ setToken }) => {
                     }
                   }}
                   margin="normal"
-                  required
                   InputLabelProps={{ shrink: true }}
                   inputProps={{
                     // Ensure proper date format handling
@@ -1751,7 +1734,6 @@ const Dashboard = ({ setToken }) => {
                   value={form.status || 'pending'}
                   onChange={handleChange}
                   margin="normal"
-                  required
                 >
                   <MenuItem value="pending">Tertunda</MenuItem>
                   <MenuItem value="in_progress">Dalam Proses</MenuItem>
