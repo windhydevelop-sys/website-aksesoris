@@ -501,6 +501,17 @@ const Dashboard = ({ setToken }) => {
     fetchProducts();
     showSuccess('Data successfully imported from document');
   };
+
+  const handleUpdateSuccess = (updatedProduct) => {
+    // Update the local state for products
+    setProducts(prevProducts =>
+      prevProducts.map(p => p._id === updatedProduct._id ? updatedProduct : p)
+    );
+    // Update the selected product in the detail view
+    setSelectedProduct(updatedProduct);
+    // Optional: Refresh all data to be sure
+    // fetchProducts();
+  };
   const handleChange = (e) => {
     const { name, value } = e.target;
     let formattedValue = value;
@@ -1790,6 +1801,7 @@ const Dashboard = ({ setToken }) => {
         product={selectedProduct}
         onPrintInvoice={handlePrintInvoiceFromDrawer}
         onExportPdf={handleExportSinglePdf}
+        onUpdateSuccess={handleUpdateSuccess}
       />
       <DocumentImport
         open={docImportOpen}

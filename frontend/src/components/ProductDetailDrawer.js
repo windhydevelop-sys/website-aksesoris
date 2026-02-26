@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from '../utils/axios';
 import {
   Drawer,
   Typography,
@@ -14,7 +15,10 @@ import {
   TableCell,
   Button,
   Chip,
-  Divider
+  Divider,
+  TextField,
+  MenuItem,
+  CircularProgress
 } from '@mui/material';
 import {
   Close,
@@ -32,16 +36,28 @@ import {
   AccountCircle,
   Store,
   PictureAsPdf,
-  AccountBalanceWallet
+  AccountBalanceWallet,
+  Save,
+  Cancel
 } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 import { getStatusChip } from '../utils/statusHelpers';
 
 import { buildImageUrl } from '../utils/imageHelpers';
 
-const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportPdf }) => {
+const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportPdf, onUpdateSuccess }) => {
   const { showSuccess, showError } = useNotification();
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({});
+  const [saving, setSaving] = useState(false);
+
+  // Initialize edit form when product changes
+  useEffect(() => {
+    if (product) {
+      setEditForm({ ...product });
+    }
+  }, [product, open]);
 
   if (!product) return null;
 
@@ -72,9 +88,41 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     }
   };
 
-  // Handle edit
-  const handleEdit = () => {
-    showSuccess('Edit functionality will be implemented');
+  // Handle edit toggle
+  const handleEditToggle = () => {
+    setIsEditing(!isEditing);
+    if (!isEditing) {
+      setEditForm({ ...product });
+    }
+  };
+
+  // Handle input change
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle save
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const response = await axios.put(`/api/products/${product._id}`, editForm);
+      if (response.data.success) {
+        showSuccess('Data produk berhasil diperbarui');
+        setIsEditing(false);
+        if (onUpdateSuccess) {
+          onUpdateSuccess(response.data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Error updating product:', error);
+      showError(error.response?.data?.message || 'Gagal memperbarui data produk');
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Define field labels and icons
@@ -257,13 +305,25 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
             Export PDF
           </Button>
           <Button
-            variant="outlined"
-            startIcon={<Edit />}
-            onClick={handleEdit}
-            color="secondary"
+            variant={isEditing ? "contained" : "outlined"}
+            startIcon={isEditing ? <Save /> : <Edit />}
+            onClick={isEditing ? handleSave : handleEditToggle}
+            color={isEditing ? "primary" : "secondary"}
+            disabled={saving}
           >
-            Edit
+            {saving ? <CircularProgress size={24} color="inherit" /> : (isEditing ? 'Simpan' : 'Edit')}
           </Button>
+          {isEditing && (
+            <Button
+              variant="outlined"
+              startIcon={<Cancel />}
+              onClick={handleEditToggle}
+              color="error"
+              disabled={saving}
+            >
+              Batal
+            </Button>
+          )}
         </Box>
 
         {/* Photos Section */}
@@ -337,7 +397,8 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
                     return true;
                   })
                   .filter(([key]) => {
-                    // Hide empty fields
+                    // Hide empty fields only if not editing
+                    if (isEditing) return true;
                     const value = product[key];
                     return value !== undefined && value !== null && value !== '' && value !== '-';
                   })
@@ -378,17 +439,54 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
                           {getFieldLabel(key, config.label, product.bank)}
                         </TableCell>
                         <TableCell sx={{ fontSize: '1.2rem', py: 2 }}>
-                          {key === 'status' ? (
-                            getStatusChip(value, 'medium', { fontSize: '1rem', px: 2 })
-                          ) : key === 'nik' ? (
-                            <Chip
-                              label={value}
-                              variant="outlined"
-                              color="primary"
-                              sx={{ fontWeight: 'bold', fontSize: '1.1rem', height: 32 }}
-                            />
+                          {isEditing ? (
+                            key === 'status' ? (
+                              <TextField
+                                select
+                                fullWidth
+                                name="status"
+                                value={editForm.status || 'pending'}
+                                onChange={handleInputChange}
+                                size="small"
+                              >
+                                <MenuItem value="pending">Tertunda</MenuItem>
+                                <MenuItem value="in_progress">Dalam Proses</MenuItem>
+                                <MenuItem value="completed">Selesai</MenuItem>
+                                <MenuItem value="cancelled">Dibatalkan</MenuItem>
+                              </TextField>
+                            ) : key === 'expired' ? (
+                              <TextField
+                                fullWidth
+                                name="expired"
+                                type="date"
+                                value={editForm.expired ? editForm.expired.split('T')[0] : ''}
+                                onChange={handleInputChange}
+                                size="small"
+                                InputLabelProps={{ shrink: true }}
+                              />
+                            ) : (
+                              <TextField
+                                fullWidth
+                                name={key}
+                                value={editForm[key] || ''}
+                                onChange={handleInputChange}
+                                size="small"
+                                placeholder={`Input ${getFieldLabel(key, config.label, product.bank)}`}
+                              />
+                            )
                           ) : (
-                            String(value)
+                            key === 'status' ? (
+                              getStatusChip(value, 'medium', { fontSize: '1rem', px: 2 })
+                            ) : key === 'nik' ? (
+                              <Chip
+                                label={value}
+                                variant="outlined"
+                                color="primary"
+                                sx={{ fontWeight: 'bold', fontSize: '1.1rem', height: 32 }}
+                              />
+                            ) : (
+                              String(value)
+                            )
                           )}
                         </TableCell>
                       </TableRow>
