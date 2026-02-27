@@ -301,7 +301,7 @@ const getProductById = async (req, res) => {
     }, req);
 
     const decryptedData = product.getDecryptedData();
-    
+
     // Log sensitive fields to verify decryption
     console.log('[PRODUCT_DETAIL] Decryption check:');
     ['mobileUser', 'mobilePassword', 'mobilePin', 'kodeAkses', 'myBCAUser', 'myBCAPassword'].forEach(field => {
@@ -376,12 +376,16 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    // Validate phone if phoneId is being changed
-    if (data.phoneId && data.phoneId !== currentProduct.phoneId?.toString()) {
+    // Validate phone if phoneId is provided in the request
+    // data.phoneId could be null or empty if the user wants to unassign the phone
+    if (data.phoneId !== undefined && data.phoneId !== (currentProduct.phoneId ? currentProduct.phoneId.toString() : '')) {
+      console.log('DEBUG: Updating phone assignment from', currentProduct.phoneId, 'to', data.phoneId);
+
       // Handle old phone: mark as returned and remove product from its assignedProducts
       if (currentProduct.phoneId) {
         const oldPhone = await Handphone.findById(currentProduct.phoneId);
         if (oldPhone) {
+          console.log('DEBUG: Unassigning product from old phone:', oldPhone._id);
           // Update assignment history for the old phone
           const oldAssignment = oldPhone.assignmentHistory.find(
             (assignment) => assignment.product && assignment.product.toString() === req.params.id
@@ -401,50 +405,69 @@ const updateProduct = async (req, res) => {
             oldPhone.status = 'available';
           }
           await oldPhone.save();
+          console.log('DEBUG: Old phone updated successfully');
         }
       }
 
-      const newPhone = await Handphone.findById(data.phoneId).populate('assignedTo');
-      if (!newPhone) {
-        return res.status(400).json({
-          success: false,
-          error: 'Phone not found'
-        });
-      }
+      // Handle new phone assignment if data.phoneId is not falsy
+      if (data.phoneId && data.phoneId !== '' && data.phoneId !== '-') {
+        const newPhone = await Handphone.findById(data.phoneId).populate('assignedTo');
+        if (!newPhone) {
+          return res.status(400).json({
+            success: false,
+            error: 'Phone not found'
+          });
+        }
 
-      // Check if phone is available or already assigned (for multiple product assignment)
-      if (newPhone.status !== 'available' && newPhone.status !== 'assigned') {
-        return res.status(400).json({
-          success: false,
-          error: 'Phone is not available for assignment'
-        });
-      }
+        // Check if phone is available or already assigned (for multiple product assignment)
+        if (newPhone.status !== 'available' && newPhone.status !== 'assigned') {
+          return res.status(400).json({
+            success: false,
+            error: 'Phone is not available for assignment'
+          });
+        }
 
-      // Check if phone is assigned to the same fieldStaff
-      const fieldStaffDoc = await FieldStaff.findOne({ kodeOrlap: data.fieldStaff });
-      if (!fieldStaffDoc) {
-        return res.status(400).json({
-          success: false,
-          error: 'Field staff not found'
-        });
-      }
-      if (newPhone.assignedTo.toString() !== fieldStaffDoc._id.toString()) {
-        return res.status(400).json({
-          success: false,
-          error: 'Phone is not assigned to the same field staff'
-        });
-      }
+        // Check if phone is assigned to the same fieldStaff
+        // Only if fieldStaff/codeAgen exists
+        if (data.fieldStaff || data.codeAgen) {
+          const staffKode = data.fieldStaff || data.codeAgen;
+          const fieldStaffDoc = await FieldStaff.findOne({ kodeOrlap: staffKode });
+          if (!fieldStaffDoc) {
+            return res.status(400).json({
+              success: false,
+              error: 'Field staff not found'
+            });
+          }
+          if (newPhone.assignedTo && newPhone.assignedTo.toString() !== fieldStaffDoc._id.toString()) {
+            return res.status(400).json({
+              success: false,
+              error: 'Phone is not assigned to the same field staff'
+            });
+          }
+        }
 
-      // Handle new phone: add product to its assignedProducts and assignmentHistory
-      newPhone.assignedProducts.push(req.params.id);
-      newPhone.assignmentHistory.push({
-        product: req.params.id,
-        assignedAt: new Date(),
-        assignedBy: req.userId,
-        status: 'active',
-      });
-      newPhone.status = 'assigned';
-      await newPhone.save();
+        // Handle new phone: add product to its assignedProducts and assignmentHistory
+        if (!newPhone.assignedProducts.includes(req.params.id)) {
+          newPhone.assignedProducts.push(req.params.id);
+        }
+
+        newPhone.assignmentHistory.push({
+          product: req.params.id,
+          assignedAt: new Date(),
+          assignedBy: req.userId,
+          status: 'active',
+        });
+        newPhone.status = 'assigned';
+        await newPhone.save();
+
+        // Ensure data.handphoneId is updated for product save
+        data.handphoneId = newPhone._id;
+        console.log('DEBUG: New phone assigned successfully:', newPhone._id);
+      } else {
+        // Explicitly unassigning
+        data.handphoneId = null;
+        console.log('DEBUG: Phone explicitly unassigned');
+      }
     }
 
     // Add audit field
@@ -453,9 +476,7 @@ const updateProduct = async (req, res) => {
     // Debug: Log the data being sent to MongoDB
     console.log('Product update - Final data to be saved:', JSON.stringify(data, null, 2));
 
-    // Remove invalid fields (no longer in Product model)
-    delete data.status;
-    delete data.harga;
+    // No fields deleted, status and harga are preserved if sent from frontend
 
     const product = await Product.findByIdAndUpdate(
       req.params.id,

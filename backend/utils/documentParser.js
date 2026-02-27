@@ -60,16 +60,16 @@ const parseListFormat = (text) => {
       'email': 'Email', 'pass email': 'Password Email',
       'expired': 'Expired',
       // BCA
-      'user bca': 'BCA-ID', 'bca id': 'BCA-ID', 'pass bca id': 'Pass BCA-ID',
+      'user bca': 'BCA-ID', 'bca id': 'BCA-ID', 'pass bca id': 'Pass BCA-ID', 'mybca': 'BCA-ID', 'password bca id': 'Pass BCA-ID',
       'kode akses': 'Kode Akses', 'pin m bca': 'Pin m-BCA',
       // BRI
-      'user brimo': 'User BRImo', 'id brimo': 'User BRImo', 'user mobile': 'User BRImo', 'mobile user': 'User BRImo',
+      'user brimo': 'User BRImo', 'id brimo': 'User BRImo', 'brimo id': 'User BRImo', 'user mobile': 'User BRImo', 'mobile user': 'User BRImo',
       'pass brimo': 'Pass BRImo', 'brimo pass': 'Pass BRImo', 'brimo password': 'Pass BRImo', 'password mobile': 'Pass BRImo',
       'pin brimo': 'PIN BRImo', 'brimo pin': 'PIN BRImo', 'pin mobile': 'PIN BRImo',
       // BNI Wondr
-      'user wondr': 'User Wondr', 'id wondr': 'User Wondr', 'user mobile': 'User Wondr', 'mobile user': 'User Wondr',
+      'user wondr': 'User Wondr', 'id wondr': 'User Wondr', 'wondr id': 'User Wondr', 'user mobile': 'User Wondr', 'mobile user': 'User Wondr',
       'pass wondr': 'Password Wondr', 'wondr pass': 'Password Wondr', 'wondr password': 'Password Wondr', 'password mobile': 'Password Wondr',
-      'pin wondr': 'PIN Wondr', 'wondr pin': 'PIN Wondr', 'pin mobile': 'PIN Wondr',
+      'pin wondr': 'PIN Wondr', 'wondr pin': 'PIN Wondr', 'pin mobile': 'PIN Wondr', 'm pin wondr': 'PIN Wondr', 'mpin wondr': 'PIN Wondr',
       // Mandiri Livin
       'user livin': 'User Livin', 'password livin': 'Password Livin', 'pass livin': 'Password Livin', 'pin livin': 'PIN Livin',
       // OCBC Nyala

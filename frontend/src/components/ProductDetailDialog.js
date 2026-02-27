@@ -20,10 +20,10 @@ import {
   Card,
   CardContent
 } from '@mui/material';
-import { 
-  Edit, 
-  Delete, 
-  Print, 
+import {
+  Edit,
+  Delete,
+  Print,
   Close,
   Inventory2,
   Person,
@@ -31,12 +31,15 @@ import {
 } from '@mui/icons-material';
 import axios from '../utils/axios';
 import { useNotification } from '../contexts/NotificationContext';
+import ProductDetailDrawer from './ProductDetailDrawer';
 
 const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
   const { showSuccess, showError } = useNotification();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const fetchProductsDetails = useCallback(async () => {
     if (!selectedHandphone) return;
@@ -71,9 +74,14 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
   }, [open, selectedHandphone, fetchProductsDetails]);
 
   const handleEditProduct = (product) => {
-    // TODO: Implement edit functionality
-    console.log('Edit product:', product);
-    showSuccess('Edit product functionality coming soon');
+    setEditingProduct(product);
+    setDrawerOpen(true);
+  };
+
+  const handleUpdateSuccess = (updatedProduct) => {
+    setProducts(prev => prev.map(p => p._id === updatedProduct._id ? updatedProduct : p));
+    setDrawerOpen(false);
+    showSuccess('Data produk berhasil diperbarui');
   };
 
   const handleDeleteProduct = async (productId) => {
@@ -120,7 +128,7 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
       'completed': 'success',
       'cancelled': 'error'
     };
-    
+
     return (
       <Chip
         label={status?.toUpperCase() || 'UNKNOWN'}
@@ -148,10 +156,10 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
       fullWidth
       sx={{ '& .MuiDialog-paper': { borderRadius: 3 } }}
     >
-      <DialogTitle 
-        sx={{ 
-          bgcolor: 'primary.main', 
-          color: 'white', 
+      <DialogTitle
+        sx={{
+          bgcolor: 'primary.main',
+          color: 'white',
           fontWeight: 'bold',
           display: 'flex',
           alignItems: 'center',
@@ -160,14 +168,14 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
       >
         <Inventory2 />
         Products Details - {selectedHandphone.merek} ({selectedHandphone.tipe})
-        <IconButton 
-          onClick={onClose} 
+        <IconButton
+          onClick={onClose}
           sx={{ color: 'white', ml: 'auto' }}
         >
           <Close />
         </IconButton>
       </DialogTitle>
-      
+
       <DialogContent sx={{ mt: 2 }}>
         {/* Handphone Info */}
         <Card sx={{ mb: 3 }}>
@@ -310,8 +318,18 @@ const ProductDetailDialog = ({ open, onClose, selectedHandphone }) => {
             </Table>
           </TableContainer>
         )}
+
+        {/* Edit Drawer */}
+        {editingProduct && (
+          <ProductDetailDrawer
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            product={editingProduct}
+            onUpdateSuccess={handleUpdateSuccess}
+          />
+        )}
       </DialogContent>
-      
+
       <DialogActions sx={{ p: 3 }}>
         <Button onClick={onClose} variant="outlined">
           Close

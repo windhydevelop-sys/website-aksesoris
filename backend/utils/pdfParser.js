@@ -130,8 +130,8 @@ const parseProductData = (rawText) => {
       // 7. Basic Fields
       nik: /NIK[ \t:]*([0-9\-\s]{16,25})/i,
       nama: /Nama[ \t:]*([A-Za-z0-9\s\.\:\'\"\(\)\-\&\/]+?)(?:\s+Ibu|\s+Tempat|\s+No\.|\n|$)/i,
-      namaIbuKandung: /(?:Nama\s*)?Ibu\s*Kandung[ \t:]*([A-Za-z\s]+?)(?:\s+Tempat|\s+No\.|\n|$)/i,
-      tempatTanggalLahir: /(?:Tempat|Tpat)?.*(?:Tanggal|Tgl)?.*Lahir[ \t:]*([A-Za-z\s,0-9\-]+?)(?:\s+No\.|\n|$)/i,
+      namaIbuKandung: /(?:Nama\s*)?Ibu\s*Kandung[ \t:]*([A-Za-z0-9\s\.\:\'\"\(\)\-\&\/]+?)(?:\s+Tempat|\s+No\.|\n|$)/i,
+      tempatTanggalLahir: /(?:Tempat|Tpat)?.*(?:Tanggal|Tgl)?.*Lahir[ \t:]*([A-Za-z0-9\s\.\:\'\"\(\)\-\&\/\,]+?)(?:\s+No\.|\n|$)/i,
       noRek: /(?:No.*?Rek(?:ening)?|No\.?Rek)[ \t:]*([0-9\s\-]{8,25})/i,
       jenisRekening: /(?:Jenis\s*Rekening|Tipe\s*Rekening|Account\s*Type)[ \t:]*([A-Za-z0-9\s]+?)(?:\s+No\.|\s+No\s*ATM|\n|$)/i,
       noAtm: /(?:No\.?\s*(?:ATM|Kartu(?:\s+Debit)?)|Nomor\s*(?:ATM|Kartu)|No\.?\s*Kartu)[ \t:]*([0-9\s\-]{16,25})(?:\s*\(([0-9\/\s\-]+?)\))?/i,
@@ -354,8 +354,8 @@ const normalizeHeaderCell = (cell) => {
   return String(cell)
     .trim()
     .toLowerCase()
-    .replace(/[-\/().\[\]:]/g, ' ')  // Replace special chars dengan space (termasuk titik dua)
-    .replace(/\s+/g, ' ')           // Normalize multiple spaces to single
+    .replace(/[-\/().\[\]:*"']/g, ' ')  // Replace special chars including quotes & asterisks
+    .replace(/\s+/g, ' ')               // Normalize multiple spaces to single
     .trim();
 };
 
@@ -408,19 +408,19 @@ const matchHeaderToField = (headerCell) => {
     { regex: /(?:user\s+)?(?:i\s*banking|i\s*bank|\bib\b|internet\s+banking)/i, field: 'ibUser' },
 
     // Basic headers
-    { regex: /^no\s+order|nomor\s+order/i, field: 'noOrder' },
-    { regex: /code\s+agen|kode\s+(?:agen|orlap)/i, field: 'codeAgen' },
-    { regex: /^nik|nomor\s+induk\s+kependudukan/i, field: 'nik' },
-    { regex: /^nama$|nama\s+lengkap|nama\s+sesuai\s+ktp/i, field: 'nama' },
-    { regex: /(?:nama\s+)?ibu\s+kandung|nama\s+ibu\s+kandung/i, field: 'namaIbuKandung' },
-    { regex: /tempat.*(?:tgl|tanggal).*lahir/i, field: 'tempatTanggalLahir' },
+    { regex: /^(?:no|nomor)\s*(?:order|pesanan)|order\s*number/i, field: 'noOrder' },
+    { regex: /code\s*agen|kode\s*(?:agen|orlap)|kode\s*orlap/i, field: 'codeAgen' },
+    { regex: /^nik|nomor\s+induk\s+kependudukan|identitas|no\s*nik/i, field: 'nik' },
+    { regex: /^nama$|nama\s+lengkap|nama\s+sesuai\s+ktp|account\s*holder|nama\s*pemilik/i, field: 'nama' },
+    { regex: /(?:nama\s*)?ibu\s+kandung|nama\s+ibu\s+kandung|mother\s*name|ibu\s*kandung/i, field: 'namaIbuKandung' },
+    { regex: /tempat.*(?:tgl|tanggal).*lahir|ttl|dob|birth\s*date/i, field: 'tempatTanggalLahir' },
     { regex: /^bank$|nama\s+bank/i, field: 'bank' },
-    { regex: /no\s+hp|nomor\s+hp|nomor\s+handphone/i, field: 'noHp' },
-    { regex: /no\s+rek|nomor\s+rekening|rekening/i, field: 'noRek' },
-    { regex: /no\s+atm|nomor\s+atm|nomor\s+kartu/i, field: 'noAtm' },
+    { regex: /no\s+hp|nomor\s+hp|nomor\s+handphone|phone\s*number|mobile\s*number/i, field: 'noHp' },
+    { regex: /no\s+rek|nomor\s+rekening|rekening|account\s*number/i, field: 'noRek' },
+    { regex: /no\s+atm|nomor\s+atm|nomor\s+kartu|card\s*number/i, field: 'noAtm' },
     { regex: /valid\s+thru|valid\s+kartu|expire|masa\s+aktif|berlaku/i, field: 'validThru' },
-    { regex: /pin\s+atm|u\s*pin|pin\s+kartu/i, field: 'pinAtm' },
-    { regex: /kcp|kantor\s+cabang|cabang/i, field: 'kcp' },
+    { regex: /pin\s+atm|u\s*pin|pin\s+kartu|atm\s*pin/i, field: 'pinAtm' },
+    { regex: /kcp|kantor\s+cabang|cabang|branch/i, field: 'kcp' },
     { regex: /pass\s+email|password\s+email/i, field: 'passEmail' },
     { regex: /email/i, field: 'email' },
     { regex: /foto\s+ktp|upload\s+foto\s+ktp/i, field: 'uploadFotoId' },
@@ -428,6 +428,9 @@ const matchHeaderToField = (headerCell) => {
     { regex: /^grade$|grade\s+kartu/i, field: 'grade' },
     { regex: /customer|pelanggan/i, field: 'customer' },
     { regex: /validasi|status/i, field: 'status' },
+    { regex: /jenis\s+rekening|rekening\s+type|tipe\s+rekening/i, field: 'jenisRekening' },
+    { regex: /field\s+staff|orlap|petugas\s+lapangan/i, field: 'fieldStaff' },
+    { regex: /sisa\s+saldo|saldo|balance|rem\s*balance/i, field: 'sisaSaldo' },
     { regex: /user\s+mobile\s+m\s*bank/i, field: 'mobileUser' },
 
     // ============ GENERIC FALLBACKS (at the end) ============
@@ -777,5 +780,6 @@ module.exports = {
   parseProductData,
   parseTableData,
   matchHeaderToField,
+  normalizeHeaderCell,
   validateExtractedData
 };

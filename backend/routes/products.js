@@ -8,7 +8,7 @@ const TelegramSubmission = require('../models/TelegramSubmission');
 const auth = require('../middleware/auth');
 const { validateProduct, validateProductUpdate } = require('../utils/validation');
 const { auditLog, securityLog } = require('../utils/audit');
-const { processPDFFile, validateExtractedData } = require('../utils/pdfParser');
+const { processPDFFile, validateExtractedData, matchHeaderToField, normalizeHeaderCell } = require('../utils/pdfParser');
 const { createProduct, getProducts, getProductById, getProductsExport, getProductExportById } = require('../controllers/products');
 const { generateWordTemplate, generateBankSpecificTemplate, generateCorrectedWord, generateCorrectedWordList } = require('../utils/wordTemplateGenerator');
 const { generateCorrectedPDF } = require('../utils/pdfTemplateGenerator');
@@ -562,68 +562,13 @@ router.get('/search', auth, addUserInfo, async (req, res) => {
 router.get('/:id', addUserInfo, getProductById);
 
 // Update product with validation and security
+const { updateProduct } = require('../controllers/products');
 router.put('/:id',
   addUserInfo,
   handleFileUpload,
   validateProductUpdate,
-  async (req, res) => {
-    try {
-      console.log('Files received:', req.files); // Debug log
-      const data = { ...req.body };
-
-      // Handle file uploads - Cloudinary returns URL in 'path'
-      if (req.files && req.files.uploadFotoId) {
-        data.uploadFotoId = req.files.uploadFotoId[0].path;
-      }
-      if (req.files && req.files.uploadFotoSelfie) {
-        data.uploadFotoSelfie = req.files.uploadFotoSelfie[0].path;
-      }
-
-      // Add complaint field if present
-      if (req.body.complaint) {
-        data.complaint = req.body.complaint;
-      }
-
-      // Add audit field
-      data.lastModifiedBy = req.userId;
-
-      const product = await Product.findByIdAndUpdate(
-        req.params.id,
-        data,
-        { new: true, runValidators: false }
-      );
-
-      if (!product) {
-        return res.status(404).json({
-          success: false,
-          error: 'Product not found'
-        });
-      }
-
-      // Audit log
-      auditLog('UPDATE', req.userId, 'Product', req.params.id, {
-        noOrder: data.noOrder,
-        nama: data.nama
-      }, req);
-
-      res.json({
-        success: true,
-        data: product.getDecryptedData()
-      });
-
-    } catch (err) {
-      securityLog('PRODUCT_UPDATE_FAILED', 'medium', {
-        error: err.message,
-        productId: req.params.id,
-        userId: req.userId
-      }, req);
-
-      res.status(500).json({
-        success: false,
-        error: 'Failed to update product'
-      });
-    }
-  });
+  updateProduct
+);
 
 // Delete product with security checks
 router.delete('/:id', addUserInfo, async (req, res) => {
@@ -1109,70 +1054,16 @@ router.post('/import-corrected-word', auth, wordDocumentUpload, async (req, res)
     const headers = rows[0].map(h => h.trim());
     const dataRows = rows.slice(1);
 
-    const fieldMap = {
-      'no. order': 'noOrder', 'no order': 'noOrder', 'code agen': 'codeAgen', 'kode orlap': 'codeAgen', 'customer': 'customer', 'bank': 'bank',
-      'jenis rekening': 'jenisRekening', 'grade': 'grade', 'kantor cabang': 'kcp', 'nik': 'nik', 'nama': 'nama',
-      'nama ibu kandung': 'namaIbuKandung', 'tempat/tanggal lahir': 'tempatTanggalLahir', 'tempat tanggal lahir': 'tempatTanggalLahir',
-      'no. rekening': 'noRek', 'no rek': 'noRek', 'sisa saldo': 'sisaSaldo', 'no. atm': 'noAtm', 'valid kartu': 'validThru', 'no. hp': 'noHp',
-      'pin atm': 'pinAtm', 'email': 'email', 'password email': 'passEmail', 'expired': 'expired',
-      // Generic mobile banking
-      'user mobile': 'mobileUser', 'password mobile': 'mobilePassword', 'pass mobile': 'mobilePassword', 'pin mobile': 'mobilePin',
-      'user mobile / m bank': 'mobileUser', 'pass mobile / m bank': 'mobilePassword', 'pin mobile / m bank': 'mobilePin',
-      'mobile password': 'mobilePassword', 'mobile pass': 'mobilePassword', 'mobile pin': 'mobilePin',
-      'mobile pin livin': 'mobilePin',
-      // Generic IB (canonical)
-      'user ib': 'ibUser', 'pass ib': 'ibPassword', 'pin ib': 'ibPin',
-      'ib': 'ibUser',
-      // Legacy IB labels
-      'i banking': 'ibUser', 'password ib': 'ibPassword',
-      // BCA
-      'bca id': 'myBCAUser', 'pass bca id': 'myBCAPassword', 'pin transaksi': 'myBCAPin',
-      'kode akses': 'kodeAkses', 'kode akses m-bca': 'kodeAkses', 'pin m-bca': 'pinMBca',
-      // BRI
-      'user brimo': 'brimoUser', 'id brimo': 'brimoUser', 'user mobile': 'brimoUser', 'mobile user': 'brimoUser',
-      'pass brimo': 'brimoPassword', 'brimo pass': 'brimoPassword', 'brimo password': 'brimoPassword', 'password mobile': 'brimoPassword',
-      'pin brimo': 'brimoPin', 'brimo pin': 'brimoPin', 'pin mobile': 'brimoPin',
-      'user merchant': 'briMerchantUser', 'user bri merchant': 'briMerchantUser', 'merchant user': 'briMerchantUser',
-      'pass merchant': 'briMerchantPassword', 'password bri merchant': 'briMerchantPassword', 'password merchant': 'briMerchantPassword', 'merchant password': 'briMerchantPassword',
-      // BNI Wondr  → stored in mobileUser/mobilePassword/mobilePin
-      'user wondr': 'mobileUser', 'id wondr': 'mobileUser', 'user mobile': 'mobileUser', 'mobile user': 'mobileUser',
-      'password wondr': 'mobilePassword', 'pass wondr': 'mobilePassword', 'wondr pass': 'mobilePassword', 'wondr password': 'mobilePassword', 'password mobile': 'mobilePassword',
-      'cabang bank': 'kcp', 'kantor cabang': 'kcp', 'cabang': 'kcp', 'kcp': 'kcp', 'customer': 'customer',
-      // Mandiri Livin → stored in mobileUser/mobilePassword/mobilePin
-      'user livin': 'mobileUser', 'password livin': 'mobilePassword', 'pass livin': 'mobilePassword', 'pin livin': 'mobilePin',
-      // Generic Fallbacks for all banks (will be aligned below based on detected bank)
-      'user': 'mobileUser', 'user id': 'mobileUser', 'username': 'mobileUser', 'id user': 'mobileUser',
-      'user m bank': 'mobileUser', 'user mobile': 'mobileUser', 'mobile user': 'mobileUser',
-      'id login': 'mobileUser', 'user login': 'mobileUser', 'account user': 'mobileUser',
-      'password': 'mobilePassword', 'sandi': 'mobilePassword', 'pass': 'mobilePassword',
-      'kata sandi': 'mobilePassword', 'login password': 'mobilePassword', 'pass login': 'mobilePassword',
-      'pin': 'mobilePin', 'pin login': 'mobilePin', 'pin m bank': 'mobilePin', 'pin mobile': 'mobilePin',
-      'pin transaksi': 'mobilePin',
-      // Bank Specific Overwrites (Should be LAST to take precedence)
-      'user nyala': 'ocbcNyalaUser', 'id nyala': 'ocbcNyalaUser', 'yala user': 'ocbcNyalaUser', 'user id nyala': 'ocbcNyalaUser',
-      'password nyala': 'ocbcNyalaPassword', 'pass nyala': 'ocbcNyalaPassword', 'password login': 'ocbcNyalaPassword', 'pass login': 'ocbcNyalaPassword',
-      'pin nyala': 'ocbcNyalaPin', 'pin login': 'ocbcNyalaPin',
-      'user i banking': 'ibUser', 'pass i banking': 'ibPassword', 'pin i banking': 'ibPin',
-      'user ib': 'ibUser', 'pass ib': 'ibPassword', 'pin ib': 'ibPin',
-      // IB Global mappings
-      'user internet banking': 'ibUser', 'pass email': 'passEmail', 'password email': 'passEmail',
-      'password internet banking': 'ibPassword',
-      'pin internet banking': 'ibPin',
-      'validasi': 'status',
-    };
-
     let updatedCount = 0;
     let createdCount = 0;
     for (const row of dataRows) {
       const rowData = {};
       headers.forEach((header, idx) => {
-        const normalizedHeader = String(header).trim().toLowerCase().replace(/-/g, ' ');
-        const key = fieldMap[normalizedHeader];
+        const key = matchHeaderToField(header);
         if (key) {
           const cleanValue = String(row[idx] || '').trim();
 
           // Numeric field validation: Skip purely alphabetic values for numeric fields
-          // (unless numeric alternative doesn't exist yet, but prioritize numeric)
           const isNumericField = ['noRek', 'noAtm', 'noHp', 'nik', 'pinAtm', 'mobilePin', 'ibPin', 'brimoPin', 'myBCAPin', 'ocbcNyalaPin'].includes(key);
           const isPureAlpha = /^[A-Za-z\s]+$/.test(cleanValue);
 
