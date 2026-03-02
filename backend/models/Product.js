@@ -49,6 +49,7 @@ const productSchema = new mongoose.Schema({
   // Specific for BCA
   kodeAkses: { type: String },
   pinMBca: { type: String },
+  pinKeyBCA: { type: String },
   // Generic bank credential fields
   mobileUser: { type: String },
   mobilePassword: { type: String },
@@ -118,6 +119,9 @@ productSchema.pre('save', function (next) {
     }
     if (this.isModified('pinMBca') && this.pinMBca && !String(this.pinMBca).startsWith('U2FsdGVkX1')) {
       this.pinMBca = encrypt(this.pinMBca);
+    }
+    if (this.isModified('pinKeyBCA') && this.pinKeyBCA && !String(this.pinKeyBCA).startsWith('U2FsdGVkX1')) {
+      this.pinKeyBCA = encrypt(this.pinKeyBCA);
     }
     // Mobile Banking Generic
     if (this.isModified('mobileUser') && this.mobileUser && !String(this.mobileUser).startsWith('U2FsdGVkX1')) {
@@ -202,6 +206,9 @@ productSchema.pre('findOneAndUpdate', function (next) {
     if (update.pinMBca && !String(update.pinMBca).startsWith('U2FsdGVkX1')) {
       update.pinMBca = encrypt(update.pinMBca);
     }
+    if (update.pinKeyBCA && !String(update.pinKeyBCA).startsWith('U2FsdGVkX1')) {
+      update.pinKeyBCA = encrypt(update.pinKeyBCA);
+    }
     if (update.mobileUser && !String(update.mobileUser).startsWith('U2FsdGVkX1')) {
       update.mobileUser = encrypt(update.mobileUser);
     }
@@ -270,7 +277,7 @@ productSchema.methods.getDecryptedData = function () {
     'pinAtm', 'pinWondr', 'passWondr', 'passEmail',
     'myBCAUser', 'myBCAPassword', 'myBCAPin',
     'brimoUser', 'brimoPassword', 'brimoPin', 'briMerchantUser', 'briMerchantPassword',
-    'kodeAkses', 'pinMBca',
+    'kodeAkses', 'pinMBca', 'pinKeyBCA',
     'mobileUser', 'mobilePassword', 'mobilePin',
     'ibUser', 'ibPassword', 'ibPin',
     'merchantUser', 'merchantPassword',

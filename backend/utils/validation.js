@@ -131,6 +131,7 @@ const productSchema = Joi.object({
   merchantUser: Joi.string().optional().allow('', '-'),
   merchantPassword: Joi.string().min(0).optional().allow('', '-'),
   ocbcNyalaUser: Joi.string().optional().allow('', '-'),
+  pinKeyBCA: Joi.string().allow('', '-').optional(),
 
   expired: Joi.date().optional().allow('', '-').messages({
     'date.base': 'Format tanggal expired tidak valid (gunakan format YYYY-MM-DD)',
@@ -264,6 +265,7 @@ const productUpdateSchema = Joi.object({
   ibUser: Joi.string().optional().allow('', '-'),
   ibPassword: Joi.string().min(0).optional().allow('', '-'),
   ocbcNyalaUser: Joi.string().optional().allow('', '-'),
+  pinKeyBCA: Joi.string().allow('', '-').optional(),
 
   expired: Joi.date().optional().allow('', '-').messages({
     'date.base': 'Format tanggal expired tidak valid (gunakan format YYYY-MM-DD)'

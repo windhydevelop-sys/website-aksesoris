@@ -18,7 +18,7 @@ const BANK_CONFIG = {
       // Internet Banking
       'ibUser', 'ibPin',
       // ATM Card
-      'noAtm', 'pinAtm', 'validThru'
+      'noAtm', 'pinAtm', 'validThru', 'pinKeyBCA'
     ],
     specificFields: {
       'mobileUser': 'mobileUser',      // Keep generic - not used for BCA
@@ -28,7 +28,12 @@ const BANK_CONFIG = {
       'pass bca-id': 'myBCAPassword',
       'pin transaksi': 'myBCAPin',
       'user i-banking': 'ibUser',
-      'pin i-banking': 'ibPin'
+      'pin i-banking': 'ibPin',
+      'pin keybca': 'pinKeyBCA',
+      'pin bcakey': 'pinKeyBCA',
+      'pin soft': 'pinKeyBCA',
+      'keybca pin': 'pinKeyBCA',
+      'keybca': 'pinKeyBCA'
     },
     displayConfig: {
       'myBCAUser': 'BCA-ID',
@@ -40,7 +45,8 @@ const BANK_CONFIG = {
       'pinMBca': 'Pin M-BCA',
       'ibUser': 'User Internet Banking',
       'ibPassword': 'Password Internet Banking',
-      'ibPin': 'Pin Internet Banking'
+      'ibPin': 'Pin Internet Banking',
+      'pinKeyBCA': 'Pin KeyBCA'
     }
   },
   'BRI': {

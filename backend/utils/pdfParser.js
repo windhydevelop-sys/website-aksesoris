@@ -109,9 +109,10 @@ const parseProductData = (rawText) => {
       // 3. BCA Specific Fields
       kodeAkses: /Kode\s+Akses[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
       pinMBca: /Pin\s+M-?BCA[ \t:]*([0-9]{4,10})/i,
+      pinKeyBCA: /(?:Pin\s+KeyBCA|Pin\s+BCAkey|Pin\s+soft|KeyBCA\s+pin|KeyBCA)[ \t:]*([0-9]{4,10}|[A-Za-z0-9]{4,10})/i,
       myBCAUser: /BCA-?ID[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
       myBCAPassword: /Pass\s+BCA-?ID[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
-      myBCAPin: /Pin\s+Transaksi[ \t:]*([0-9]{4,10})/i,
+      myBCAPin: /(?:Pin\s+Transaksi|Pin\s+BCA-?ID)[ \t:]*([0-9]{4,10})/i,
 
       // 4. OCBC Nyala
       ocbcNyalaUser: /(?:User|ID|Account|Login|Username)\s*(?:Nyala|NYALA|OCBC)[ \t:]*([A-Za-z0-9!@#$%\^&*.\-_]+)/i,
@@ -378,7 +379,7 @@ const matchHeaderToField = (headerCell) => {
     // ============ BNI WONDR ============
     { regex: /wondr\s+user|user\s+wondr|id\s+wondr/i, field: 'mobileUser' },
     { regex: /wondr\s+(?:pass|password)|pass\s+wondr|password\s+wondr|wondr\s+pass/i, field: 'mobilePassword' },
-    { regex: /wondr\s+pin|pin\s+wondr/i, field: 'mobilePin' },
+    { regex: /(?:m-?pin|pin)\s+wondr|wondr\s+(?:m-?pin|pin)/i, field: 'mobilePin' },
 
     // ============ MANDIRI LIVIN ============
     { regex: /livin\s+user|user\s+livin|id\s+livin|account\s+livin|user\s+id\s+livin|acc\s+livin/i, field: 'mobileUser' },
@@ -395,7 +396,8 @@ const matchHeaderToField = (headerCell) => {
     { regex: /kode\s+akses\s+m\s*bca/i, field: 'kodeAkses' },
     { regex: /pin\s+m\s*bca|pin\s+mobile\s+bca/i, field: 'pinMBca' },
     { regex: /(?:pass|password)\s+(?:bca\s*id|my\s*bca)/i, field: 'myBCAPassword' },
-    { regex: /pin\s+(?:bca\s*id|my\s*bca|transaksi)/i, field: 'myBCAPin' },
+    { regex: /pin\s+(?:keybca|bcakey|soft)|(?:keybca|soft)\s+pin|^keybca$|pin\s+key\s*bca/i, field: 'pinKeyBCA' },
+    { regex: /pin\s+(?:bca[\s-]?id|my\s*bca|transaksi)/i, field: 'myBCAPin' },
     { regex: /(?:user\s+)?(?:bca\s*id|my\s*bca)|id\s+(?:bca\s*id|my\s*bca)/i, field: 'myBCAUser' },
 
     // ============ GENERIC Mobile / IB ============

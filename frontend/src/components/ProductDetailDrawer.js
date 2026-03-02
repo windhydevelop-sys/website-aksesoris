@@ -158,6 +158,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
     myBCAPin: { label: 'Pin Transaksi', icon: <VpnKey /> },
     kodeAkses: { label: 'Kode Akses M-BCA', icon: <VpnKey /> },
     pinMBca: { label: 'Pin m-BCA', icon: <VpnKey /> },
+    pinKeyBCA: { label: 'Pin KeyBCA', icon: <VpnKey /> },
     email: { label: 'Email', icon: <Email /> },
     passEmail: { label: 'Pass Email', icon: <VpnKey /> },
     merchantUser: { label: 'User Merchant', icon: <Store /> },
@@ -174,7 +175,7 @@ const ProductDetailDrawer = ({ open, onClose, product, onPrintInvoice, onExportP
   // Using generic fields (mobileUser, mobilePassword, etc) for most banks
   // Only use specific fields if the bank has unique requirements (e.g., BCA)
   const bankSpecificFields = {
-    'BCA': ['myBCAUser', 'myBCAPassword', 'myBCAPin', 'kodeAkses', 'pinMBca', 'ibUser', 'ibPassword', 'ibPin'],
+    'BCA': ['myBCAUser', 'myBCAPassword', 'myBCAPin', 'kodeAkses', 'pinMBca', 'pinKeyBCA', 'ibUser', 'ibPassword', 'ibPin'],
     'BRI': ['jenisRekening', 'brimoUser', 'brimoPassword', 'brimoPin', 'briMerchantUser', 'briMerchantPassword'],
     'BNI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],
     'MANDIRI': ['mobileUser', 'mobilePassword', 'mobilePin', 'ibUser', 'ibPassword', 'ibPin'],

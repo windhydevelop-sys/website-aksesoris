@@ -523,6 +523,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             // BCA Specific - M-BCA Mobile Banking
             { id: 'kodeAkses', label: 'Kode Akses M-BCA', bank: 'bca' },
             { id: 'pinMBca', label: 'Pin M-BCA', bank: 'bca' },
+            { id: 'pinKeyBCA', label: 'Pin KeyBCA', bank: 'bca' },
             // BCA Specific - Internet Banking (IB)
             { id: 'ibUser', label: 'User I-Banking', bank: 'bca' },
             { id: 'ibPin', label: 'Pin I-Banking', bank: 'bca' },

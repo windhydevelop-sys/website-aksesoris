@@ -41,6 +41,7 @@ const generateCorrectedPDF = async (products, format = 'table') => {
             { key: 'myBCAUser', label: 'BCA-ID' },
             { key: 'myBCAPassword', label: 'Pass BCA-ID' },
             { key: 'myBCAPin', label: 'Pin Transaksi' },
+            { key: 'pinKeyBCA', label: 'Pin KeyBCA' },
             { key: 'complaint', label: 'Complaint' }
         ];
 

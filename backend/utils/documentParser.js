@@ -30,7 +30,7 @@ const parseListFormat = (text) => {
       'User Mobile', 'Password Mobile', 'PIN Mobile',
       'User IB', 'Pass IB', 'PIN IB',
       // BCA
-      'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi', 'Kode Akses', 'Pin m-BCA',
+      'BCA-ID', 'Pass BCA-ID', 'Pin Transaksi', 'Kode Akses', 'Pin m-BCA', 'Pin KeyBCA',
       // BRI
       'User BRImo', 'Pass BRImo', 'PIN BRImo', 'User Merchant', 'Pass Merchant',
       // BNI Wondr
@@ -61,7 +61,8 @@ const parseListFormat = (text) => {
       'expired': 'Expired',
       // BCA
       'user bca': 'BCA-ID', 'bca id': 'BCA-ID', 'pass bca id': 'Pass BCA-ID', 'mybca': 'BCA-ID', 'password bca id': 'Pass BCA-ID',
-      'kode akses': 'Kode Akses', 'pin m bca': 'Pin m-BCA',
+      'kode akses': 'Kode Akses', 'pin m bca': 'Pin m-BCA', 'pin key bca': 'Pin KeyBCA', 'pin keybca': 'Pin KeyBCA', 'pin bcakey': 'Pin KeyBCA', 'pin soft': 'Pin KeyBCA', 'keybca pin': 'Pin KeyBCA', 'keybca': 'Pin KeyBCA',
+      'pin bca id': 'Pin Transaksi', 'pin bca-id': 'Pin Transaksi',
       // BRI
       'user brimo': 'User BRImo', 'id brimo': 'User BRImo', 'brimo id': 'User BRImo', 'user mobile': 'User BRImo', 'mobile user': 'User BRImo',
       'pass brimo': 'Pass BRImo', 'brimo pass': 'Pass BRImo', 'brimo password': 'Pass BRImo', 'password mobile': 'Pass BRImo',
