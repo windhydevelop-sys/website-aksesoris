@@ -41,7 +41,7 @@ const generateWordTemplate = async () => {
             'Nama Ibu Kandung', 'Tempat/Tanggal Lahir', 'No. Rekening', 'No. ATM',
             'Valid Kartu', 'No. HP', 'PIN ATM', 'Email', 'Password Email', 'Expired',
             'User Mobile', 'Password Mobile', 'PIN Mobile',
-            'I-Banking', 'Password IB', 'PIN IB'
+            'I-Banking', 'Password IB', 'PIN IB', 'Pin KeyBCA'
         ];
 
         // Sample data row
@@ -50,7 +50,7 @@ const generateWordTemplate = async () => {
             '3201010101010001', 'Ahmad Susanto', 'Siti Aminah', 'Jakarta, 01 Januari 1990',
             '123456789012', '1234567890123456', '12/25', '081234567890', '1234', '5678',
             'SecurePass123!', 'ahmad@example.com', 'EmailPass456!', '2025-12-31',
-            'userbrimo', 'BrimoPass789!', '9012', '', ''
+            'userbrimo', 'BrimoPass789!', '9012', '', '', '', '123456'
         ];
 
         // Create table rows
@@ -405,7 +405,7 @@ const generateCorrectedWord = async (products) => {
         const bank = banks.length === 1 ? banks[0] : 'ALL';
 
         if (bank === 'BCA') {
-            specificHeaders = ['BCA-ID', 'Pass BCA-ID', 'Pin Transaksi', 'Kode Akses M-BCA', 'Pin m-BCA'];
+            specificHeaders = ['BCA-ID', 'Pass BCA-ID', 'Pin Transaksi', 'Kode Akses M-BCA', 'Pin m-BCA', 'Pin KeyBCA'];
             specificFieldMap = {
                 myBCAUser: 'BCA-ID', myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi',
                 kodeAkses: 'Kode Akses M-BCA', pinMBca: 'Pin m-BCA', pinKeyBCA: 'Pin KeyBCA'

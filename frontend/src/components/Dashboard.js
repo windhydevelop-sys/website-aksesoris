@@ -435,6 +435,7 @@ const initialFormState = {
   passWondr: '',
   kodeAkses: '',
   pinMBca: '',
+  pinKeyBCA: '',
   briMerchantUser: '',
   briMerchantPassword: '',
   jenisRekening: '',
@@ -751,6 +752,7 @@ const Dashboard = ({ setToken }) => {
         passWondr: product.passWondr || '',
         kodeAkses: product.kodeAkses || '',
         pinMBca: product.pinMBca || '',
+        pinKeyBCA: product.pinKeyBCA || '',
         briMerchantUser: product.briMerchantUser || '',
         briMerchantPassword: product.briMerchantPassword || '',
         jenisRekening: product.jenisRekening || '',
@@ -1538,6 +1540,15 @@ const Dashboard = ({ setToken }) => {
                       label="Pin Mobile BCA"
                       name="pinMBca"
                       value={form.pinMBca}
+                      onChange={handleChange}
+                      margin="normal"
+                      type="text"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Pin KeyBCA"
+                      name="pinKeyBCA"
+                      value={form.pinKeyBCA}
                       onChange={handleChange}
                       margin="normal"
                       type="text"

@@ -152,7 +152,10 @@ const WorkflowManagement = () => {
     brimoUser: '',
     brimoPassword: '',
     briMerchantUser: '',
-    briMerchantPassword: ''
+    briMerchantPassword: '',
+    kodeAkses: '',
+    pinMBca: '',
+    pinKeyBCA: ''
   });
 
   const handleLogout = () => {
@@ -1322,9 +1325,9 @@ const WorkflowManagement = () => {
                       <TextField
                         fullWidth
                         label="Kode Akses"
-                        name="mobilePassword"
-                        value={productForm.mobilePassword}
-                        onChange={(e) => setProductForm(prev => ({ ...prev, mobilePassword: e.target.value }))}
+                        name="kodeAkses"
+                        value={productForm.kodeAkses}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, kodeAkses: e.target.value }))}
                         margin="normal"
                         type="text"
                       />
@@ -1333,9 +1336,20 @@ const WorkflowManagement = () => {
                       <TextField
                         fullWidth
                         label="Pin Mobile BCA"
-                        name="mobilePin"
-                        value={productForm.mobilePin}
-                        onChange={(e) => setProductForm(prev => ({ ...prev, mobilePin: e.target.value }))}
+                        name="pinMBca"
+                        value={productForm.pinMBca}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, pinMBca: e.target.value }))}
+                        margin="normal"
+                        type="text"
+                      />
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <TextField
+                        fullWidth
+                        label="Pin KeyBCA"
+                        name="pinKeyBCA"
+                        value={productForm.pinKeyBCA}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, pinKeyBCA: e.target.value }))}
                         margin="normal"
                         type="text"
                       />
