@@ -5,8 +5,7 @@ const User = require('../models/User');
 const FieldStaff = require('../models/FieldStaff');
 const TelegramSubmission = require('../models/TelegramSubmission');
 
-const token = process.env.TELEGRAM_BOT_TOKEN;
-const bot = new TelegramBot(token);
+const { bot } = require('../utils/telegramService');
 const { getSteps, getBankSpecificLabel, downloadTelegramFile } = require('../utils/telegramHelper');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';

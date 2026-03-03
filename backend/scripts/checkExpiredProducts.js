@@ -13,12 +13,7 @@ const connectDB = require('../config/db');
 const Product = require('../models/Product');
 const TelegramUser = require('../models/TelegramUser');
 
-const token = process.env.TELEGRAM_BOT_TOKEN;
-if (!token) {
-  console.error('TELEGRAM_BOT_TOKEN is not defined in env');
-  process.exit(1);
-}
-const bot = new TelegramBot(token);
+const { bot } = require('../utils/telegramService');
 
 const checkExpiredProducts = async () => {
   try {

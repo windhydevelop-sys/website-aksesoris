@@ -336,6 +336,7 @@ const getProductById = async (req, res) => {
 
 // Update product with phone validation and status change logic
 const updateProduct = async (req, res) => {
+  const { sendComplaintNotification } = require('../utils/telegramService');
   try {
     const data = { ...req.body };
 
@@ -496,6 +497,19 @@ const updateProduct = async (req, res) => {
       noOrder: data.noOrder,
       nama: data.nama
     }, req);
+
+    // Send Telegram Notification if complaint fields are present/updated
+    if (data.complaint || data.complaintStatus) {
+      // If adding a new complaint (no previous complaint)
+      const isNewComplaint = !currentProduct.complaint || currentProduct.complaint.trim() === '';
+      const isStatusUpdate = data.complaintStatus && data.complaintStatus !== currentProduct.complaintStatus;
+
+      if (isNewComplaint || isStatusUpdate || (data.complaint && data.complaint !== currentProduct.complaint)) {
+        // Fetch full product for better notification context
+        const notificationProduct = await Product.findById(product._id);
+        sendComplaintNotification(notificationProduct, isNewComplaint ? 'new' : 'update');
+      }
+    }
 
     // Return with populated phone
     const populatedProduct = await Product.findById(product._id).populate('handphoneId', 'merek tipe imei spesifikasi');
