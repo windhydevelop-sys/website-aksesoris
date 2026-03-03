@@ -50,14 +50,23 @@ const submitAndGenerateWord = async (chatId, session) => {
     try {
         const data = { ...session.formData };
 
+        // Ensure codeAgen is included from the session
+        data.codeAgen = session.kodeOrlap;
+
         // Format data for Word generator (expects an array of products)
         const products = [data];
 
         const result = await generateCorrectedWordList(products);
 
         if (result.success) {
+            // Filename format: codeagen_bank_namaproduk_tglinput.docx
+            const dateStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const safeBank = (data.bank || 'NoBank').replace(/\s+/g, '-');
+            const safeNama = (data.nama || 'TanpaNama').replace(/\s+/g, '-');
+            const filename = `${data.codeAgen || 'NoAgen'}_${safeBank}_${safeNama}_${dateStr}.docx`;
+
             await bot.sendDocument(chatId, result.buffer, {}, {
-                filename: `Data_Produk_${data.nama || 'TanpaNama'}_${Date.now()}.docx`,
+                filename: filename,
                 contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             });
             await bot.sendMessage(chatId, '✅ File Word berhasil dibuat! Data input Anda telah dihapus dari sistem untuk privasi.');
