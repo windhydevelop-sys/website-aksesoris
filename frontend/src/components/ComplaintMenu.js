@@ -60,8 +60,6 @@ const ComplaintMenu = () => {
     }
   };
 
-  // Tambahkan variabel untuk memeriksa keberadaan komplain
-  const showSisaSaldoColumn = complaints.some(product => product.complaint);
 
   const fetchComplaints = useCallback(async () => {
     setLoading(true);

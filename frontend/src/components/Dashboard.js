@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import * as XLSX from 'xlsx';
 import { Page, Text, View, Document, StyleSheet, pdf, Image } from '@react-pdf/renderer';
@@ -11,7 +12,7 @@ import {
   Grid, Card, CardContent,
   MenuItem, TablePagination
 } from '@mui/material';
-import { Search, Event, TrendingUp, People, Smartphone, Inventory } from '@mui/icons-material';
+import { Search, Event, TrendingUp, People, Smartphone, Inventory, Info } from '@mui/icons-material';
 import { Edit, Delete, Add, CloudUpload, CloudDownload, PictureAsPdf } from '@mui/icons-material';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './Dashboard.css';
@@ -471,6 +472,7 @@ const initialFormState = {
 };
 
 const Dashboard = ({ setToken }) => {
+  const navigate = useNavigate();
   const { showSuccess, showError } = useNotification();
   const { themeMode } = useThemeMode();
   const isLightMono = themeMode === THEME_MODE.LIGHT_MONO;
