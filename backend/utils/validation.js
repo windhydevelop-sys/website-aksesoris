@@ -150,8 +150,20 @@ const productSchema = Joi.object({
     'any.only': 'Status produk tidak valid',
     'string.base': 'Status produk harus berupa string'
   }),
-  complaint: Joi.string().optional().messages({
+  complaint: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Complaint harus berupa string'
+  }),
+  complaintDate: Joi.date().optional().allow('', '-').messages({
+    'date.base': 'Format tanggal komplain tidak valid'
+  }),
+  complaintResolvedDate: Joi.date().optional().allow('', '-').messages({
+    'date.base': 'Format tanggal penyelesaian tidak valid'
+  }),
+  complaintStatus: Joi.string().valid('pending', 'dalam proses', 'Rusak', 'selesai', '').optional().messages({
+    'any.only': 'Status komplain tidak valid'
+  }),
+  complaintType: Joi.string().optional().allow('', '-').messages({
+    'string.base': 'Jenis komplain harus berupa string'
   })
 });
 
@@ -285,6 +297,18 @@ const productUpdateSchema = Joi.object({
   }),
   complaint: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Complaint harus berupa string'
+  }),
+  complaintDate: Joi.date().optional().allow('', '-').messages({
+    'date.base': 'Format tanggal komplain tidak valid'
+  }),
+  complaintResolvedDate: Joi.date().optional().allow('', '-').messages({
+    'date.base': 'Format tanggal penyelesaian tidak valid'
+  }),
+  complaintStatus: Joi.string().valid('pending', 'dalam proses', 'Rusak', 'selesai', '').optional().messages({
+    'any.only': 'Status komplain tidak valid'
+  }),
+  complaintType: Joi.string().optional().allow('', '-').messages({
+    'string.base': 'Jenis komplain harus berupa string'
   })
 });
 

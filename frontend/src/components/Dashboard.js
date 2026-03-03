@@ -463,6 +463,11 @@ const initialFormState = {
   email: '',
   passEmail: '',
   status: 'pending',
+  complaint: '',
+  complaintDate: '',
+  complaintResolvedDate: '',
+  complaintStatus: '',
+  complaintType: '',
 };
 
 const Dashboard = ({ setToken }) => {
@@ -671,8 +676,10 @@ const Dashboard = ({ setToken }) => {
       ];
       setChartData(data);
 
-      // Calculate total complaints
-      const complaints = products.filter(p => p.complaint && p.complaint.trim() !== '');
+      // Calculate total active complaints (not resolved)
+      const complaints = products.filter(p =>
+        p.complaint && p.complaint.trim() !== '' && p.complaintStatus !== 'selesai'
+      );
       setComplaintsCount(complaints.length);
     }
   }, [products, isLightMono]);
@@ -1789,9 +1796,46 @@ const Dashboard = ({ setToken }) => {
                   <MenuItem value="cancelled">Dibatalkan</MenuItem>
                 </TextField>
 
-                {form.status === 'in_progress' && (
-                  <TextField fullWidth label="Complaint" name="complaint" placeholder="Deskripsi keluhan atau masalah" value={form.complaint || ''} onChange={handleChange} margin="normal" multiline rows={4} />
-                )}
+                <Box sx={{ mt: 3, p: 2, border: '1px dashed rgba(0,0,0,0.2)', borderRadius: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 'bold' }}>Detail Komplain (Opsional)</Typography>
+                  <TextField fullWidth label="Jenis Komplain" name="complaintType" value={form.complaintType || ''} onChange={handleChange} margin="normal" />
+                  <TextField
+                    fullWidth
+                    select
+                    label="Status Komplain"
+                    name="complaintStatus"
+                    value={form.complaintStatus || ''}
+                    onChange={handleChange}
+                    margin="normal"
+                  >
+                    <MenuItem value="">- Pilih Status -</MenuItem>
+                    <MenuItem value="pending">Pending</MenuItem>
+                    <MenuItem value="dalam proses">Dalam Proses</MenuItem>
+                    <MenuItem value="Rusak">Rusak</MenuItem>
+                    <MenuItem value="selesai">Selesai</MenuItem>
+                  </TextField>
+                  <TextField
+                    fullWidth
+                    label="Tgl Input Komplain"
+                    name="complaintDate"
+                    type="date"
+                    value={form.complaintDate ? form.complaintDate.split('T')[0] : ''}
+                    onChange={handleChange}
+                    margin="normal"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Tgl Penyelesaian"
+                    name="complaintResolvedDate"
+                    type="date"
+                    value={form.complaintResolvedDate ? form.complaintResolvedDate.split('T')[0] : ''}
+                    onChange={handleChange}
+                    margin="normal"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField fullWidth label="Isi Komplain" name="complaint" placeholder="Deskripsi keluhan atau masalah" value={form.complaint || ''} onChange={handleChange} margin="normal" multiline rows={2} />
+                </Box>
                 <Box mt={2} mb={1}>
                   <input accept="image/*" style={{ display: 'none' }} id="upload-foto-id" type="file" onChange={(e) => setForm({ ...form, uploadFotoId: e.target.files[0] })} />
                   <label htmlFor="upload-foto-id">

@@ -38,6 +38,14 @@ const productSchema = new mongoose.Schema({
   fieldStaff: { type: String }, // New field for field staff
   orderNumber: { type: String }, // New field for order number
   complaint: { type: String }, // New field for complaints
+  complaintDate: { type: Date }, // Date when complaint was filed
+  complaintResolvedDate: { type: Date }, // Date when complaint was resolved
+  complaintStatus: {
+    type: String,
+    enum: ['pending', 'dalam proses', 'Rusak', 'selesai', ''],
+    default: ''
+  },
+  complaintType: { type: String },
   myBCAUser: { type: String },
   myBCAPassword: { type: String },
   myBCAPin: { type: String },
