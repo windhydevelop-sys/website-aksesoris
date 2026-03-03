@@ -21,7 +21,8 @@ import {
   DialogContent,
   DialogActions,
   Card,
-  CardContent
+  CardContent,
+  Autocomplete
 } from '@mui/material';
 import { Search } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
@@ -105,7 +106,14 @@ const ComplaintMenu = () => {
   };
 
   const handleOpenAdd = () => {
-    setFormAdd({ productId: '', sisaSaldo: '', complaint: '' });
+    setFormAdd({
+      productId: '',
+      complaintDate: '',
+      complaintResolvedDate: '',
+      complaintStatus: 'pending',
+      complaintType: '',
+      complaint: ''
+    });
     setOpenAdd(true);
   };
 
@@ -355,36 +363,34 @@ const ComplaintMenu = () => {
           <DialogTitle sx={{ fontSize: '1.5rem', py: 3, fontWeight: 'bold' }}>Tambah Komplain</DialogTitle>
           <form onSubmit={handleSubmitAdd}>
             <DialogContent sx={{ py: 4, px: 4 }}>
-              <TextField
-                select
+              <Autocomplete
                 fullWidth
-                label="Pilih No. Order"
-                name="productId"
-                value={formAdd.productId}
-                onChange={handleChangeAdd}
-                margin="normal"
-                sx={{
-                  mb: 3,
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 3,
-                    backgroundColor: 'rgba(255,255,255,0.9)',
-                    '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
-                    '&.Mui-focused': { backgroundColor: 'white' }
-                  },
-                  '& .MuiInputBase-input': {
-                    fontSize: '1.1rem',
-                    py: 1.5
-                  },
-                  '& .MuiInputLabel-root': {
-                    fontSize: '1.1rem'
-                  }
+                options={productOptions}
+                getOptionLabel={(option) => `${option.noOrder || '-'} - ${option.nama || '-'}`}
+                value={productOptions.find(p => p._id === formAdd.productId) || null}
+                onChange={(event, newValue) => {
+                  setFormAdd({ ...formAdd, productId: newValue ? newValue._id : '' });
                 }}
-              >
-                <option value="" hidden></option>
-                {productOptions.map((p) => (
-                  <option key={p._id} value={p._id}>{p.noOrder} - {p.nama}</option>
-                ))}
-              </TextField>
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Pilih No. Order / Nama Customer"
+                    margin="normal"
+                    sx={{
+                      mb: 3,
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: 3,
+                        backgroundColor: 'rgba(255,255,255,0.9)',
+                        '&:hover': { backgroundColor: 'rgba(255,255,255,0.95)' },
+                        '&.Mui-focused': { backgroundColor: 'white' }
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: '1.1rem'
+                      }
+                    }}
+                  />
+                )}
+              />
               <TextField
                 fullWidth
                 label="Tgl Input Komplain"
