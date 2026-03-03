@@ -405,10 +405,12 @@ const generateCorrectedWord = async (products) => {
         const bank = banks.length === 1 ? banks[0] : 'ALL';
 
         if (bank === 'BCA') {
-            specificHeaders = ['BCA-ID', 'Pass BCA-ID', 'Pin Transaksi', 'Kode Akses M-BCA', 'Pin m-BCA', 'Pin KeyBCA'];
+            specificHeaders = ['BCA-ID', 'Pass BCA-ID', 'Pin Transaksi', 'Kode Akses M-BCA', 'Pin m-BCA', 'User KlikBCA', 'PIN KlikBCA', 'PIN Transaksi KlikBCA', 'Pin KeyBCA'];
             specificFieldMap = {
                 myBCAUser: 'BCA-ID', myBCAPassword: 'Pass BCA-ID', myBCAPin: 'Pin Transaksi',
-                kodeAkses: 'Kode Akses M-BCA', pinMBca: 'Pin m-BCA', pinKeyBCA: 'Pin KeyBCA'
+                kodeAkses: 'Kode Akses M-BCA', pinMBca: 'Pin m-BCA',
+                ibUser: 'User KlikBCA', ibPassword: 'PIN KlikBCA', ibPin: 'PIN Transaksi KlikBCA',
+                pinKeyBCA: 'Pin KeyBCA'
             };
         } else if (bank === 'BRI') {
             specificHeaders = ['User BRImo', 'Pass BRImo', 'PIN BRImo', 'User Merchant', 'Pass Merchant'];
@@ -566,9 +568,12 @@ const generateCorrectedWordList = async (products) => {
                 specificFields = [
                     { key: 'kodeAkses', label: 'Kode Akses M-BCA' },
                     { key: 'pinMBca', label: 'Pin m-BCA' },
-                    { key: 'myBCAUser', label: 'BCA-ID' },
-                    { key: 'myBCAPassword', label: 'Pass BCA-ID' },
-                    { key: 'myBCAPin', label: 'Pin Transaksi' },
+                    { key: 'myBCAUser', label: 'BCA-ID (myBCA)' },
+                    { key: 'myBCAPassword', label: 'Pass BCA-ID (myBCA)' },
+                    { key: 'myBCAPin', label: 'Pin Transaksi (myBCA)' },
+                    { key: 'ibUser', label: 'User KlikBCA' },
+                    { key: 'ibPassword', label: 'PIN KlikBCA' },
+                    { key: 'ibPin', label: 'PIN Transaksi KlikBCA' },
                     { key: 'pinKeyBCA', label: 'Pin KeyBCA' }
                 ];
             } else if (bank === 'BRI') {
