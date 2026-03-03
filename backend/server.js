@@ -22,6 +22,7 @@ const connectDB = require('./config/db');
 const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
 const telegramRoutes = require('./routes/telegram');
+const telegramWordRoutes = require('./routes/telegramWord');
 const userRoutes = require('./routes/users');
 const customerRoutes = require('./routes/customers');
 const fieldStaffRoutes = require('./routes/fieldStaff');
@@ -152,6 +153,7 @@ app.get('/', (req, res) => {
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/telegram', telegramRoutes);
+app.use('/api/telegram-word', telegramWordRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/field-staff', fieldStaffRoutes);
