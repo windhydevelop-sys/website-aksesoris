@@ -650,9 +650,11 @@ const Dashboard = ({ setToken }) => {
     if (Array.isArray(products)) {
       const now = new Date();
       const alerts = products.filter(p => {
+        if (!p.expired) return false;
         const exp = new Date(p.expired);
         const diff = (exp - now) / (1000 * 60 * 60 * 24);
-        return diff <= 7 && diff > 0;
+        // Include anything already expired or expiring within 30 days
+        return diff <= 30;
       });
       setNotifications(alerts);
 
