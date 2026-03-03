@@ -539,11 +539,13 @@ const generateCorrectedWordList = async (products) => {
     try {
         logger.info('Generating Corrected Word List document', { count: products.length });
 
-        const commonFields = [
+        const commonStart = [
             { key: 'noOrder', label: 'No. Order' },
             { key: 'codeAgen', label: 'Code Agen' },
-            { key: 'jenisRekening', label: 'Jenis Rekening' },
-            { key: 'bank', label: 'Bank' },
+            { key: 'bank', label: 'Bank' }
+        ];
+
+        const commonEnd = [
             { key: 'grade', label: 'Grade' },
             { key: 'kcp', label: 'Kantor Cabang' },
             { key: 'nik', label: 'NIK' },
@@ -562,10 +564,10 @@ const generateCorrectedWordList = async (products) => {
 
         const sections = await Promise.all(products.map(async (p, idx) => {
             const bank = (p.bank || '').toUpperCase();
-            let specificFields = [];
+            let bankSpecific = [];
 
             if (bank === 'BCA') {
-                specificFields = [
+                bankSpecific = [
                     { key: 'kodeAkses', label: 'Kode Akses M-BCA' },
                     { key: 'pinMBca', label: 'Pin m-BCA' },
                     { key: 'myBCAUser', label: 'BCA-ID (myBCA)' },
@@ -577,7 +579,8 @@ const generateCorrectedWordList = async (products) => {
                     { key: 'pinKeyBCA', label: 'Pin KeyBCA' }
                 ];
             } else if (bank === 'BRI') {
-                specificFields = [
+                bankSpecific = [
+                    { key: 'jenisRekening', label: 'Jenis Rekening' },
                     { key: 'brimoUser', label: 'User BRImo' },
                     { key: 'brimoPassword', label: 'Pass BRImo' },
                     { key: 'mobilePin', label: 'PIN BRImo' },
@@ -585,7 +588,7 @@ const generateCorrectedWordList = async (products) => {
                     { key: 'briMerchantPassword', label: 'Pass Merchant' }
                 ];
             } else if (bank === 'BNI') {
-                specificFields = [
+                bankSpecific = [
                     { key: 'mobileUser', label: 'User Wondr' },
                     { key: 'mobilePassword', label: 'Password Wondr' },
                     { key: 'mobilePin', label: 'PIN Wondr' },
@@ -594,7 +597,7 @@ const generateCorrectedWordList = async (products) => {
                     { key: 'ibPin', label: 'PIN IB' }
                 ];
             } else if (bank === 'MANDIRI') {
-                specificFields = [
+                bankSpecific = [
                     { key: 'mobileUser', label: 'User Livin' },
                     { key: 'mobilePassword', label: 'Password Livin' },
                     { key: 'mobilePin', label: 'PIN Livin' },
@@ -603,7 +606,7 @@ const generateCorrectedWordList = async (products) => {
                     { key: 'ibPin', label: 'PIN IB' }
                 ];
             } else if (bank === 'OCBC' || bank === 'OCBC NISP') {
-                specificFields = [
+                bankSpecific = [
                     { key: 'ocbcNyalaUser', label: 'User Nyala' },
                     { key: 'mobilePassword', label: 'Password Nyala' },
                     { key: 'mobilePin', label: 'PIN Nyala' },
@@ -612,8 +615,7 @@ const generateCorrectedWordList = async (products) => {
                     { key: 'ibPin', label: 'PIN IB' }
                 ];
             } else {
-                // Default: CIMB, PERMATA, BTN, DANAMON, dan bank lainnya
-                specificFields = [
+                bankSpecific = [
                     { key: 'mobileUser', label: 'User Mobile' },
                     { key: 'mobilePassword', label: 'Password Mobile' },
                     { key: 'mobilePin', label: 'PIN Mobile' },
@@ -623,7 +625,7 @@ const generateCorrectedWordList = async (products) => {
                 ];
             }
 
-            const currentFields = [...commonFields, ...specificFields];
+            const currentFields = [...commonStart, ...bankSpecific, ...commonEnd];
             const imageParagraphs = [];
 
             await addImageToParagraphs(imageParagraphs, p.uploadFotoId, 'FOTO KTP');
