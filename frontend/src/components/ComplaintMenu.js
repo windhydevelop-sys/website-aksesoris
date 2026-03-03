@@ -22,9 +22,10 @@ import {
   DialogActions,
   Card,
   CardContent,
-  Autocomplete
+  Autocomplete,
+  IconButton
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
+import { Search, Edit, Delete } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 import axios from 'axios';
 
@@ -48,6 +49,7 @@ const ComplaintMenu = () => {
     complaintType: '',
     complaint: ''
   });
+  const [isEditing, setIsEditing] = useState(false);
   const [productOptions, setProductOptions] = useState([]);
 
   const getStatusColor = (status) => {
@@ -104,6 +106,7 @@ const ComplaintMenu = () => {
   };
 
   const handleOpenAdd = () => {
+    setIsEditing(false);
     setFormAdd({
       productId: '',
       complaintDate: '',
@@ -123,6 +126,38 @@ const ComplaintMenu = () => {
     setFormAdd({ ...formAdd, [e.target.name]: e.target.value });
   };
 
+  const handleEditClick = (product) => {
+    setIsEditing(true);
+    setFormAdd({
+      productId: product._id,
+      complaintDate: product.complaintDate ? product.complaintDate.split('T')[0] : '',
+      complaintResolvedDate: product.complaintResolvedDate ? product.complaintResolvedDate.split('T')[0] : '',
+      complaintStatus: product.complaintStatus || 'pending',
+      complaintType: product.complaintType || '',
+      complaint: product.complaint || ''
+    });
+    setOpenAdd(true);
+  };
+
+  const handleDeleteClick = async (productId) => {
+    if (window.confirm('Apakah anda yakin ingin menghapus data komplain ini? (Data produk tidak akan terhapus)')) {
+      try {
+        await axios.put(`/api/products/${productId}`, {
+          complaintDate: null,
+          complaintResolvedDate: null,
+          complaintStatus: '',
+          complaintType: '',
+          complaint: ''
+        });
+        showSuccess('Data komplain berhasil dihapus');
+        fetchComplaints();
+      } catch (err) {
+        console.error('Error deleting complaint:', err);
+        showError('Gagal menghapus data komplain');
+      }
+    }
+  };
+
   const handleSubmitAdd = async (e) => {
     e.preventDefault();
     try {
@@ -139,9 +174,9 @@ const ComplaintMenu = () => {
       });
       setOpenAdd(false);
       fetchComplaints();
-      showSuccess('Komplain berhasil ditambahkan!');
+      showSuccess(isEditing ? 'Komplain berhasil diperbarui!' : 'Komplain berhasil ditambahkan!');
     } catch (err) {
-      console.error('Error creating product:', err);
+      console.error('Error saving complaint:', err);
       showError('Gagal menyimpan data komplain.');
     }
   };
@@ -320,6 +355,7 @@ const ComplaintMenu = () => {
                   <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Status</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Complaint</TableCell>
                   <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Expired</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold', fontSize: '1.2rem', py: 3 }}>Aksi</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -350,6 +386,16 @@ const ComplaintMenu = () => {
                     </TableCell>
                     <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{product.complaint}</TableCell>
                     <TableCell sx={{ fontSize: '1.1rem', py: 3 }}>{product.expired ? new Date(product.expired).toLocaleDateString('id-ID') : '-'}</TableCell>
+                    <TableCell sx={{ py: 3 }}>
+                      <Box display="flex" gap={1}>
+                        <IconButton color="primary" onClick={() => handleEditClick(product)} size="small">
+                          <Edit />
+                        </IconButton>
+                        <IconButton color="error" onClick={() => handleDeleteClick(product._id)} size="small">
+                          <Delete />
+                        </IconButton>
+                      </Box>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -358,7 +404,9 @@ const ComplaintMenu = () => {
         )}
 
         <Dialog open={openAdd} onClose={handleCloseAdd} fullWidth maxWidth="md" sx={{ '& .MuiDialog-paper': { borderRadius: 4 } }}>
-          <DialogTitle sx={{ fontSize: '1.5rem', py: 3, fontWeight: 'bold' }}>Tambah Komplain</DialogTitle>
+          <DialogTitle sx={{ fontSize: '1.5rem', py: 3, fontWeight: 'bold' }}>
+            {isEditing ? 'Edit Komplain' : 'Tambah Komplain'}
+          </DialogTitle>
           <form onSubmit={handleSubmitAdd}>
             <DialogContent sx={{ py: 4, px: 4 }}>
               <Autocomplete
