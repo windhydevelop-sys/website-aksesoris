@@ -488,6 +488,7 @@ const Dashboard = ({ setToken }) => {
   const [fieldStaff, setFieldStaff] = useState([]);
   const [orders, setOrders] = useState([]);
   const [totalHandphones, setTotalHandphones] = useState(0);
+  const [complaintsCount, setComplaintsCount] = useState(0);
 
 
 
@@ -669,6 +670,10 @@ const Dashboard = ({ setToken }) => {
         { name: 'Completed', value: statusCounts.completed || 0, color: isLightMono ? '#999999' : '#4caf50' },
       ];
       setChartData(data);
+
+      // Calculate total complaints
+      const complaints = products.filter(p => p.complaint && p.complaint.trim() !== '');
+      setComplaintsCount(complaints.length);
     }
   }, [products, isLightMono]);
 
@@ -1084,7 +1089,7 @@ const Dashboard = ({ setToken }) => {
       {/* Full Width Cards Section */}
       <Box sx={{ px: 3, mb: 4 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12} sm={6} md={6}>
+          <Grid item xs={12} sm={6} md={4}>
             <Card sx={{
               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: isLightMono ? 'text.primary' : 'white',
@@ -1102,7 +1107,7 @@ const Dashboard = ({ setToken }) => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={6}>
+          <Grid item xs={12} sm={6} md={4}>
             <Card sx={{
               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
               color: isLightMono ? 'text.primary' : 'white',
@@ -1120,7 +1125,7 @@ const Dashboard = ({ setToken }) => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={6}>
+          <Grid item xs={12} sm={6} md={4}>
             <Card sx={{
               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
               color: isLightMono ? 'text.primary' : 'white',
@@ -1138,7 +1143,7 @@ const Dashboard = ({ setToken }) => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={6}>
+          <Grid item xs={12} sm={6} md={4}>
             <Card sx={{
               background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
               color: isLightMono ? 'text.primary' : 'white',
@@ -1153,6 +1158,25 @@ const Dashboard = ({ setToken }) => {
                 <TrendingUp sx={{ fontSize: 64, mb: 3 }} />
                 <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{notifications.length}</Typography>
                 <Typography variant="h5" sx={{ fontWeight: 600 }}>Expired Soon</Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={4}>
+            <Card sx={{
+              background: isLightMono ? '#ffffff' : 'linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)',
+              color: isLightMono ? 'text.primary' : 'white',
+              border: isLightMono ? '1px solid rgba(0,0,0,0.12)' : 'none',
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              transition: 'transform 0.3s',
+              '&:hover': { transform: 'translateY(-5px)' },
+              minHeight: 220,
+              cursor: 'pointer'
+            }} onClick={() => navigate('/complaints')}>
+              <CardContent sx={{ textAlign: 'center', py: 4, px: 3 }}>
+                <Info sx={{ fontSize: 64, mb: 3 }} />
+                <Typography variant="h2" component="div" sx={{ mb: 2, fontWeight: 'bold', fontSize: '3rem' }}>{complaintsCount}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 600 }}>Active Complaints</Typography>
               </CardContent>
             </Card>
           </Grid>
