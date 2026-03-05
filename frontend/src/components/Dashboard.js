@@ -175,220 +175,329 @@ const InvoicePdfDocument = ({ product }) => (
   </Document>
 );
 
+// Helper: Determine if a field should be displayed based on bank and jenisRekening
+// Mirrors the logic in ProductDetail.js
+const pdfShouldDisplayField = (key, product) => {
+  const bank = (product.bank || '').toUpperCase();
+  const jenisRekening = (product.jenisRekening || '').toUpperCase();
+
+  // BCA-exclusive fields
+  if (['pinMBca', 'kodeAkses', 'myBCAUser', 'myBCAPassword', 'myBCAPin', 'pinKeyBCA'].includes(key)) {
+    return bank.includes('BCA');
+  }
+  // pinWondr / passWondr — only relevant for BNI (Wondr app)
+  if (['pinWondr', 'passWondr'].includes(key)) {
+    return bank.includes('BNI');
+  }
+  // mobileUser, mobilePassword, mobilePin — used by non-BCA, non-BRI banks
+  // BRI uses dedicated brimoUser/brimoPassword/brimoPin instead
+  if (['mobileUser', 'mobilePassword', 'mobilePin'].includes(key)) {
+    return !bank.includes('BCA') && !bank.includes('BRI');
+  }
+  // IB fields — show for all banks except BRI
+  if (['ibUser', 'ibPassword', 'ibPin'].includes(key)) {
+    return !bank.includes('BRI');
+  }
+  // BRI Brimo-specific fields (only for BRI non-QRIS)
+  if (['brimoUser', 'brimoPassword', 'brimoPin'].includes(key)) {
+    return bank.includes('BRI') && !jenisRekening.includes('QRIS');
+  }
+  // BRI MERCHANT QRIS fields
+  if (['briMerchantUser', 'briMerchantPassword'].includes(key)) {
+    return bank.includes('BRI') && jenisRekening.includes('QRIS');
+  }
+  // OCBC Nyala fields
+  if (['ocbcNyalaUser', 'ocbcNyalaPassword', 'ocbcNyalaPin'].includes(key)) {
+    return bank.includes('OCBC') || bank.includes('NISP');
+  }
+  // Deprecated generic merchant fields
+  if (['merchantUser', 'merchantPassword'].includes(key)) {
+    return false;
+  }
+  return true;
+};
+
+// Helper: Get dynamic label for a field based on bank type
+// Mirrors the logic in ProductDetail.js
+const pdfGetDynamicLabel = (key, product, defaultLabel) => {
+  const bank = (product.bank || '').toUpperCase();
+
+  if (key === 'mobileUser') {
+    if (bank.includes('BNI')) return 'User Wondr';
+    if (bank.includes('MANDIRI')) return 'User Livin';
+    if (bank.includes('BRI')) return 'User Brimo';
+    if (bank.includes('OCBC') || bank.includes('NISP')) return 'User Nyala';
+  }
+  if (key === 'mobilePassword') {
+    if (bank.includes('BCA')) return 'Kode Akses M-BCA';
+    if (bank.includes('BNI')) return 'Password Wondr';
+    if (bank.includes('MANDIRI')) return 'Password Livin';
+    if (bank.includes('BRI')) return 'Password Brimo';
+  }
+  if (key === 'mobilePin') {
+    if (bank.includes('BNI')) return 'Pin Wondr';
+    if (bank.includes('MANDIRI')) return 'Pin Livin';
+    if (bank.includes('BRI')) return 'Pin Brimo';
+  }
+  if (key === 'ibUser') {
+    if (bank.includes('BCA')) return 'User Internet Banking';
+  }
+  if (key === 'ibPin') {
+    if (bank.includes('BCA')) return 'Pin Internet Banking';
+  }
+  return defaultLabel;
+};
+
+// Helper: Render a row only if the field should be displayed for this bank
+const PdfBankField = ({ fieldKey, defaultLabel, product, value }) => {
+  if (!pdfShouldDisplayField(fieldKey, product)) return null;
+  const label = pdfGetDynamicLabel(fieldKey, product, defaultLabel);
+  return (
+    <View style={styles.row}>
+      <Text style={styles.label}>{label}:</Text>
+      <Text style={styles.value}>{value || '-'}</Text>
+    </View>
+  );
+};
+
+// Normalize product data for export — merge BRI generic↔specific fields bidirectionally
+const normalizeForPdf = (product) => {
+  const p = { ...product };
+  const bank = (p.bank || '').toUpperCase();
+  const jenisRekening = (p.jenisRekening || '').toUpperCase();
+  const hasVal = (v) => v && v !== '-' && v !== '';
+
+  if (bank.includes('BRI')) {
+    if (jenisRekening.includes('QRIS')) {
+      if (!hasVal(p.briMerchantUser) && hasVal(p.merchantUser)) p.briMerchantUser = p.merchantUser;
+      if (!hasVal(p.briMerchantPassword) && hasVal(p.merchantPassword)) p.briMerchantPassword = p.merchantPassword;
+    } else {
+      // Bidirectional: mobileUser ↔ brimoUser
+      if (!hasVal(p.brimoUser) && hasVal(p.mobileUser)) p.brimoUser = p.mobileUser;
+      if (!hasVal(p.brimoPassword) && hasVal(p.mobilePassword)) p.brimoPassword = p.mobilePassword;
+      if (!hasVal(p.brimoPin) && hasVal(p.mobilePin)) p.brimoPin = p.mobilePin;
+      if (!hasVal(p.mobileUser) && hasVal(p.brimoUser)) p.mobileUser = p.brimoUser;
+      if (!hasVal(p.mobilePassword) && hasVal(p.brimoPassword)) p.mobilePassword = p.brimoPassword;
+      if (!hasVal(p.mobilePin) && hasVal(p.brimoPin)) p.mobilePin = p.brimoPin;
+    }
+  }
+  return p;
+};
+
 // PDF Document for complete product export
-const ProductExportPdfDocument = ({ products }) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <Text style={styles.header}>LAPORAN DATA PRODUK LENGKAP</Text>
-      <Text style={styles.subHeader}>Dibuat pada: {new Date().toLocaleDateString('id-ID')} {new Date().toLocaleTimeString('id-ID')}</Text>
-      <Text style={styles.subHeader}>Total Produk: {products.length}</Text>
+const ProductExportPdfDocument = ({ products }) => {
+  const normalizedProducts = products.map(normalizeForPdf);
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.header}>LAPORAN DATA PRODUK LENGKAP</Text>
+        <Text style={styles.subHeader}>Dibuat pada: {new Date().toLocaleDateString('id-ID')} {new Date().toLocaleTimeString('id-ID')}</Text>
+        <Text style={styles.subHeader}>Total Produk: {normalizedProducts.length}</Text>
 
-      {products.map((product, index) => (
-        <View key={product._id} style={{ marginBottom: 20, borderBottom: '1px solid #ccc', paddingBottom: 10 }}>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 8, color: '#333' }}>
-            Produk #{index + 1} - {product.noOrder}
-          </Text>
+        {normalizedProducts.map((product, index) => (
+          <View key={product._id} style={{ marginBottom: 20, borderBottom: '1px solid #ccc', paddingBottom: 10 }}>
+            <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 8, color: '#333' }}>
+              Produk #{index + 1} - {product.noOrder} ({product.bank || '-'})
+            </Text>
 
-          {/* Data Order */}
-          <View style={styles.section}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Order</Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>No. Order:</Text>
-              <Text style={styles.value}>{product.noOrder || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Customer:</Text>
-              <Text style={styles.value}>{product.customer || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Field Staff:</Text>
-              <Text style={styles.value}>{product.codeAgen || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Order Number:</Text>
-              <Text style={styles.value}>{product.noOrder || '-'}</Text>
-            </View>
-          </View>
-
-          {/* Data Bank */}
-          <View style={styles.section}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Bank</Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>Bank:</Text>
-              <Text style={styles.value}>{product.bank || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Jenis Rekening:</Text>
-              <Text style={styles.value}>{product.jenisRekening || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Grade:</Text>
-              <Text style={styles.value}>{product.grade || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Kantor Cabang:</Text>
-              <Text style={styles.value}>{product.kcp || '-'}</Text>
-            </View>
-          </View>
-
-          {/* Data Personal */}
-          <View style={styles.section}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Personal</Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>NIK:</Text>
-              <Text style={styles.value}>{product.nik || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Nama:</Text>
-              <Text style={styles.value}>{product.nama || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Nama Ibu Kandung:</Text>
-              <Text style={styles.value}>{product.namaIbuKandung || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>TTL:</Text>
-              <Text style={styles.value}>{product.tempatTanggalLahir || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>No. Rekening:</Text>
-              <Text style={styles.value}>{product.noRek || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Sisa Saldo:</Text>
-              <Text style={styles.value}>{product.sisaSaldo || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>No. ATM:</Text>
-              <Text style={styles.value}>{product.noAtm || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Valid Kartu:</Text>
-              <Text style={styles.value}>{product.validThru || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>No. HP:</Text>
-              <Text style={styles.value}>{product.noHp || '-'}</Text>
-            </View>
-          </View>
-
-          {/* Data Keamanan */}
-          <View style={styles.section}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Keamanan</Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>PIN ATM:</Text>
-              <Text style={styles.value}>{product.pinAtm || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>PIN Mbanking:</Text>
-              <Text style={styles.value}>{product.pinWondr || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Password Mbanking:</Text>
-              <Text style={styles.value}>{product.passWondr || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Email:</Text>
-              <Text style={styles.value}>{product.email || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Password Email:</Text>
-              <Text style={styles.value}>{product.passEmail || '-'}</Text>
-            </View>
-          </View>
-
-          {/* Data Handphone */}
-          <View style={styles.section}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Handphone</Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>Handphone:</Text>
-              <Text style={styles.value}>
-                {product.handphoneId ?
-                  `${product.handphoneId.merek || ''} ${product.handphoneId.tipe || ''}`.trim() || '-' : '-'}
-              </Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>IMEI:</Text>
-              <Text style={styles.value}>{product.handphoneId?.imei || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Tanggal Assign:</Text>
-              <Text style={styles.value}>
-                {product.handphoneAssignmentDate ?
-                  new Date(product.handphoneAssignmentDate).toLocaleDateString('id-ID') : '-'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Data Tambahan */}
-          <View style={styles.section}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Tambahan</Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>Expired:</Text>
-              <Text style={styles.value}>
-                {product.expired ? new Date(product.expired).toLocaleDateString('id-ID') : '-'}
-              </Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Complaint:</Text>
-              <Text style={styles.value}>{product.complaint || '-'}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Status:</Text>
-              <Text style={styles.value}>{product.status || 'pending'}</Text>
-            </View>
-          </View>
-
-          {/* Foto Produk */}
-          <View style={styles.section}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 8, color: '#666' }}>Foto Produk</Text>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-              {/* Foto KTP */}
-              <View style={{ flex: 1, marginRight: 5 }}>
-                <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto KTP</Text>
-                {(product.uploadFotoIdBase64 || product.uploadFotoId) ? (
-                  <Image
-                    src={product.uploadFotoIdBase64 || buildImageUrl(product.uploadFotoId)}
-                    style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
-                  />
-                ) : (
-                  <View style={{ width: '100%', height: 120, border: '1px solid #ddd', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
-                    <Text style={{ fontSize: 8, color: '#999' }}>Tidak ada foto</Text>
-                  </View>
-                )}
+            {/* Data Order */}
+            <View style={styles.section}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Order</Text>
+              <View style={styles.row}>
+                <Text style={styles.label}>No. Order:</Text>
+                <Text style={styles.value}>{product.noOrder || '-'}</Text>
               </View>
-
-              {/* Foto Selfie */}
-              <View style={{ flex: 1, marginLeft: 5 }}>
-                <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto Selfie</Text>
-                {(product.uploadFotoSelfieBase64 || product.uploadFotoSelfie) ? (
-                  <Image
-                    src={product.uploadFotoSelfieBase64 || buildImageUrl(product.uploadFotoSelfie)}
-                    style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
-                  />
-                ) : (
-                  <View style={{ width: '100%', height: 120, border: '1px solid #ddd', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
-                    <Text style={{ fontSize: 8, color: '#999' }}>Tidak ada foto</Text>
-                  </View>
-                )}
+              <View style={styles.row}>
+                <Text style={styles.label}>Customer:</Text>
+                <Text style={styles.value}>{product.customer || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Field Staff:</Text>
+                <Text style={styles.value}>{product.codeAgen || '-'}</Text>
               </View>
             </View>
+
+            {/* Data Bank */}
+            <View style={styles.section}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Bank</Text>
+              <View style={styles.row}>
+                <Text style={styles.label}>Bank:</Text>
+                <Text style={styles.value}>{product.bank || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Jenis Rekening:</Text>
+                <Text style={styles.value}>{product.jenisRekening || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Grade:</Text>
+                <Text style={styles.value}>{product.grade || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Kantor Cabang:</Text>
+                <Text style={styles.value}>{product.kcp || '-'}</Text>
+              </View>
+            </View>
+
+            {/* Data Personal */}
+            <View style={styles.section}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Personal</Text>
+              <View style={styles.row}>
+                <Text style={styles.label}>NIK:</Text>
+                <Text style={styles.value}>{product.nik || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Nama:</Text>
+                <Text style={styles.value}>{product.nama || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Nama Ibu Kandung:</Text>
+                <Text style={styles.value}>{product.namaIbuKandung || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>TTL:</Text>
+                <Text style={styles.value}>{product.tempatTanggalLahir || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>No. Rekening:</Text>
+                <Text style={styles.value}>{product.noRek || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Sisa Saldo:</Text>
+                <Text style={styles.value}>{product.sisaSaldo || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>No. ATM:</Text>
+                <Text style={styles.value}>{product.noAtm || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Valid Kartu:</Text>
+                <Text style={styles.value}>{product.validThru || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>No. HP:</Text>
+                <Text style={styles.value}>{product.noHp || '-'}</Text>
+              </View>
+            </View>
+
+            {/* Data Keamanan - Bank-Aware */}
+            <View style={styles.section}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Keamanan</Text>
+              <View style={styles.row}>
+                <Text style={styles.label}>PIN ATM:</Text>
+                <Text style={styles.value}>{product.pinAtm || '-'}</Text>
+              </View>
+              <PdfBankField fieldKey="pinWondr" defaultLabel="PIN Wondr" product={product} value={product.pinWondr} />
+              <PdfBankField fieldKey="passWondr" defaultLabel="Pass Wondr" product={product} value={product.passWondr} />
+              <View style={styles.row}>
+                <Text style={styles.label}>Email:</Text>
+                <Text style={styles.value}>{product.email || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Password Email:</Text>
+                <Text style={styles.value}>{product.passEmail || '-'}</Text>
+              </View>
+
+              {/* Mobile Banking fields (non-BCA) */}
+              <PdfBankField fieldKey="mobileUser" defaultLabel="User Mobile" product={product} value={product.mobileUser} />
+              <PdfBankField fieldKey="mobilePassword" defaultLabel="Password Mobile" product={product} value={product.mobilePassword} />
+              <PdfBankField fieldKey="mobilePin" defaultLabel="PIN Mobile" product={product} value={product.mobilePin} />
+
+              {/* Internet Banking fields (non-BRI) */}
+              <PdfBankField fieldKey="ibUser" defaultLabel="User I-Banking" product={product} value={product.ibUser} />
+              <PdfBankField fieldKey="ibPassword" defaultLabel="Password IB" product={product} value={product.ibPassword} />
+              <PdfBankField fieldKey="ibPin" defaultLabel="PIN IB" product={product} value={product.ibPin} />
+
+              {/* BCA-specific fields */}
+              <PdfBankField fieldKey="myBCAUser" defaultLabel="BCA-ID" product={product} value={product.myBCAUser} />
+              <PdfBankField fieldKey="myBCAPassword" defaultLabel="Pass BCA-ID" product={product} value={product.myBCAPassword} />
+              <PdfBankField fieldKey="myBCAPin" defaultLabel="Pin Transaksi" product={product} value={product.myBCAPin} />
+              <PdfBankField fieldKey="pinKeyBCA" defaultLabel="Pin KeyBCA" product={product} value={product.pinKeyBCA} />
+              <PdfBankField fieldKey="kodeAkses" defaultLabel="Kode Akses M-BCA" product={product} value={product.kodeAkses} />
+              <PdfBankField fieldKey="pinMBca" defaultLabel="Pin M-BCA" product={product} value={product.pinMBca} />
+
+              {/* BRI-specific fields */}
+              <PdfBankField fieldKey="brimoUser" defaultLabel="User Brimo" product={product} value={product.brimoUser} />
+              <PdfBankField fieldKey="brimoPassword" defaultLabel="Password Brimo" product={product} value={product.brimoPassword} />
+              <PdfBankField fieldKey="brimoPin" defaultLabel="Pin Brimo" product={product} value={product.brimoPin} />
+              <PdfBankField fieldKey="briMerchantUser" defaultLabel="User Merchant QRIS" product={product} value={product.briMerchantUser} />
+              <PdfBankField fieldKey="briMerchantPassword" defaultLabel="Password Merchant QRIS" product={product} value={product.briMerchantPassword} />
+
+              {/* OCBC-specific fields */}
+              <PdfBankField fieldKey="ocbcNyalaUser" defaultLabel="User Nyala" product={product} value={product.ocbcNyalaUser} />
+              <PdfBankField fieldKey="ocbcNyalaPassword" defaultLabel="Password Nyala" product={product} value={product.ocbcNyalaPassword} />
+              <PdfBankField fieldKey="ocbcNyalaPin" defaultLabel="Pin Nyala" product={product} value={product.ocbcNyalaPin} />
+            </View>
+
+            {/* Data Tambahan */}
+            <View style={styles.section}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 5, color: '#666' }}>Data Tambahan</Text>
+              <View style={styles.row}>
+                <Text style={styles.label}>Expired:</Text>
+                <Text style={styles.value}>
+                  {product.expired ? new Date(product.expired).toLocaleDateString('id-ID') : '-'}
+                </Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Complaint:</Text>
+                <Text style={styles.value}>{product.complaint || '-'}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>Status:</Text>
+                <Text style={styles.value}>{product.status || 'pending'}</Text>
+              </View>
+            </View>
+
+            {/* Foto Produk */}
+            <View style={styles.section}>
+              <Text style={{ fontSize: 12, fontWeight: 'bold', marginBottom: 8, color: '#666' }}>Foto Produk</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+                {/* Foto KTP */}
+                <View style={{ flex: 1, marginRight: 5 }}>
+                  <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto KTP</Text>
+                  {(product.uploadFotoIdBase64 || product.uploadFotoId) ? (
+                    <Image
+                      src={product.uploadFotoIdBase64 || buildImageUrl(product.uploadFotoId)}
+                      style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
+                    />
+                  ) : (
+                    <View style={{ width: '100%', height: 120, border: '1px solid #ddd', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+                      <Text style={{ fontSize: 8, color: '#999' }}>Tidak ada foto</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Foto Selfie */}
+                <View style={{ flex: 1, marginLeft: 5 }}>
+                  <Text style={{ fontSize: 10, fontWeight: 'bold', marginBottom: 3, textAlign: 'center' }}>Foto Selfie</Text>
+                  {(product.uploadFotoSelfieBase64 || product.uploadFotoSelfie) ? (
+                    <Image
+                      src={product.uploadFotoSelfieBase64 || buildImageUrl(product.uploadFotoSelfie)}
+                      style={{ width: '100%', height: 120, objectFit: 'contain', border: '1px solid #ddd' }}
+                    />
+                  ) : (
+                    <View style={{ width: '100%', height: 120, border: '1px solid #ddd', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
+                      <Text style={{ fontSize: 8, color: '#999' }}>Tidak ada foto</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+        ))}
+
+        {/* Signature Section */}
+        <View style={{ marginTop: 40, flexDirection: 'row', justifyContent: 'flex-end' }} wrap={false}>
+          <View style={{ width: 200, textAlign: 'center' }}>
+            <Text style={{ fontSize: 10, marginBottom: 50 }}>Dicetak oleh Administrator,</Text>
+            <View style={{ borderBottom: '1px solid #000', marginBottom: 5, width: '100%' }} />
+            <Text style={{ fontSize: 10, fontWeight: 'bold' }}>( _____________________ )</Text>
+            <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>Tanda Tangan & Nama Terang</Text>
           </View>
         </View>
-      ))}
-
-      {/* Signature Section */}
-      <View style={{ marginTop: 40, flexDirection: 'row', justifyContent: 'flex-end' }} wrap={false}>
-        <View style={{ width: 200, textAlign: 'center' }}>
-          <Text style={{ fontSize: 10, marginBottom: 50 }}>Dicetak oleh Administrator,</Text>
-          <View style={{ borderBottom: '1px solid #000', marginBottom: 5, width: '100%' }} />
-          <Text style={{ fontSize: 10, fontWeight: 'bold' }}>( _____________________ )</Text>
-          <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>Tanda Tangan & Nama Terang</Text>
-        </View>
-      </View>
-    </Page>
-  </Document>
-);
+      </Page>
+    </Document>
+  );
+};
 
 const formatCardNumber = (value) => {
   // Remove all non-digits
