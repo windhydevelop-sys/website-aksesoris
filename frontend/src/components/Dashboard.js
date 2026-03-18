@@ -751,9 +751,11 @@ const Dashboard = ({ setToken }) => {
         const now = new Date();
         const days = parseInt(filterExpired);
         filtered = filtered.filter(p => {
+          if (!p.expired) return false;
           const exp = new Date(p.expired);
           const diff = (exp - now) / (1000 * 60 * 60 * 24);
-          return diff <= days && diff > 0;
+          // Include if expiring within `days` or ALREADY expired (diff <= days)
+          return diff <= days; 
         });
       }
       if (filterStatus) {
@@ -1187,8 +1189,12 @@ const Dashboard = ({ setToken }) => {
               Dashboard Produk
             </Typography>
             {notifications.length > 0 && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                {notifications.length} produk akan expired dalam 7 hari!
+              <Alert 
+                severity="warning" 
+                sx={{ mb: 2, cursor: 'pointer', '&:hover': { bgcolor: 'warning.light' } }}
+                onClick={() => setFilterExpired('7')} // Set filter to 7 days
+              >
+                {notifications.length} produk sudah expired atau akan expired dalam 30 hari! Klik untuk melihat.
               </Alert>
             )}
           </div>
