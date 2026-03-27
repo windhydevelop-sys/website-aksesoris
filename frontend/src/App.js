@@ -17,6 +17,7 @@ import FieldStaffManagement from './components/FieldStaffManagement';
 import OrderManagement from './components/OrderManagement';
 import CashflowManagement from './components/CashflowManagement';
 import BalanceTracker from './components/BalanceTracker';
+import PaymentManagement from './components/PaymentManagement';
 import ProductDetail from './components/ProductDetail';
 import HandphoneManagement from './components/HandphoneManagement';
 import FieldStaffDashboard from './components/FieldStaffDashboard';
@@ -53,6 +54,7 @@ function App() {
               <Route path="/orders" element={token ? <OrderManagement /> : <Navigate to="/login" />} />
               <Route path="/cashflow" element={token ? <CashflowManagement /> : <Navigate to="/login" />} />
               <Route path="/balance-tracker" element={token ? <BalanceTracker /> : <Navigate to="/login" />} />
+              <Route path="/payments" element={token ? <PaymentManagement /> : <Navigate to="/login" />} />
               <Route path="/product-details/:id" element={token ? <ProductDetail /> : <Navigate to="/login" />} />
               <Route path="/complaints" element={token ? <ComplaintMenu /> : <Navigate to="/login" />} />
               <Route path="/handphone" element={token ? <HandphoneMenu /> : <Navigate to="/login" />} />

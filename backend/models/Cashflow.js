@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const cashflowSchema = new mongoose.Schema({
+  // Transaction Type & Category
   type: {
     type: String,
     enum: ['income', 'expense'],
@@ -9,77 +10,74 @@ const cashflowSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    example: 'Penjualan, Gaji, Sewa, Transportasi, dll'
   },
+  
+  // Amount & Description
   amount: {
     type: Number,
     required: true,
-    min: 0
+    min: 0,
+    description: 'Nominal transaksi'
   },
-  
-  // Enhanced Journal Fields
-  debit: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  credit: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  accountCode: {
-    type: String,
-    default: '1101',
-    trim: true
-  },
-  accountName: {
-    type: String,
-    default: 'Cash',
-    trim: true
-  },
-  journalDescription: {
-    type: String,
-    trim: true
-  },
-  referenceNumber: {
-    type: String,
-    trim: true
-  },
-  balanceCheck: {
-    type: Boolean,
-    default: true
-  },
-
-  // Existing fields
   description: {
     type: String,
-    trim: true
+    trim: true,
+    description: 'Deskripsi detail transaksi'
   },
+  
+  // Date & Reference
   date: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    description: 'Tanggal transaksi'
   },
   reference: {
     type: String,
-    trim: true
+    trim: true,
+    description: 'Nomor referensi atau invoice'
   },
+  
+  // Product Reference (for tracking sync with inventory)
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    sparse: true,
+    description: 'Link ke produk (jika ada)'
+  },
+  
+  // Account Selection (Rekening A atau B)
+  account: {
+    type: String,
+    enum: ['Rekening A', 'Rekening B'],
+    default: 'Rekening A',
+    description: 'Rekening mana yang digunakan'
+  },
+  
+  // Payment Method
   paymentMethod: {
     type: String,
     enum: ['cash', 'transfer', 'credit_card', 'debit_card', 'other'],
-    default: 'cash'
+    default: 'cash',
+    description: 'Metode pembayaran'
   },
+  
+  // Audit Fields
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
+    description: 'User yang membuat transaksi'
   },
   lastModifiedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+    ref: 'User',
+    description: 'User terakhir yang edit'
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'cashflows'
 });
 
 // Set debit/credit based on type for proper double-entry accounting
@@ -125,6 +123,9 @@ cashflowSchema.index({ createdAt: -1 });
 cashflowSchema.index({ accountCode: 1 });
 cashflowSchema.index({ debit: 1 });
 cashflowSchema.index({ credit: 1 });
+cashflowSchema.index({ productId: 1 }); // For idempotency
+cashflowSchema.index({ account: 1 }); // For multi-account support
+cashflowSchema.index({ isDebt: 1 }); // For debt tracking
 
 // Virtual for formatted amount
 cashflowSchema.virtual('formattedAmount').get(function() {

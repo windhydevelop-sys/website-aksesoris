@@ -32,6 +32,9 @@ const balanceTransactionRoutes = require('./routes/balance-transactions');
 const handphoneRoutes = require('./routes/handphone');
 const backupRoutes = require('./routes/backup');
 const menuPermissionRoutes = require('./routes/menuPermissions');
+const rekeningRoutes = require('./routes/rekening');
+const invoiceRoutes = require('./routes/invoice');
+const productPaymentRoutes = require('./routes/product-payment');
 const User = require('./models/User');
 
 
@@ -163,6 +166,9 @@ app.use('/api/balance-transactions', balanceTransactionRoutes);
 app.use('/api/handphones', handphoneRoutes);
 app.use('/api/backup', backupRoutes);
 app.use('/api/menu-permissions', menuPermissionRoutes);
+app.use('/api/rekening', rekeningRoutes);
+app.use('/api/invoice', invoiceRoutes);
+app.use('/api/product-payment', productPaymentRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Global error handler

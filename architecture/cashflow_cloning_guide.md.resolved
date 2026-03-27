@@ -1,0 +1,139 @@
+# Complete Payment & Cashflow System Cloning Guide
+
+Panduan ini berisi langkah-langkah teknis dan potongan kode untuk menduplikasi sistem Manajemen Pembayaran dan sinkronisasi Arus Kas otomatis ke aplikasi lain.
+
+---
+
+## 1. Utilitas Frontend (Wajib)
+
+Buat file baru di [frontend/src/utils/formatHelpers.js](file:///Users/macbook/projects/kue_lapis/frontend/src/utils/formatHelpers.js) untuk menangani format mata uang dengan titik.
+
+```javascript
+export const formatCurrency = (value) => {
+    if (!value) return '';
+    const numberString = String(value).replace(/[^0-9]/g, '');
+    return numberString.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
+
+export const cleanCurrency = (value) => {
+    if (!value) return 0;
+    return parseInt(String(value).replace(/\./g, ''), 10) || 0;
+};
+```
+
+---
+
+## 2. Manajemen Navigasi (Frontend)
+
+### Daftarkan Route ([App.js](file:///Users/macbook/projects/kue_lapis/frontend/src/App.js))
+```javascript
+import PaymentManagement from './components/PaymentManagement';
+// ...
+<Route path="/payments" element={<ProtectedRoute><PaymentManagement /></ProtectedRoute>} />
+```
+
+### Tambahkan ke Sidebar ([SidebarLayout.js](file:///Users/macbook/projects/kue_lapis/frontend/src/components/SidebarLayout.js))
+```javascript
+import { MonetizationOn } from '@mui/icons-material';
+// ...
+{ text: 'Manajemen Pembayaran', icon: <MonetizationOn />, path: '/payments' },
+```
+
+---
+
+## 3. Logika Backend (The Core Sync)
+
+### Helper: [backend/utils/cashflowHelper.js](file:///Users/macbook/projects/kue_lapis/backend/utils/cashflowHelper.js)
+Gunakan logika ini untuk sinkronisasi otomatis.
+
+```javascript
+const Cashflow = require('../models/Cashflow');
+const BalanceTransaction = require('../models/BalanceTransaction');
+
+const syncProductWithCashflow = async (product, userId) => {
+    if (!product.harga || product.harga <= 0) return;
+    if (product.paymentStatus !== 'paid' && product.status !== 'completed') return;
+
+    try {
+        let cashflowEntry = await Cashflow.findOne({ productId: product._id });
+        const cashflowData = {
+            type: 'expense',
+            category: 'Pembayaran Produk',
+            amount: product.harga,
+            description: `Otomatis: Pembayaran ${product.nama} (${product.noOrder})`,
+            date: product.updatedAt || new Date(),
+            productId: product._id,
+            isDebt: product.paymentStatus !== 'paid',
+            lastModifiedBy: userId,
+            account: 'Rekening A'
+        };
+
+        if (cashflowEntry) {
+            Object.assign(cashflowEntry, cashflowData);
+            await cashflowEntry.save();
+        } else {
+            cashflowData.createdBy = userId;
+            cashflowEntry = new Cashflow(cashflowData);
+            await cashflowEntry.save();
+        }
+
+        // Ledger Sync (Only if Paid)
+        if (!cashflowData.isDebt) {
+            let balanceEntry = await BalanceTransaction.findOne({ reference: product._id.toString() });
+            const balanceData = {
+                type: 'expense',
+                amount: product.harga,
+                reference: product._id.toString(),
+                lastModifiedBy: userId
+            };
+            if (balanceEntry) {
+                Object.assign(balanceEntry, balanceData);
+                await balanceEntry.save();
+            } else {
+                balanceData.createdBy = userId;
+                await new BalanceTransaction(balanceData).save();
+            }
+        } else {
+            await BalanceTransaction.findOneAndDelete({ reference: product._id.toString() });
+        }
+    } catch (error) {
+        console.error('Sync Error:', error);
+    }
+};
+```
+
+---
+
+## 4. Keamanan & Sinkronisasi (Routes & Controllers)
+
+### Route Produk ([backend/routes/products.js](file:///Users/macbook/projects/kue_lapis/backend/routes/products.js))
+**PENTING**: Pastikan route `PUT` dan `DELETE` menggunakan `auth` agar `req.userId` tersedia.
+
+```javascript
+router.put('/:id', auth, addUserInfo, handleFileUpload, updateProduct);
+```
+
+### Integrasi Sinkronisasi
+Panggil [syncProductWithCashflow](file:///Users/macbook/projects/kue_lapis/backend/utils/cashflowHelper.js#5-98) pada:
+1. [controllers/products.js](file:///Users/macbook/projects/kue_lapis/backend/controllers/products.js) -> [createProduct](file:///Users/macbook/projects/kue_lapis/backend/controllers/products.js#96-223) (setelah `.save()`)
+2. [controllers/products.js](file:///Users/macbook/projects/kue_lapis/backend/controllers/products.js) -> [updateProduct](file:///Users/macbook/projects/kue_lapis/backend/controllers/products.js#381-582) (setelah `.save()`)
+3. [routes/products.js](file:///Users/macbook/projects/kue_lapis/backend/routes/products.js) -> `/import-document-save` (di dalam loop simpan)
+4. [routes/products.js](file:///Users/macbook/projects/kue_lapis/backend/routes/products.js) -> `/import-corrected-word` (saat update/promote produk)
+
+---
+
+## 5. Filter Database ([backend/controllers/products.js](file:///Users/macbook/projects/kue_lapis/backend/controllers/products.js))
+
+Tambahkan filter berikut pada fungsi [getProducts](file:///Users/macbook/projects/kue_lapis/backend/controllers/products.js#224-315):
+```javascript
+const { paymentStatus, hasPrice } = req.query;
+if (paymentStatus) query.paymentStatus = paymentStatus;
+if (hasPrice === 'true') query.harga = { $gt: 0 };
+```
+
+---
+
+## 6. Tips Agar Tidak Error
+1. **Model Check**: Pastikan model [Cashflow](file:///Users/macbook/projects/kue_lapis/frontend/src/components/CashflowManagement.js#19-720) memiliki field `productId` dengan type `ObjectId`.
+2. **Auth Consistency**: Jika `req.userId` kosong, sinkronisasi cashflow akan gagal saat mencoba menyimpan field `createdBy`. Selalu gunakan middleware `auth`.
+3. **Currency Conversion**: Di frontend, selalu gunakan [cleanCurrency()](file:///Users/macbook/projects/kue_lapis/frontend/src/utils/formatHelpers.js#16-27) sebelum mengirim data harga ke backend untuk menghindari error tipe data [Number](file:///Users/macbook/projects/kue_lapis/frontend/src/components/Dashboard.js#511-514).

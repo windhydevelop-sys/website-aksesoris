@@ -38,26 +38,16 @@ const productSchema = new mongoose.Schema({
   fieldStaff: { type: String }, // New field for field staff
   orderNumber: { type: String }, // New field for order number
   complaint: { type: String }, // New field for complaints
-  complaintDate: { type: Date }, // Date when complaint was filed
-  complaintResolvedDate: { type: Date }, // Date when complaint was resolved
-  complaintStatus: {
-    type: String,
-    enum: ['pending', 'dalam proses', 'Rusak', 'selesai', ''],
-    default: ''
-  },
-  complaintType: { type: String },
   myBCAUser: { type: String },
   myBCAPassword: { type: String },
   myBCAPin: { type: String },
   brimoUser: { type: String },
   brimoPassword: { type: String },
-  brimoPin: { type: String },
   briMerchantUser: { type: String },
   briMerchantPassword: { type: String },
   // Specific for BCA
   kodeAkses: { type: String },
   pinMBca: { type: String },
-  pinKeyBCA: { type: String },
   // Generic bank credential fields
   mobileUser: { type: String },
   mobilePassword: { type: String },
@@ -70,6 +60,84 @@ const productSchema = new mongoose.Schema({
   ocbcNyalaUser: { type: String },
   ocbcNyalaPassword: { type: String },
   ocbcNyalaPin: { type: String },
+  
+  // Payment & Invoicing Fields
+  harga: {
+    type: Number,
+    required: false,
+    description: 'Harga produk/layanan (legacy)'
+  },
+  hargaBeli: {
+    type: Number,
+    required: false,
+    default: 0,
+    description: 'Biaya/Harga Beli dari Orlap (Hutang)'
+  },
+  hargaJual: {
+    type: Number,
+    required: false,
+    default: 0,
+    description: 'Tagihan/Harga Jual ke Customer (Piutang)'
+  },
+  pembayaranHutangStatus: {
+    type: String,
+    enum: ['unpaid', 'paid'],
+    default: 'unpaid',
+    description: 'Status pembayaran ke Orlap'
+  },
+  pembayaranPiutangStatus: {
+    type: String,
+    enum: ['unpaid', 'paid'],
+    default: 'unpaid',
+    description: 'Status pembayaran dari Customer'
+  },
+  account: {
+    type: String,
+    enum: ['Rekening A', 'Rekening B', '-'],
+    default: '-',
+    description: 'Rekening utama penampung'
+  },
+  pembayaranHutangAccount: {
+    type: String,
+    enum: ['Rekening A', 'Rekening B', 'cash', '-'],
+    default: '-',
+    description: 'Rekening yang digunakan bayar ke Orlap'
+  },
+  pembayaranPiutangAccount: {
+    type: String,
+    enum: ['Rekening A', 'Rekening B', 'cash', '-'],
+    default: '-',
+    description: 'Rekening penerima dari Customer'
+  },
+  sudahBayar: {
+    type: Boolean,
+    default: false,
+    description: 'Status pembayaran produk'
+  },
+  rekeningId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'RekeningDetail',
+    required: false,
+    description: 'Rekening yang digunakan untuk pembayaran'
+  },
+  invoiceNo: {
+    type: String,
+    required: false,
+    unique: true,
+    sparse: true,
+    description: 'Nomor invoice'
+  },
+  invoiceDate: {
+    type: Date,
+    required: false,
+    description: 'Tanggal invoice dibuat'
+  },
+  paymentDate: {
+    type: Date,
+    required: false,
+    description: 'Tanggal pembayaran'
+  },
+  
   status: {
     type: String,
     enum: ['pending', 'in_progress', 'completed', 'cancelled'],
@@ -86,83 +154,76 @@ const productSchema = new mongoose.Schema({
 productSchema.pre('save', function (next) {
   try {
     // Encrypt sensitive fields before saving
-    if (this.isModified('pinAtm') && this.pinAtm && !String(this.pinAtm).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('pinAtm')) {
       this.pinAtm = encrypt(this.pinAtm);
     }
-    if (this.isModified('pinWondr') && this.pinWondr && !String(this.pinWondr).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('pinWondr')) {
       this.pinWondr = encrypt(this.pinWondr);
     }
-    if (this.isModified('passWondr') && this.passWondr && !String(this.passWondr).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('passWondr')) {
       this.passWondr = encrypt(this.passWondr);
     }
-    if (this.isModified('passEmail') && this.passEmail && !String(this.passEmail).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('passEmail')) {
       this.passEmail = encrypt(this.passEmail);
     }
-    if (this.isModified('myBCAUser') && this.myBCAUser && !String(this.myBCAUser).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('myBCAUser')) {
       this.myBCAUser = encrypt(this.myBCAUser);
     }
-    if (this.isModified('myBCAPassword') && this.myBCAPassword && !String(this.myBCAPassword).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('myBCAPassword')) {
       this.myBCAPassword = encrypt(this.myBCAPassword);
     }
-    if (this.isModified('myBCAPin') && this.myBCAPin && !String(this.myBCAPin).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('myBCAPin')) {
       this.myBCAPin = encrypt(this.myBCAPin);
     }
-    if (this.isModified('brimoUser') && this.brimoUser && !String(this.brimoUser).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('brimoUser')) {
       this.brimoUser = encrypt(this.brimoUser);
     }
-    if (this.isModified('brimoPassword') && this.brimoPassword && !String(this.brimoPassword).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('brimoPassword')) {
       this.brimoPassword = encrypt(this.brimoPassword);
     }
-    if (this.isModified('brimoPin') && this.brimoPin && !String(this.brimoPin).startsWith('U2FsdGVkX1')) {
-      this.brimoPin = encrypt(this.brimoPin);
-    }
-    if (this.isModified('briMerchantUser') && this.briMerchantUser && !String(this.briMerchantUser).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('briMerchantUser')) {
       this.briMerchantUser = encrypt(this.briMerchantUser);
     }
-    if (this.isModified('briMerchantPassword') && this.briMerchantPassword && !String(this.briMerchantPassword).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('briMerchantPassword')) {
       this.briMerchantPassword = encrypt(this.briMerchantPassword);
     }
-    if (this.isModified('kodeAkses') && this.kodeAkses && !String(this.kodeAkses).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('kodeAkses')) {
       this.kodeAkses = encrypt(this.kodeAkses);
     }
-    if (this.isModified('pinMBca') && this.pinMBca && !String(this.pinMBca).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('pinMBca')) {
       this.pinMBca = encrypt(this.pinMBca);
     }
-    if (this.isModified('pinKeyBCA') && this.pinKeyBCA && !String(this.pinKeyBCA).startsWith('U2FsdGVkX1')) {
-      this.pinKeyBCA = encrypt(this.pinKeyBCA);
-    }
-    // Mobile Banking Generic
-    if (this.isModified('mobileUser') && this.mobileUser && !String(this.mobileUser).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('mobileUser')) {
       this.mobileUser = encrypt(this.mobileUser);
     }
-    if (this.isModified('mobilePassword') && this.mobilePassword && !String(this.mobilePassword).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('mobilePassword')) {
       this.mobilePassword = encrypt(this.mobilePassword);
     }
-    if (this.isModified('mobilePin') && this.mobilePin && !String(this.mobilePin).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('mobilePin')) {
       this.mobilePin = encrypt(this.mobilePin);
     }
-    if (this.isModified('ibUser') && this.ibUser && !String(this.ibUser).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('ibUser')) {
       this.ibUser = encrypt(this.ibUser);
     }
-    if (this.isModified('ibPassword') && this.ibPassword && !String(this.ibPassword).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('ibPassword')) {
       this.ibPassword = encrypt(this.ibPassword);
     }
-    if (this.isModified('ibPin') && this.ibPin && !String(this.ibPin).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('ibPin')) {
       this.ibPin = encrypt(this.ibPin);
     }
-    if (this.isModified('merchantUser') && this.merchantUser && !String(this.merchantUser).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('merchantUser')) {
       this.merchantUser = encrypt(this.merchantUser);
     }
-    if (this.isModified('merchantPassword') && this.merchantPassword && !String(this.merchantPassword).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('merchantPassword')) {
       this.merchantPassword = encrypt(this.merchantPassword);
     }
-    if (this.isModified('ocbcNyalaUser') && this.ocbcNyalaUser && !String(this.ocbcNyalaUser).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('ocbcNyalaUser')) {
       this.ocbcNyalaUser = encrypt(this.ocbcNyalaUser);
     }
-    if (this.isModified('ocbcNyalaPassword') && this.ocbcNyalaPassword && !String(this.ocbcNyalaPassword).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('ocbcNyalaPassword')) {
       this.ocbcNyalaPassword = encrypt(this.ocbcNyalaPassword);
     }
-    if (this.isModified('ocbcNyalaPin') && this.ocbcNyalaPin && !String(this.ocbcNyalaPin).startsWith('U2FsdGVkX1')) {
+    if (this.isModified('ocbcNyalaPin')) {
       this.ocbcNyalaPin = encrypt(this.ocbcNyalaPin);
     }
     next();
@@ -175,99 +236,76 @@ productSchema.pre('save', function (next) {
 productSchema.pre('findOneAndUpdate', function (next) {
   try {
     const update = this.getUpdate();
-    if (update.pinAtm && !String(update.pinAtm).startsWith('U2FsdGVkX1')) {
+    if (update.pinAtm) {
       update.pinAtm = encrypt(update.pinAtm);
     }
-    if (update.pinWondr && !String(update.pinWondr).startsWith('U2FsdGVkX1')) {
+    if (update.pinWondr) {
       update.pinWondr = encrypt(update.pinWondr);
     }
-    if (update.passWondr && !String(update.passWondr).startsWith('U2FsdGVkX1')) {
+    if (update.passWondr) {
       update.passWondr = encrypt(update.passWondr);
     }
-    if (update.passEmail && !String(update.passEmail).startsWith('U2FsdGVkX1')) {
+    if (update.passEmail) {
       update.passEmail = encrypt(update.passEmail);
     }
-    if (update.myBCAUser && !String(update.myBCAUser).startsWith('U2FsdGVkX1')) {
+    if (update.myBCAUser) {
       update.myBCAUser = encrypt(update.myBCAUser);
     }
-    if (update.myBCAPassword && !String(update.myBCAPassword).startsWith('U2FsdGVkX1')) {
+    if (update.myBCAPassword) {
       update.myBCAPassword = encrypt(update.myBCAPassword);
     }
-    if (update.myBCAPin && !String(update.myBCAPin).startsWith('U2FsdGVkX1')) {
+    if (update.myBCAPin) {
       update.myBCAPin = encrypt(update.myBCAPin);
     }
-    if (update.brimoUser && !String(update.brimoUser).startsWith('U2FsdGVkX1')) {
+    if (update.brimoUser) {
       update.brimoUser = encrypt(update.brimoUser);
     }
-    if (update.brimoPassword && !String(update.brimoPassword).startsWith('U2FsdGVkX1')) {
+    if (update.brimoPassword) {
       update.brimoPassword = encrypt(update.brimoPassword);
     }
-    if (update.briMerchantUser && !String(update.briMerchantUser).startsWith('U2FsdGVkX1')) {
+    if (update.briMerchantUser) {
       update.briMerchantUser = encrypt(update.briMerchantUser);
     }
-    if (update.briMerchantPassword && !String(update.briMerchantPassword).startsWith('U2FsdGVkX1')) {
+    if (update.briMerchantPassword) {
       update.briMerchantPassword = encrypt(update.briMerchantPassword);
     }
-    if (update.kodeAkses && !String(update.kodeAkses).startsWith('U2FsdGVkX1')) {
+    if (update.kodeAkses) {
       update.kodeAkses = encrypt(update.kodeAkses);
     }
-    if (update.pinMBca && !String(update.pinMBca).startsWith('U2FsdGVkX1')) {
+    if (update.pinMBca) {
       update.pinMBca = encrypt(update.pinMBca);
     }
-    if (update.pinKeyBCA && !String(update.pinKeyBCA).startsWith('U2FsdGVkX1')) {
-      update.pinKeyBCA = encrypt(update.pinKeyBCA);
-    }
-    if (update.mobileUser && !String(update.mobileUser).startsWith('U2FsdGVkX1')) {
+    if (update.mobileUser) {
       update.mobileUser = encrypt(update.mobileUser);
     }
-    if (update.mobilePassword && !String(update.mobilePassword).startsWith('U2FsdGVkX1')) {
+    if (update.mobilePassword) {
       update.mobilePassword = encrypt(update.mobilePassword);
     }
-    if (update.mobilePin && !String(update.mobilePin).startsWith('U2FsdGVkX1')) {
+    if (update.mobilePin) {
       update.mobilePin = encrypt(update.mobilePin);
     }
-    // IB
-    if (update.ibUser && !String(update.ibUser).startsWith('U2FsdGVkX1')) {
+    if (update.ibUser) {
       update.ibUser = encrypt(update.ibUser);
     }
-    if (update.ibPassword && !String(update.ibPassword).startsWith('U2FsdGVkX1')) {
+    if (update.ibPassword) {
       update.ibPassword = encrypt(update.ibPassword);
     }
-    if (update.ibPin && !String(update.ibPin).startsWith('U2FsdGVkX1')) {
+    if (update.ibPin) {
       update.ibPin = encrypt(update.ibPin);
     }
-    // OCBC
-    if (update.ocbcNyalaUser && !String(update.ocbcNyalaUser).startsWith('U2FsdGVkX1')) {
-      update.ocbcNyalaUser = encrypt(update.ocbcNyalaUser);
-    }
-    if (update.ocbcNyalaPassword && !String(update.ocbcNyalaPassword).startsWith('U2FsdGVkX1')) {
-      update.ocbcNyalaPassword = encrypt(update.ocbcNyalaPassword);
-    }
-    if (update.ocbcNyalaPin && !String(update.ocbcNyalaPin).startsWith('U2FsdGVkX1')) {
-      update.ocbcNyalaPin = encrypt(update.ocbcNyalaPin);
-    }
-    if (update.ibUser && !String(update.ibUser).startsWith('U2FsdGVkX1')) {
-      update.ibUser = encrypt(update.ibUser);
-    }
-    if (update.ibPassword && !String(update.ibPassword).startsWith('U2FsdGVkX1')) {
-      update.ibPassword = encrypt(update.ibPassword);
-    }
-    if (update.ibPin && !String(update.ibPin).startsWith('U2FsdGVkX1')) {
-      update.ibPin = encrypt(update.ibPin);
-    }
-    if (update.merchantUser && !String(update.merchantUser).startsWith('U2FsdGVkX1')) {
+    if (update.merchantUser) {
       update.merchantUser = encrypt(update.merchantUser);
     }
-    if (update.merchantPassword && !String(update.merchantPassword).startsWith('U2FsdGVkX1')) {
+    if (update.merchantPassword) {
       update.merchantPassword = encrypt(update.merchantPassword);
     }
-    if (update.ocbcNyalaUser && !String(update.ocbcNyalaUser).startsWith('U2FsdGVkX1')) {
+    if (update.ocbcNyalaUser) {
       update.ocbcNyalaUser = encrypt(update.ocbcNyalaUser);
     }
-    if (update.ocbcNyalaPassword && !String(update.ocbcNyalaPassword).startsWith('U2FsdGVkX1')) {
+    if (update.ocbcNyalaPassword) {
       update.ocbcNyalaPassword = encrypt(update.ocbcNyalaPassword);
     }
-    if (update.ocbcNyalaPin && !String(update.ocbcNyalaPin).startsWith('U2FsdGVkX1')) {
+    if (update.ocbcNyalaPin) {
       update.ocbcNyalaPin = encrypt(update.ocbcNyalaPin);
     }
     next();
@@ -284,8 +322,8 @@ productSchema.methods.getDecryptedData = function () {
   const fieldsToDecrypt = [
     'pinAtm', 'pinWondr', 'passWondr', 'passEmail',
     'myBCAUser', 'myBCAPassword', 'myBCAPin',
-    'brimoUser', 'brimoPassword', 'brimoPin', 'briMerchantUser', 'briMerchantPassword',
-    'kodeAkses', 'pinMBca', 'pinKeyBCA',
+    'brimoUser', 'brimoPassword', 'briMerchantUser', 'briMerchantPassword',
+    'kodeAkses', 'pinMBca',
     'mobileUser', 'mobilePassword', 'mobilePin',
     'ibUser', 'ibPassword', 'ibPin',
     'merchantUser', 'merchantPassword',

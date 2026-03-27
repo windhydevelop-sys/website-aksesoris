@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Drawer, Toolbar, Box, List, ListItem, ListItemIcon, ListItemText, ListItemButton, AppBar, Avatar, Typography, Chip, IconButton, Switch, Tooltip, useMediaQuery, useTheme } from '@mui/material';
-import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet, Backup, Settings, Timeline, Calculate, Description } from '@mui/icons-material';
+import { Dashboard as DashboardIcon, Logout, PeopleAlt, Info, Group, Android, AdminPanelSettings, AccountCircle, Menu as MenuIcon, AddShoppingCart, AccountBalanceWallet, Backup, Settings, Timeline, Calculate, Description, MonetizationOn } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from '../utils/axios';
 import { useThemeMode } from '../contexts/ThemeModeContext';
@@ -279,6 +279,19 @@ const SidebarLayout = ({ children, onLogout }) => {
                 </ListItemButton>
               </ListItem>
             )}
+            {(userRole === 'admin' || menuPermissions.payments) && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={isActive('/payments')}
+                  onClick={() => navigate('/payments')}
+                  sx={navItemSx}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}><MonetizationOn /></ListItemIcon>
+                  <ListItemText primary="Manajemen Pembayaran" sx={{ color: 'inherit' }} />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {/* Laporan Laba Rugi moved to Cashflow menu tab */}
             {(userRole === 'admin' || menuPermissions.complaints) && (
               <ListItem disablePadding>
                 <ListItemButton

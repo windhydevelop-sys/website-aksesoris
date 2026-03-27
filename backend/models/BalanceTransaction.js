@@ -44,6 +44,18 @@ const balanceTransactionSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  // Product Reference (for sync tracking)
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    sparse: true
+  },
+  // Multi-Account Support
+  account: {
+    type: String,
+    enum: ['Rekening A', 'Rekening B'],
+    default: 'Rekening A'
+  },
   paymentMethod: {
     type: String,
     enum: ['cash', 'transfer', 'credit_card', 'debit_card', 'other'],
@@ -99,6 +111,8 @@ balanceTransactionSchema.index({ date: -1 });
 balanceTransactionSchema.index({ createdBy: 1 });
 balanceTransactionSchema.index({ createdAt: -1 });
 balanceTransactionSchema.index({ runningBalance: 1 });
+balanceTransactionSchema.index({ productId: 1 }); // For sync tracking
+balanceTransactionSchema.index({ account: 1 }); // For multi-account support
 
 // Virtual for formatted amount
 balanceTransactionSchema.virtual('formattedAmount').get(function() {

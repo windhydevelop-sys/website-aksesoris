@@ -564,6 +564,7 @@ router.get('/:id', addUserInfo, getProductById);
 // Update product with validation and security
 const { updateProduct } = require('../controllers/products');
 router.put('/:id',
+  auth,
   addUserInfo,
   handleFileUpload,
   validateProductUpdate,
@@ -571,7 +572,10 @@ router.put('/:id',
 );
 
 // Delete product with security checks
-router.delete('/:id', addUserInfo, async (req, res) => {
+router.delete('/:id',
+  auth,
+  addUserInfo,
+  async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
 

@@ -164,7 +164,14 @@ const productSchema = Joi.object({
   }),
   complaintType: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Jenis komplain harus berupa string'
-  })
+  }),
+  hargaBeli: Joi.number().min(0).optional().default(0),
+  hargaJual: Joi.number().min(0).optional().default(0),
+  pembayaranHutangStatus: Joi.string().valid('unpaid', 'paid').optional(),
+  pembayaranPiutangStatus: Joi.string().valid('unpaid', 'paid').optional(),
+  account: Joi.string().valid('Rekening A', 'Rekening B', '-', '').optional(),
+  pembayaranHutangAccount: Joi.string().valid('Rekening A', 'Rekening B', 'cash', '-', '').optional(),
+  pembayaranPiutangAccount: Joi.string().valid('Rekening A', 'Rekening B', 'cash', '-', '').optional()
 });
 
 // Product validation schema for UPDATE (all fields optional)
@@ -309,7 +316,14 @@ const productUpdateSchema = Joi.object({
   }),
   complaintType: Joi.string().optional().allow('', '-').messages({
     'string.base': 'Jenis komplain harus berupa string'
-  })
+  }),
+  hargaBeli: Joi.number().min(0).optional(),
+  hargaJual: Joi.number().min(0).optional(),
+  pembayaranHutangStatus: Joi.string().valid('unpaid', 'paid').optional(),
+  pembayaranPiutangStatus: Joi.string().valid('unpaid', 'paid').optional(),
+  account: Joi.string().valid('Rekening A', 'Rekening B', '-', '').optional(),
+  pembayaranHutangAccount: Joi.string().valid('Rekening A', 'Rekening B', 'cash', '-', '').optional(),
+  pembayaranPiutangAccount: Joi.string().valid('Rekening A', 'Rekening B', 'cash', '-', '').optional()
 });
 
 // User validation schema

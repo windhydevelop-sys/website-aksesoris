@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import {
     CloudUpload, ExpandMore, CheckCircle, Error, Info, Download, Description,
-    Add as AddIcon
+    Add as AddIcon, Close as CloseIcon
 } from '@mui/icons-material';
 import { useNotification } from '../contexts/NotificationContext';
 
@@ -56,6 +56,42 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
         noHandphoneOrlap: ''
     });
     const [isSavingQuickAdd, setIsSavingQuickAdd] = useState(false);
+    const [zoomImage, setZoomImage] = useState(null);
+    const [editRow, setEditRow] = useState({ index: -1, data: null });
+    
+    // Handlers for preview editing
+    const formatNumberWithDots = (num) => {
+        if (!num && num !== 0) return '';
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    const handleEditPreview = (field, value) => {
+        let finalValue = value;
+        if (field === 'hargaBeli' || field === 'hargaJual') {
+            const numericValue = value.replace(/[^0-9]/g, '');
+            const cleanedValue = parseInt(numericValue, 10) || 0;
+            finalValue = formatNumberWithDots(cleanedValue);
+        }
+
+        setEditRow(prev => ({
+            ...prev,
+            data: { ...prev.data, [field]: finalValue }
+        }));
+    };
+
+    const handleSaveEdit = () => {
+        if (!editRow || editRow.index === -1) return;
+        
+        // Convert formatted strings back to numbers before saving
+        const finalData = { ...editRow.data };
+        if (finalData.hargaBeli) finalData.hargaBeli = parseInt(finalData.hargaBeli.toString().replace(/\./g, ''), 10) || 0;
+        if (finalData.hargaJual) finalData.hargaJual = parseInt(finalData.hargaJual.toString().replace(/\./g, ''), 10) || 0;
+
+        const newData = [...previewData.extractedData];
+        newData[editRow.index] = finalData;
+        setPreviewData({ ...previewData, extractedData: newData });
+        setEditRow({ index: -1, data: null });
+    };
 
     const token = localStorage.getItem('token');
 
@@ -506,6 +542,8 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
 
         const data = previewData.extractedData;
 
+
+
         // Define all possible columns for all banks
         const allColumns = [
             { id: 'noOrder', label: 'No. Order' },
@@ -564,12 +602,18 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
             { id: 'pinAtm', label: 'Pin ATM' },
             { id: 'email', label: 'Email' },
             { id: 'passEmail', label: 'Password Email' },
-            { id: 'status', label: 'Validasi' }
+            { id: 'hargaBeli', label: 'Harga Beli (Hutang)' },
+            { id: 'hargaJual', label: 'Harga Jual (Piutang)' },
+            { id: 'uploadFotoId', label: 'KTP' },
+            { id: 'uploadFotoSelfie', label: 'Selfie' },
+            { id: 'status', label: 'Validasi' },
+            { id: 'actions', label: 'Aksi' }
         ];
 
         // Determine which columns to show. We'll show a column if any row has it OR if it's a common field.
         const visibleColumns = allColumns.filter(col => {
-            if (!col.bank) return true; // Common field
+            if (!col.bank && col.id !== 'actions') return true; // Common field, always show actions
+            if (col.id === 'actions') return true; // Always show actions column
             // Show bank-specific field if at least one product has that bank
             return data.some(p => (p.bank || '').toLowerCase().includes(col.bank));
         });
@@ -592,64 +636,138 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
         });
 
         return (
-            <TableContainer component={Paper} sx={{ mt: 2, maxHeight: 500 }}>
-                <Table size="small" stickyHeader>
-                    <TableHead>
-                        <TableRow>
-                            {finalColumns.map(col => (
-                                <TableCell key={col.id} sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>
-                                    {col.label}
-                                </TableCell>
-                            ))}
-                            {selectedFiles.length > 0 && (
-                                <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>
-                                    Source File
-                                </TableCell>
-                            )}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {data.map((product, index) => (
-                            <TableRow key={index} hover>
-                                {finalColumns.map(col => {
-                                    if (col.id === 'status') {
-                                        return (
-                                            <TableCell key={col.id}>
-                                                {product.isDuplicate ? (
-                                                    <Chip
-                                                        label="Duplicate"
-                                                        color="warning"
-                                                        size="small"
-                                                        icon={<Error />}
-                                                    />
-                                                ) : (
-                                                    <Chip
-                                                        label="Valid"
-                                                        color="success"
-                                                        size="small"
-                                                        icon={<CheckCircle />}
-                                                    />
-                                                )}
-                                            </TableCell>
-                                        );
-                                    }
-                                    return (
-                                        <TableCell key={col.id}>
-                                            {product[col.id] || '-'}
-                                        </TableCell>
-                                    );
-                                })}
-                                {/* Source File Column if multiple */}
+            <>
+                <TableContainer component={Paper} sx={{ mt: 2, maxHeight: 500 }}>
+                    <Table size="small" stickyHeader>
+                        <TableHead>
+                            <TableRow>
+                                {finalColumns.map(col => (
+                                    <TableCell key={col.id} sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>
+                                        {col.label}
+                                    </TableCell>
+                                ))}
                                 {selectedFiles.length > 0 && (
-                                    <TableCell>
-                                        <Chip label={product.sourceFile || 'Merged'} size="small" variant="outlined" />
+                                    <TableCell sx={{ fontWeight: 'bold', bgcolor: 'primary.main', color: 'white' }}>
+                                        Source File
                                     </TableCell>
                                 )}
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                            {data.map((product, idx) => (
+                                <TableRow key={idx} hover>
+                                    {finalColumns.map(col => {
+                                        if (col.id === 'status') {
+                                            return (
+                                                <TableCell key={col.id}>
+                                                    {product.isDuplicate ? (
+                                                        <Chip
+                                                            label="Duplicate"
+                                                            color="warning"
+                                                            size="small"
+                                                            icon={<Error />}
+                                                        />
+                                                    ) : (
+                                                        <Chip
+                                                            label="Valid"
+                                                            color="success"
+                                                            size="small"
+                                                            icon={<CheckCircle />}
+                                                        />
+                                                    )}
+                                                </TableCell>
+                                            );
+                                        }
+                                        if (col.id === 'hargaBeli' || col.id === 'hargaJual') {
+                                            const val = product[col.id];
+                                            return (
+                                                <TableCell key={col.id} align="right">
+                                                    {val ? `Rp ${Number(val).toLocaleString('id-ID')}` : '-'}
+                                                </TableCell>
+                                            );
+                                        }
+                                        if (col.id === 'uploadFotoId' || col.id === 'uploadFotoSelfie') {
+                                            const imageUrl = product[col.id];
+                                            return (
+                                                <TableCell key={col.id}>
+                                                    {imageUrl && imageUrl !== '-' ? (
+                                                        <Box
+                                                            component="img"
+                                                            src={imageUrl}
+                                                            alt={col.label}
+                                                            onClick={() => setZoomImage({ url: imageUrl, title: col.label })}
+                                                            sx={{
+                                                                width: 40,
+                                                                height: 40,
+                                                                objectFit: 'cover',
+                                                                borderRadius: 1,
+                                                                cursor: 'pointer',
+                                                                border: '1px solid',
+                                                                borderColor: 'divider',
+                                                                transition: 'transform 0.2s',
+                                                                '&:hover': {
+                                                                    transform: 'scale(1.1)',
+                                                                    boxShadow: 2
+                                                                }
+                                                            }}
+                                                        />
+                                                    ) : '-'}
+                                                </TableCell>
+                                            );
+                                        }
+                                        return (
+                                            <TableCell key={col.id} align={['hargaBeli', 'hargaJual'].includes(col.id) ? 'right' : 'left'}>
+                                                {['hargaBeli', 'hargaJual'].includes(col.id) ? (
+                                                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: col.id === 'hargaBeli' ? 'error.main' : 'success.main' }}>
+                                                        {product[col.id] ? `Rp ${Number(product[col.id]).toLocaleString('id-ID')}` : '-'}
+                                                    </Typography>
+                                                ) : col.id === 'actions' ? (
+                                                    <Button size="small" variant="outlined" onClick={() => setEditRow({ index: idx, data: { ...product } })}>
+                                                        Edit
+                                                    </Button>
+                                                ) : (
+                                                    product[col.id] || '-'
+                                                )}
+                                            </TableCell>
+                                        );
+                                    })}
+                                    {/* Source File Column if multiple */}
+                                    {selectedFiles.length > 0 && (
+                                        <TableCell>
+                                            <Chip label={product.sourceFile || 'Merged'} size="small" variant="outlined" />
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+
+                <Dialog open={!!editRow} onClose={() => setEditRow(null)} maxWidth="sm" fullWidth>
+                    <DialogTitle>Edit Data Produk</DialogTitle>
+                    <DialogContent dividers>
+                        {editRow && (
+                            <Grid container spacing={2}>
+                                {finalColumns.filter(col => col.id !== 'status' && col.id !== 'uploadFotoId' && col.id !== 'uploadFotoSelfie' && col.id !== 'actions').map(col => (
+                                    <Grid item xs={12} key={col.id}>
+                                        <TextField
+                                            fullWidth
+                                            label={col.label}
+                                            value={editRow.data[col.id] || ''}
+                                            onChange={(e) => handleEditPreview(col.id, e.target.value)}
+                                            type={['hargaBeli', 'hargaJual'].includes(col.id) ? 'number' : 'text'}
+                                        />
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        )}
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => setEditRow(null)}>Batal</Button>
+                        <Button onClick={handleSaveEdit} variant="contained" color="primary">Simpan</Button>
+                    </DialogActions>
+                </Dialog>
+            </>
         );
     };
 
@@ -743,7 +861,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 </Box>
             </DialogTitle>
 
-            <DialogContent>
+            <DialogContent dividers>
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
@@ -907,11 +1025,10 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                             </Typography>
                                         </AccordionSummary>
                                         <AccordionDetails>
-                                            <Grid container spacing={2}>
-                                                <Grid item xs={12} md={4}>
+                                            <Grid container spacing={2} direction="column">
+                                                <Grid item xs={12} md={12}>
                                                     <Autocomplete
                                                         fullWidth
-                                                        size="small"
                                                         options={customers}
                                                         getOptionLabel={(option) => `[${option.kodeCustomer}] ${option.namaCustomer}`}
                                                         value={fileOverrides[file.name]?.customer || null}
@@ -921,14 +1038,25 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                                                 [file.name]: { ...prev[file.name], customer: newValue }
                                                             }));
                                                         }}
+                                                        renderOption={(props, option) => {
+                                                            const { key, ...optionProps } = props;
+                                                            return (
+                                                                <li key={key} {...optionProps} style={{ wordBreak: 'break-word', whiteSpace: 'normal', padding: '12px 16px' }}>
+                                                                    <Typography variant="body1">{`[${option.kodeCustomer}] ${option.namaCustomer}`}</Typography>
+                                                                </li>
+                                                            );
+                                                        }}
+                                                        sx={{
+                                                            '& .MuiInputBase-root': { minHeight: '56px' },
+                                                            '& .MuiInputBase-input': { fontSize: '1rem' }
+                                                        }}
                                                         renderInput={(params) => <TextField {...params} label="Customer" placeholder="Timpa Customer Kosong" />}
                                                     />
                                                 </Grid>
-                                                <Grid item xs={12} md={4}>
+                                                <Grid item xs={12} md={12}>
                                                     <Autocomplete
                                                         fullWidth
                                                         freeSolo
-                                                        size="small"
                                                         options={orders}
                                                         getOptionLabel={(option) => typeof option === 'string' ? option : option.noOrder}
                                                         value={fileOverrides[file.name]?.noOrder || null}
@@ -947,13 +1075,24 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                                                 }));
                                                             }
                                                         }}
+                                                        renderOption={(props, option) => {
+                                                            const { key, ...optionProps } = props;
+                                                            return (
+                                                                <li key={key} {...optionProps} style={{ wordBreak: 'break-word', whiteSpace: 'normal', padding: '12px 16px' }}>
+                                                                    <Typography variant="body1">{typeof option === 'string' ? option : option.noOrder}</Typography>
+                                                                </li>
+                                                            );
+                                                        }}
+                                                        sx={{
+                                                            '& .MuiInputBase-root': { minHeight: '56px' },
+                                                            '& .MuiInputBase-input': { fontSize: '1rem' }
+                                                        }}
                                                         renderInput={(params) => <TextField {...params} label="No. Order" placeholder="Timpa No Order Kosong" />}
                                                     />
                                                 </Grid>
-                                                <Grid item xs={12} md={4}>
+                                                <Grid item xs={12} md={12}>
                                                     <Autocomplete
                                                         fullWidth
-                                                        size="small"
                                                         options={fieldStaffs}
                                                         getOptionLabel={(option) => `[${option.kodeOrlap}] ${option.namaOrlap}`}
                                                         value={fileOverrides[file.name]?.fieldStaff || null}
@@ -962,6 +1101,18 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                                                 ...prev,
                                                                 [file.name]: { ...prev[file.name], fieldStaff: newValue }
                                                             }));
+                                                        }}
+                                                        renderOption={(props, option) => {
+                                                            const { key, ...optionProps } = props;
+                                                            return (
+                                                                <li key={key} {...optionProps} style={{ wordBreak: 'break-word', whiteSpace: 'normal', padding: '12px 16px' }}>
+                                                                    <Typography variant="body1">{`[${option.kodeOrlap}] ${option.namaOrlap}`}</Typography>
+                                                                </li>
+                                                            );
+                                                        }}
+                                                        sx={{
+                                                            '& .MuiInputBase-root': { minHeight: '56px' },
+                                                            '& .MuiInputBase-input': { fontSize: '1rem' }
                                                         }}
                                                         renderInput={(params) => <TextField {...params} label="Field Staff" placeholder="Timpa Orlap Kosong" />}
                                                     />
@@ -975,17 +1126,29 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                     Global Fallback (Opsi Terakhir)
                                 </Typography>
 
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} md={6}>
-                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                <Grid container spacing={2} direction="column">
+                                    <Grid item xs={12} md={12}>
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, width: '100%' }}>
                                             <Autocomplete
                                                 fullWidth
-                                                size="small"
                                                 loading={isLoadingRefs}
                                                 options={customers}
                                                 getOptionLabel={(option) => `[${option.kodeCustomer}] ${option.namaCustomer}`}
                                                 value={globalCustomer}
                                                 onChange={(e, newValue) => setGlobalCustomer(newValue)}
+                                                renderOption={(props, option) => {
+                                                    const { key, ...optionProps } = props;
+                                                    return (
+                                                        <li key={key} {...optionProps} style={{ wordBreak: 'break-word', whiteSpace: 'normal', padding: '12px 16px' }}>
+                                                            <Typography variant="body1">{`[${option.kodeCustomer}] ${option.namaCustomer}`}</Typography>
+                                                        </li>
+                                                    );
+                                                }}
+                                                sx={{
+                                                    flexGrow: 1,
+                                                    '& .MuiInputBase-root': { minHeight: '56px' },
+                                                    '& .MuiInputBase-input': { fontSize: '1rem' }
+                                                }}
                                                 renderInput={(params) => (
                                                     <TextField
                                                         {...params}
@@ -1006,21 +1169,19 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                             <Tooltip title="Tambah Customer Baru">
                                                 <IconButton
                                                     color="primary"
-                                                    size="small"
                                                     onClick={() => setQuickAddType('customer')}
-                                                    sx={{ mt: 0.5, border: '1px solid currentColor' }}
+                                                    sx={{ mt: 1, border: '1px solid currentColor', width: 48, height: 48 }}
                                                 >
-                                                    <AddIcon fontSize="small" />
+                                                    <AddIcon />
                                                 </IconButton>
                                             </Tooltip>
                                         </Box>
                                     </Grid>
-                                    <Grid item xs={12} md={6}>
-                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                    <Grid item xs={12} md={12}>
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, width: '100%' }}>
                                             <Autocomplete
                                                 fullWidth
                                                 freeSolo
-                                                size="small"
                                                 loading={isLoadingRefs}
                                                 options={orders}
                                                 getOptionLabel={(option) => typeof option === 'string' ? option : option.noOrder}
@@ -1029,6 +1190,19 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                                 onBlur={(e) => {
                                                     const val = e.target.value;
                                                     if (val) setGlobalNoOrder(val);
+                                                }}
+                                                renderOption={(props, option) => {
+                                                    const { key, ...optionProps } = props;
+                                                    return (
+                                                        <li key={key} {...optionProps} style={{ wordBreak: 'break-word', whiteSpace: 'normal', padding: '12px 16px' }}>
+                                                            <Typography variant="body1">{typeof option === 'string' ? option : option.noOrder}</Typography>
+                                                        </li>
+                                                    );
+                                                }}
+                                                sx={{
+                                                    flexGrow: 1,
+                                                    '& .MuiInputBase-root': { minHeight: '56px' },
+                                                    '& .MuiInputBase-input': { fontSize: '1rem' }
                                                 }}
                                                 renderInput={(params) => (
                                                     <TextField
@@ -1050,26 +1224,37 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                             <Tooltip title="Tambah Order Baru">
                                                 <IconButton
                                                     color="primary"
-                                                    size="small"
                                                     onClick={() => setQuickAddType('order')}
-                                                    sx={{ mt: 0.5, border: '1px solid currentColor' }}
+                                                    sx={{ mt: 1, border: '1px solid currentColor', width: 48, height: 48 }}
                                                 >
-                                                    <AddIcon fontSize="small" />
+                                                    <AddIcon />
                                                 </IconButton>
                                             </Tooltip>
                                         </Box>
                                     </Grid>
 
-                                    <Grid item xs={12} md={6}>
-                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                                    <Grid item xs={12} md={12}>
+                                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, width: '100%' }}>
                                             <Autocomplete
                                                 fullWidth
-                                                size="small"
                                                 loading={isLoadingRefs}
                                                 options={fieldStaffs}
                                                 getOptionLabel={(option) => `[${option.kodeOrlap}] ${option.namaOrlap}`}
                                                 value={globalFieldStaff}
                                                 onChange={(e, newValue) => setGlobalFieldStaff(newValue)}
+                                                renderOption={(props, option) => {
+                                                    const { key, ...optionProps } = props;
+                                                    return (
+                                                        <li key={key} {...optionProps} style={{ wordBreak: 'break-word', whiteSpace: 'normal', padding: '12px 16px' }}>
+                                                            <Typography variant="body1">{`[${option.kodeOrlap}] ${option.namaOrlap}`}</Typography>
+                                                        </li>
+                                                    );
+                                                }}
+                                                sx={{
+                                                    flexGrow: 1,
+                                                    '& .MuiInputBase-root': { minHeight: '56px' },
+                                                    '& .MuiInputBase-input': { fontSize: '1rem' }
+                                                }}
                                                 renderInput={(params) => (
                                                     <TextField
                                                         {...params}
@@ -1090,11 +1275,10 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                             <Tooltip title="Tambah Orlap Baru">
                                                 <IconButton
                                                     color="primary"
-                                                    size="small"
                                                     onClick={() => setQuickAddType('field-staff')}
-                                                    sx={{ mt: 0.5, border: '1px solid currentColor' }}
+                                                    sx={{ mt: 1, border: '1px solid currentColor', width: 48, height: 48 }}
                                                 >
-                                                    <AddIcon fontSize="small" />
+                                                    <AddIcon />
                                                 </IconButton>
                                             </Tooltip>
                                         </Box>
@@ -1256,7 +1440,7 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                 </Box>
             </Backdrop>
             {/* Quick Add Dialog */}
-            <Dialog open={!!quickAddType} onClose={() => setQuickAddType(null)} maxWidth="xs" fullWidth>
+            <Dialog open={!!quickAddType} onClose={() => setQuickAddType(null)} maxWidth="sm" fullWidth>
                 <DialogTitle>Tambah {quickAddType === 'customer' ? 'Customer' : quickAddType === 'order' ? 'Order' : 'Orlap'} Baru</DialogTitle>
                 <DialogContent>
                     <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1302,6 +1486,18 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                                     options={fieldStaffs}
                                     getOptionLabel={(option) => `[${option.kodeOrlap}] ${option.namaOrlap}`}
                                     onChange={(e, newValue) => setQuickAddData({ ...quickAddData, fieldStaff: newValue?._id })}
+                                    renderOption={(props, option) => {
+                                        const { key, ...optionProps } = props;
+                                        return (
+                                            <li key={key} {...optionProps} style={{ wordBreak: 'break-word', whiteSpace: 'normal', padding: '8px 16px' }}>
+                                                <Typography variant="body2">{`[${option.kodeOrlap}] ${option.namaOrlap}`}</Typography>
+                                            </li>
+                                        );
+                                    }}
+                                    sx={{
+                                        '& .MuiInputBase-root': { minHeight: '56px' },
+                                        '& .MuiInputBase-input': { fontSize: '1rem' }
+                                    }}
                                     renderInput={(params) => <TextField {...params} label="Pilih Field Staff (Opsional)" />}
                                 />
                             </>
@@ -1342,6 +1538,83 @@ const DocumentImport = ({ open, onClose, onImportSuccess }) => {
                         )}
                     >
                         {isSavingQuickAdd ? <CircularProgress size={24} /> : 'Simpan'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            {/* Image Zoom Dialog */}
+            <Dialog 
+                open={Boolean(zoomImage)} 
+                onClose={() => setZoomImage(null)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {zoomImage?.title || 'Preview Foto'}
+                    <IconButton onClick={() => setZoomImage(null)}>
+                        <CloseIcon />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent sx={{ p: 0, textAlign: 'center', bgcolor: '#f5f5f5' }}>
+                    {zoomImage?.url && (
+                        <Box
+                            component="img"
+                            src={zoomImage.url}
+                            alt="Full Preview"
+                            sx={{
+                                maxWidth: '100%',
+                                maxHeight: '80vh',
+                                display: 'block',
+                                margin: '0 auto',
+                                objectFit: 'contain'
+                            }}
+                        />
+                    )}
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setZoomImage(null)} color="primary">Tutup</Button>
+                </DialogActions>
+            </Dialog>
+            {/* Edit Preview Row Dialog */}
+            <Dialog open={editRow.index !== -1} onClose={() => setEditRow({ index: -1, data: null })} maxWidth="xs" fullWidth>
+                <DialogTitle>Edit Data Preview</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <TextField
+                            label="Nama"
+                            fullWidth
+                            value={editRow.data?.nama || ''}
+                            onChange={(e) => setEditRow({ ...editRow, data: { ...editRow.data, nama: e.target.value } })}
+                        />
+                        <TextField
+                            label="Harga Beli (Hutang)"
+                            fullWidth
+                            type="text"
+                            value={editRow.data?.hargaBeli || ''}
+                            onChange={(e) => handleEditPreview('hargaBeli', e.target.value)}
+                            helperText={editRow.data?.hargaBeli ? `Rp ${editRow.data.hargaBeli}` : ''}
+                        />
+                        <TextField
+                            label="Harga Jual (Piutang)"
+                            fullWidth
+                            type="text"
+                            value={editRow.data?.hargaJual || ''}
+                            onChange={(e) => handleEditPreview('hargaJual', e.target.value)}
+                            helperText={editRow.data?.hargaJual ? `Rp ${editRow.data.hargaJual}` : ''}
+                        />
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setEditRow({ index: -1, data: null })}>Batal</Button>
+                    <Button
+                        variant="contained"
+                        onClick={() => {
+                            const newData = [...previewData.extractedData];
+                            newData[editRow.index] = editRow.data;
+                            setPreviewData({ ...previewData, extractedData: newData });
+                            setEditRow({ index: -1, data: null });
+                        }}
+                    >
+                        Update Preview
                     </Button>
                 </DialogActions>
             </Dialog>

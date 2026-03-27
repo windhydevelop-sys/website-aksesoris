@@ -63,6 +63,9 @@ const parseListFormat = (text) => {
       'user bca': 'BCA-ID', 'bca id': 'BCA-ID', 'pass bca id': 'Pass BCA-ID', 'mybca': 'BCA-ID', 'password bca id': 'Pass BCA-ID',
       'kode akses': 'Kode Akses', 'pin m bca': 'Pin m-BCA', 'pin key bca': 'Pin KeyBCA', 'pin keybca': 'Pin KeyBCA', 'pin bcakey': 'Pin KeyBCA', 'pin soft': 'Pin KeyBCA', 'keybca pin': 'Pin KeyBCA', 'keybca': 'Pin KeyBCA',
       'pin bca id': 'Pin Transaksi', 'pin bca-id': 'Pin Transaksi',
+      'pin mybca id': 'Pin Transaksi', 'mybca id': 'Pin Transaksi',
+      'pin transaksi': 'Pin Transaksi',
+      'user i banking bca': 'User IB', 'i banking bca': 'User IB',
       // BRI
       'user brimo': 'User BRImo', 'id brimo': 'User BRImo', 'brimo id': 'User BRImo', 'user mobile': 'User BRImo', 'mobile user': 'User BRImo',
       'pass brimo': 'Pass BRImo', 'brimo pass': 'Pass BRImo', 'brimo password': 'Pass BRImo', 'password mobile': 'Pass BRImo',

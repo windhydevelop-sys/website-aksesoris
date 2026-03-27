@@ -157,7 +157,7 @@ const InvoicePdfDocument = ({ product }) => (
             <Text style={styles.tableCol}>{product.imeiHandphone || '-'}</Text>
             <Text style={styles.tableCol}>{product.spesifikasi || '-'}</Text>
             <Text style={styles.tableCol}>{product.kepemilikan || '-'}</Text>
-            <Text style={styles.tableCol}>Rp {product.harga ? product.harga.toLocaleString('id-ID') : '-'}</Text>
+            <Text style={styles.tableCol}>Rp {(product.hargaJual || product.harga || 0).toLocaleString('id-ID')}</Text>
           </View>
         </View>
       </View>
@@ -166,7 +166,7 @@ const InvoicePdfDocument = ({ product }) => (
         <Text style={styles.subHeader}>Total Pembayaran</Text>
         <View style={styles.row}>
           <Text style={styles.label}>Total:</Text>
-          <Text style={styles.value}>Rp {product.harga ? product.harga.toLocaleString('id-ID') : '-'}</Text>
+          <Text style={styles.value}>Rp {(product.hargaJual || product.harga || 0).toLocaleString('id-ID')}</Text>
         </View>
       </View>
 

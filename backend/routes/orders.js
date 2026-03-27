@@ -10,17 +10,30 @@ const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 
-// Get all orders
+// Get all orders with pagination
 router.get('/', auth, async (req, res) => {
   try {
+    const { page = 1, limit = 50 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const total = await Order.countDocuments();
     const orders = await Order.find()
       .populate('fieldStaff', 'kodeOrlap namaOrlap')
       .populate('createdBy', 'username')
       .populate('lastModifiedBy', 'username')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
 
     res.json({
       success: true,
+      count: orders.length,
+      total,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit))
+      },
       data: orders
     });
   } catch (error) {

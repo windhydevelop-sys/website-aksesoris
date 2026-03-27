@@ -1,0 +1,74 @@
+# AI Agent Master Blueprint: Feature Replication Guide
+
+This document provides high-level technical specifications and implementation patterns for replicating the "KUE LAPIS" feature set. Use this to guide your development process.
+
+---
+
+## 1. Multi-Account Cashflow Mechanism (2 Accounts)
+
+**Goal**: Support tracking financial transactions across "Rekening A" and "Rekening B".
+
+### Backend Requirements:
+- **Schema Update**: Add an `account` field to the [Cashflow](file:///Users/macbook/projects/kue_lapis/frontend/src/components/CashflowManagement.js#19-720) model (Enum: `['Rekening A', 'Rekening B']`, Default: `Rekening A`).
+- **Aggregation Logic**: Implementation of aggregation pipelines to calculate `totalDebit`, `totalCredit`, and `balance` grouped by `account`.
+
+### Frontend Implementation:
+- **Account Summary Bar**: A grid of cards displaying the balance of each account at the top of the Cashflow page.
+- **Transaction Form**: Include a Select/Dropdown field to assign a transaction to a specific account.
+- **Dynamic Styling**: Use distinct colors for each account (e.g., Primary/Blue and Warning/Orange) to help visual differentiation.
+
+---
+
+## 2. Payment Management to Cashflow Sync Logic
+
+**Goal**: Automatically record expenses when a product is marked as "paid".
+
+### Core Helper ([backend/utils/cashflowHelper.js](file:///Users/macbook/projects/kue_lapis/backend/utils/cashflowHelper.js)):
+Create a robust [syncProductWithCashflow(product, userId)](file:///Users/macbook/projects/kue_lapis/backend/utils/cashflowHelper.js#5-98) function:
+- **Trigger Condition**: Execute if `harga > 0` AND (`paymentStatus === 'paid'` OR `status === 'completed'`).
+- **Idempotency**: Use `productId` as a unique reference to [findOne](file:///Users/macbook/projects/kue_lapis/backend/models/Product.js#332-337) and update existing entries rather than creating duplicates.
+- **Debt Handling**:
+    - If `status === 'completed'` but `paymentStatus !== 'paid'`, mark as `isDebt: true` in Cashflow.
+    - Remove from the Balance/Ledger if it's still a debt.
+    - Only add to the Ledger (actual cash movement) when `paymentStatus === 'paid'`.
+
+### Integration Points:
+- Call this helper in **every** path that saves product data:
+    - Standard [updateProduct](file:///Users/macbook/projects/kue_lapis/backend/controllers/products.js#381-582) controller.
+    - Bulk import loops (PDF/Word).
+    - Approval flows from external sources (e.g., Telegram).
+
+---
+
+## 3. Professional Invoice Design (A5 PDF)
+
+**Goal**: High-fidelity, print-ready document for customer transactions.
+
+### PDF Components (@react-pdf/renderer):
+- **Branding**: Bold header with company name and descriptive tagline.
+- **Metadata Section**: Two-column layout for "Order Details" (Order#, Date, Orlap Code) and "Customer Details" (Name, NIK).
+- **Core Table**: A clean, bordered table for Device Specifications (Brand, Type, IMEI) and Account Information (Bank, Account#, Account Name).
+- **Financial Summary**: A dedicated block in the bottom-right corner showing Total Price and a large, colored Payment Status label (**LUNAS** vs **BELUM BAYAR**).
+- **Accessibility**: Ensure the "Print Invoice" button is conditionally visible in the UI when a product has a price and is either paid or completed.
+
+---
+
+## 4. Bulk Upload Thumbnail Previews
+
+**Goal**: Enhancing data verification during complex document imports.
+
+### Frontend Component ([DocumentImport.js](file:///Users/macbook/projects/kue_lapis/frontend/src/components/DocumentImport.js)):
+- **Dynamic Column Mapping**: Add `uploadFotoId` and `uploadFotoSelfie` to the preview table configuration.
+- **Thumbnail Rendering**:
+    - Use a small `Box` (img component) with `objectFit: 'cover'`.
+    - Implement a [buildImageUrl](file:///Users/macbook/projects/kue_lapis/frontend/src/components/ProductDetail.js#93-103) helper to resolve relative paths to full server URLs.
+    - Add an `onError` fallback to handle missing or broken image links.
+- **Full-Size Verification**: Include a `Visibility` icon button next to the thumbnail that opens the raw image URL in a new browser tab for detailed inspection.
+
+---
+
+## 5. Critical Technical Guards (Standard Operating Procedures)
+
+1.  **Auth Middleware**: Always ensure `auth` middleware is present on `PUT` routes. Without `req.userId`, automatic cashflow entries will fail due to missing `createdBy` metadata.
+2.  **Currency Clean-up**: Implement a [cleanCurrency](file:///Users/macbook/projects/kue_lapis/frontend/src/utils/formatHelpers.js#16-27) utility (Regex: `replace(/\./g, '')`) before sending formatted monetary strings to the backend.
+3.  **Encrypted Fields**: Ensure the sync logic reads data *after* decryption (using model methods like [getDecryptedData()](file:///Users/macbook/projects/kue_lapis/backend/models/Product.js#288-325)) if price fields are sensitive.

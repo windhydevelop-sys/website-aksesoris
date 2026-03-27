@@ -3,21 +3,36 @@ const FieldStaff = require('../models/FieldStaff');
 const Product = require('../models/Product');
 const { auditLog, securityLog } = require('../utils/audit');
 
-// Get all handphones with populated assignedTo and currentProduct
+// Get all handphones with populated assignedTo and currentProduct with pagination
 const getHandphones = async (req, res) => {
   try {
+    const { page = 1, limit = 50 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const total = await Handphone.countDocuments();
     const handphones = await Handphone.find()
       .populate('assignedTo', 'kodeOrlap namaOrlap noHandphone')
       .populate('currentProduct', 'noOrder nama noHp')
-      .populate('assignmentHistory.product', 'noOrder nama');
+      .populate('assignmentHistory.product', 'noOrder nama')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
 
-    auditLog('READ', req.userId, 'Handphone', 'all', {
-      count: handphones.length
+    auditLog('READ', req.userId, 'Handphone', 'all_paginated', {
+      count: handphones.length,
+      page,
+      limit
     }, req);
 
     res.json({
       success: true,
       count: handphones.length,
+      total,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit))
+      },
       data: handphones
     });
   } catch (error) {
@@ -203,8 +218,8 @@ const updateHandphone = async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     ).populate('assignedTo', 'kodeOrlap namaOrlap noHandphone')
-     .populate('currentProduct', 'noOrder nama noHp')
-     .populate('assignmentHistory.product', 'noOrder nama');
+      .populate('currentProduct', 'noOrder nama noHp')
+      .populate('assignmentHistory.product', 'noOrder nama');
 
     auditLog('UPDATE', req.userId, 'Handphone', handphoneId, {
       merek: updatedHandphone.merek,
