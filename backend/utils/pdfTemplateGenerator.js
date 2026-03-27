@@ -4,6 +4,37 @@ const fs = require('fs');
 const { logger } = require('./audit');
 
 /**
+ * Helper to convert number to Indonesian words (Terbilang)
+ */
+const terbilang = (nilai) => {
+    const bilangan = [
+        '', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima',
+        'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'
+    ];
+    let temp = '';
+    if (nilai < 12) {
+        temp = ' ' + bilangan[nilai];
+    } else if (nilai < 20) {
+        temp = terbilang(nilai - 10) + ' Belas';
+    } else if (nilai < 100) {
+        temp = terbilang(Math.floor(nilai / 10)) + ' Puluh' + terbilang(nilai % 10);
+    } else if (nilai < 200) {
+        temp = ' Seratus' + terbilang(nilai - 100);
+    } else if (nilai < 1000) {
+        temp = terbilang(Math.floor(nilai / 100)) + ' Ratus' + terbilang(nilai % 100);
+    } else if (nilai < 2000) {
+        temp = ' Seribu' + terbilang(nilai - 1000);
+    } else if (nilai < 1000000) {
+        temp = terbilang(Math.floor(nilai / 1000)) + ' Ribu' + terbilang(nilai % 1000);
+    } else if (nilai < 1000000000) {
+        temp = terbilang(Math.floor(nilai / 1000000)) + ' Juta' + terbilang(nilai % 1000000);
+    } else if (nilai < 1000000000000) {
+        temp = terbilang(Math.floor(nilai / 1000000000)) + ' Milyar' + terbilang(nilai % 1000000000);
+    }
+    return temp.trim();
+};
+
+/**
  * Determine if a field should be displayed based on bank and jenisRekening.
  * Mirrors the logic in ProductDetail.js (frontend).
  */
@@ -420,6 +451,259 @@ const generateCorrectedPDF = async (products, format = 'table') => {
     }
 };
 
+/**
+ * Generate Grouped Invoice PDF (Piutang)
+ */
+const generateGroupedInvoicePDF = async (products, customerName) => {
+    let browser;
+    try {
+        const totalAmount = products.reduce((sum, p) => sum + (p.hargaJual || 0), 0);
+        const invoiceNo = `INV-${Date.now().toString().slice(-6)}`;
+        const dateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 40px; color: #333; line-height: 1.4; }
+                .header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+                .company-info h1 { margin: 0; color: #1a73e8; font-size: 28px; }
+                .company-info p { margin: 5px 0; font-size: 12px; color: #666; }
+                .invoice-title { text-align: right; }
+                .invoice-title h2 { margin: 0; color: #333; font-size: 24px; text-transform: uppercase; }
+                .invoice-title p { margin: 5px 0; font-size: 14px; font-weight: bold; }
+                
+                .details-section { display: flex; justify-content: space-between; margin-bottom: 40px; }
+                .bill-to h3 { margin: 0 0 10px 0; font-size: 14px; color: #777; text-transform: uppercase; }
+                .bill-to p { margin: 2px 0; font-size: 16px; font-weight: bold; }
+                
+                table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                th { background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; padding: 12px 8px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; }
+                td { border-bottom: 1px solid #eee; padding: 12px 8px; font-size: 13px; }
+                .text-right { text-align: right; }
+                .font-bold { font-weight: bold; }
+                
+                .summary { display: flex; justify-content: flex-end; }
+                .summary-table { width: 300px; }
+                .summary-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+                .summary-row.total { border-bottom: none; font-size: 18px; color: #1a73e8; font-weight: bold; }
+                
+                .terbilang-box { margin-top: -20px; margin-bottom: 40px; padding: 15px; background: #f8f9fa; border-left: 4px solid #1a73e8; font-style: italic; font-size: 14px; }
+                
+                .footer { margin-top: 60px; display: flex; justify-content: space-between; }
+                .signature { width: 200px; text-align: center; }
+                .signature-space { height: 80px; border-bottom: 1px solid #333; margin-bottom: 10px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="company-info">
+                    <h1>SISTEM AKSESORIS</h1>
+                    <p>Manajemen Piutang & Keamanan Data</p>
+                </div>
+                <div class="invoice-title">
+                    <h2>INVOICE</h2>
+                    <p>#${invoiceNo}</p>
+                    <p style="font-weight: normal; font-size: 12px;">Tanggal: ${dateStr}</p>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <div class="bill-to">
+                    <h3>Tagihan Kepada:</h3>
+                    <p>${customerName || 'Customer Umum'}</p>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px">No</th>
+                        <th>No. Order</th>
+                        <th>Keterangan Produk</th>
+                        <th>Bank / Rekening</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${products.map((p, idx) => `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td class="font-bold">${p.noOrder || '-'}</td>
+                            <td>${p.nama || '-'} (NIK: ${p.nik || '-'})</td>
+                            <td>${p.bank || '-'} - ${p.noRek || '-'}</td>
+                            <td class="text-right font-bold">Rp ${Number(p.hargaJual || 0).toLocaleString('id-ID')}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+
+            <div class="terbilang-box">
+                Terbilang: <strong># ${terbilang(totalAmount)} Rupiah #</strong>
+            </div>
+
+            <div class="summary">
+                <div class="summary-table">
+                    <div class="summary-row total">
+                        <span>TOTAL</span>
+                        <span>Rp ${totalAmount.toLocaleString('id-ID')}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <div class="signature">
+                    <p>Penerima,</p>
+                    <div class="signature-space"></div>
+                    <p>( ____________________ )</p>
+                </div>
+                <div class="signature">
+                    <p>Hormat Kami,</p>
+                    <div class="signature-space"></div>
+                    <p><strong>Admin Sistem</strong></p>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+        const page = await browser.newPage();
+        await page.setContent(html);
+        const buffer = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '20px', bottom: '20px' } });
+        await browser.close();
+        return { success: true, buffer, filename: `Invoice-${invoiceNo}.pdf` };
+    } catch (err) {
+        if (browser) await browser.close();
+        return { success: false, error: err.message };
+    }
+};
+
+/**
+ * Generate Kwitansi PDF (Hutang to Orlap)
+ */
+const generateKwitansiPDF = async (products, orlapName) => {
+    let browser;
+    try {
+        const totalAmount = products.reduce((sum, p) => sum + (p.hargaBeli || 0), 0);
+        const receiptNo = `KWT-${Date.now().toString().slice(-6)}`;
+        const dateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        let html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: 'Courier New', Courier, monospace; margin: 0; padding: 20px; color: #000; }
+                .receipt-container { border: 2px solid #000; padding: 30px; position: relative; max-width: 800px; margin: auto; }
+                .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 80px; color: rgba(0,0,0,0.05); z-index: -1; white-space: nowrap; }
+                
+                header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 1px solid #000; padding-bottom: 10px; }
+                .title { font-size: 24px; font-weight: bold; text-decoration: underline; }
+                .serial { font-size: 14px; }
+                
+                .row { display: flex; margin-bottom: 15px; font-size: 16px; }
+                .label { width: 180px; }
+                .separator { width: 20px; }
+                .value { flex: 1; border-bottom: 1px dotted #000; padding-bottom: 2px; }
+                
+                .amount-box { margin-top: 30px; display: inline-block; padding: 10px 20px; border: 2px solid #000; background: #f0f0f0; font-size: 20px; font-weight: bold; }
+                .footer { margin-top: 40px; display: flex; justify-content: flex-end; }
+                .signature-box { text-align: center; width: 250px; }
+                .signature-space { height: 80px; }
+                
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                th, td { border: 1px solid #000; padding: 5px; text-align: left; }
+                th { background: #eee; }
+            </style>
+        </head>
+        <body>
+            <div class="receipt-container">
+                <div class="watermark">KWITANSI / RECEIPT</div>
+                <header>
+                    <div class="title">KWITANSI</div>
+                    <div class="serial">No: ${receiptNo}</div>
+                </header>
+
+                <div class="row">
+                    <div class="label">Sudah Terima Dari</div>
+                    <div class="separator">:</div>
+                    <div class="value"><strong>SISTEM AKSESORIS</strong></div>
+                </div>
+                <div class="row">
+                    <div class="label">Banyaknya Uang</div>
+                    <div class="separator">:</div>
+                    <div class="value" style="font-style: italic; background: #f9f9f9; padding: 5px;">
+                        # ${terbilang(totalAmount)} Rupiah #
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="label">Untuk Pembayaran</div>
+                    <div class="separator">:</div>
+                    <div class="value">Pembayaran Hutang Kepada Orlap Multi-Produk</div>
+                </div>
+                <div class="row" style="margin-bottom: 0;">
+                    <div class="label">Nama Penerima</div>
+                    <div class="separator">:</div>
+                    <div class="value"><strong>${orlapName || 'Orlap Umum'}</strong></div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30px">No</th>
+                            <th>No. Order</th>
+                            <th>Nama / NIK</th>
+                            <th>Bank / Rekening</th>
+                            <th style="text-align: right">Nominal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${products.map((p, idx) => `
+                            <tr>
+                                <td>${idx + 1}</td>
+                                <td>${p.noOrder || '-'}</td>
+                                <td>${p.nama || '-'} (${p.nik || '-'})</td>
+                                <td>${p.bank || '-'} - ${p.noRek || '-'}</td>
+                                <td style="text-align: right">Rp ${Number(p.hargaBeli || 0).toLocaleString('id-ID')}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+
+                <div class="amount-box">
+                    Rp ${totalAmount.toLocaleString('id-ID')},-
+                </div>
+
+                <div class="footer">
+                    <div class="signature-box">
+                        <p>Tgl, ${dateStr}</p>
+                        <div class="signature-space"></div>
+                        <p><strong>( ${orlapName || '________________'} )</strong></p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        `;
+
+        browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+        const page = await browser.newPage();
+        await page.setContent(html);
+        const buffer = await page.pdf({ format: 'A4', orientation: 'landscape', printBackground: true });
+        await browser.close();
+        return { success: true, buffer, filename: `Kwitansi-${receiptNo}.pdf` };
+    } catch (err) {
+        if (browser) await browser.close();
+        return { success: false, error: err.message };
+    }
+};
+
 module.exports = {
-    generateCorrectedPDF
+    generateCorrectedPDF,
+    generateGroupedInvoicePDF,
+    generateKwitansiPDF
 };

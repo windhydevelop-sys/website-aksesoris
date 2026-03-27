@@ -11,7 +11,7 @@ const { auditLog, securityLog } = require('../utils/audit');
 const { processPDFFile, validateExtractedData, matchHeaderToField, normalizeHeaderCell } = require('../utils/pdfParser');
 const { createProduct, getProducts, getProductById, getProductsExport, getProductExportById } = require('../controllers/products');
 const { generateWordTemplate, generateBankSpecificTemplate, generateCorrectedWord, generateCorrectedWordList } = require('../utils/wordTemplateGenerator');
-const { generateCorrectedPDF } = require('../utils/pdfTemplateGenerator');
+const { generateCorrectedPDF, generateGroupedInvoicePDF, generateKwitansiPDF } = require('../utils/pdfTemplateGenerator');
 const { cloudinary } = require('../utils/cloudinary');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const { normalizeNoOrder, normalizeCustomer } = require('../utils/normalization');
@@ -495,6 +495,62 @@ router.post('/export-corrected-pdf', auth, async (req, res) => {
   }
 });
 
+
+// Generate Grouped Invoice PDF (Piutang)
+router.post('/generate-grouped-invoice', auth, async (req, res) => {
+  try {
+    const { productIds, customerName } = req.body;
+    if (!productIds || !Array.isArray(productIds)) {
+      return res.status(400).json({ success: false, error: 'Invalid product selection' });
+    }
+
+    const products = await Product.find({ _id: { $in: productIds } });
+    if (products.length === 0) {
+      return res.status(404).json({ success: false, error: 'Products not found' });
+    }
+
+    const { success, buffer, filename, error } = await generateGroupedInvoicePDF(products, customerName);
+
+    if (!success) {
+      return res.status(500).json({ success: false, error });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error generating grouped invoice:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+// Generate Kwitansi PDF (Hutang)
+router.post('/generate-kwitansi', auth, async (req, res) => {
+  try {
+    const { productIds, orlapName } = req.body;
+    if (!productIds || !Array.isArray(productIds)) {
+      return res.status(400).json({ success: false, error: 'Invalid product selection' });
+    }
+
+    const products = await Product.find({ _id: { $in: productIds } });
+    if (products.length === 0) {
+      return res.status(404).json({ success: false, error: 'Products not found' });
+    }
+
+    const { success, buffer, filename, error } = await generateKwitansiPDF(products, orlapName);
+
+    if (!success) {
+      return res.status(500).json({ success: false, error });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.send(buffer);
+  } catch (error) {
+    console.error('Error generating kwitansi:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
 
 // Search products by NIK
 router.get('/search', auth, addUserInfo, async (req, res) => {

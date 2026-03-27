@@ -26,9 +26,10 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Checkbox
 } from '@mui/material';
-import { Payment } from '@mui/icons-material';
+import { Payment, Print, Receipt } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios_instance from '../utils/axios';
 import SidebarLayout from './SidebarLayout';
@@ -48,6 +49,8 @@ const PaymentManagement = () => {
   const [settleDialog, setSettleDialog] = useState({ open: false, product: null, type: '' });
   const [selectedAccount, setSelectedAccount] = useState('Rekening A');
   const [isSettling, setIsSettling] = useState(false);
+  const [selectedProductIds, setSelectedProductIds] = useState([]);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   /**
    * Fetch unpaid products that are completed (ready for payment)
@@ -153,11 +156,82 @@ const PaymentManagement = () => {
         showSuccess(`Berhasil melunasi ${type === 'piutang' ? 'Tagihan Customer' : 'Hutang Orlap'}`);
         fetchUnpaidProducts();
         setSettleDialog({ open: false, product: null, type: '' });
+        // Clear selection if the settled product was selected
+        setSelectedProductIds(prev => prev.filter(id => id !== product._id));
       }
     } catch (err) {
       showError('Gagal melakukan pelunasan');
     } finally {
       setIsSettling(false);
+    }
+  };
+
+  const handleSelectToggle = (id) => {
+    setSelectedProductIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (checked, items) => {
+    if (checked) {
+      const ids = items.map(p => p._id);
+      setSelectedProductIds(prev => [...new Set([...prev, ...ids])]);
+    } else {
+      const idsToRemove = items.map(p => p._id);
+      setSelectedProductIds(prev => prev.filter(id => !idsToRemove.includes(id)));
+    }
+  };
+
+  const handlePrintAction = async (type) => {
+    if (selectedProductIds.length === 0) return;
+    
+    setIsPrinting(true);
+    try {
+      const selectedProducts = products.filter(p => selectedProductIds.includes(p._id));
+      
+      let endpoint = '';
+      let payload = { productIds: selectedProductIds };
+
+      if (type === 'piutang') {
+        // Validate same customer
+        const customer = selectedProducts[0].customer;
+        const allSame = selectedProducts.every(p => p.customer === customer);
+        if (!allSame) {
+          showError('Semua produk yang dipilih harus dari Customer yang sama untuk 1 Invoice');
+          setIsPrinting(false);
+          return;
+        }
+        endpoint = '/api/products/generate-grouped-invoice';
+        payload.customerName = customer;
+      } else {
+        // Validate same Orlap
+        const orlap = selectedProducts[0].codeAgen;
+        const allSame = selectedProducts.every(p => p.codeAgen === orlap);
+        if (!allSame) {
+          showError('Semua produk yang dipilih harus dari Orlap yang sama untuk 1 Kwitansi');
+          setIsPrinting(false);
+          return;
+        }
+        endpoint = '/api/products/generate-kwitansi';
+        payload.orlapName = orlap;
+      }
+
+      const response = await axios_instance.post(endpoint, payload, { responseType: 'blob' });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${type === 'piutang' ? 'Invoice' : 'Kwitansi'}-${Date.now()}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      
+      showSuccess(`Berhasil membuat ${type === 'piutang' ? 'Invoice' : 'Kwitansi'}`);
+    } catch (err) {
+      console.error('Print Error:', err);
+      showError(`Gagal membuat ${type === 'piutang' ? 'Invoice' : 'Kwitansi'}`);
+    } finally {
+      setIsPrinting(false);
     }
   };
 
@@ -184,7 +258,15 @@ const PaymentManagement = () => {
 
         {/* Tabs */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} aria-label="payment tabs" color="success">
+          <Tabs 
+            value={activeTab} 
+            onChange={(e, v) => {
+              setActiveTab(v);
+              setSelectedProductIds([]); // Clear selection on tab switch
+            }} 
+            aria-label="payment tabs" 
+            color="success"
+          >
             <Tab label={`💰 Piutang Customer (${piutangProducts.length})`} sx={{ fontWeight: 'bold' }} />
             <Tab label={`💸 Hutang ke Orlap (${hutangProducts.length})`} sx={{ fontWeight: 'bold' }} />
           </Tabs>
@@ -270,6 +352,23 @@ const PaymentManagement = () => {
           <Button variant="outlined" onClick={fetchUnpaidProducts}>
             🔄 Refresh
           </Button>
+
+          {selectedProductIds.length > 0 && (
+            <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+              <Button
+                variant="contained"
+                color={activeTab === 0 ? 'success' : 'warning'}
+                startIcon={activeTab === 0 ? <Print /> : <Receipt />}
+                onClick={() => handlePrintAction(activeTab === 0 ? 'piutang' : 'hutang')}
+                disabled={isPrinting}
+              >
+                {isPrinting ? <CircularProgress size={20} color="inherit" /> : `Cetak ${activeTab === 0 ? 'Invoice' : 'Kwitansi'} (${selectedProductIds.length})`}
+              </Button>
+              <Button variant="text" size="small" onClick={() => setSelectedProductIds([])}>
+                Batal Pilih
+              </Button>
+            </Box>
+          )}
         </Box>
 
         {/* Products Table */}
@@ -292,9 +391,16 @@ const PaymentManagement = () => {
             <Table>
               <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
                 <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      indeterminate={selectedProductIds.length > 0 && selectedProductIds.length < (activeTab === 0 ? piutangProducts.length : hutangProducts.length)}
+                      checked={(activeTab === 0 ? piutangProducts : hutangProducts).length > 0 && selectedProductIds.length === (activeTab === 0 ? piutangProducts : hutangProducts).length}
+                      onChange={(e) => handleSelectAll(e.target.checked, activeTab === 0 ? piutangProducts : hutangProducts)}
+                    />
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>No. Order</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Nama</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Field Staff</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>{activeTab === 0 ? 'Customer' : 'Field Staff'}</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 'bold' }}>{activeTab === 0 ? 'Harga Jual (Piutang)' : 'Harga Beli (Hutang)'}</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Invoice</TableCell>
                   <TableCell align="center" sx={{ fontWeight: 'bold' }}>Aksi</TableCell>
@@ -304,10 +410,16 @@ const PaymentManagement = () => {
                 {(activeTab === 0 ? piutangProducts : hutangProducts)
                   .filter(p => p.noOrder?.toLowerCase().includes(searchTerm.toLowerCase()) || p.nama?.toLowerCase().includes(searchTerm.toLowerCase()))
                   .map((product) => (
-                  <TableRow key={product._id} hover>
+                  <TableRow key={product._id} hover selected={selectedProductIds.includes(product._id)}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedProductIds.includes(product._id)}
+                        onChange={() => handleSelectToggle(product._id)}
+                      />
+                    </TableCell>
                     <TableCell sx={{ fontWeight: 'bold' }}>{product.noOrder || '-'}</TableCell>
                     <TableCell>{product.nama || '-'}</TableCell>
-                    <TableCell>{product.codeAgen || '-'}</TableCell>
+                    <TableCell>{activeTab === 0 ? (product.customer || '-') : (product.codeAgen || '-')}</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 'bold', color: activeTab === 0 ? '#2e7d32' : '#e65100' }}>
                       Rp {formatHargaDot(activeTab === 0 ? (product.hargaJual || product.harga) : product.hargaBeli)}
                     </TableCell>
