@@ -172,8 +172,10 @@ const ProductEditForm = ({ open, product, onClose, onSubmit }) => {
               label="📊 Status"
               onChange={(e) => handleChange('status', e.target.value)}
             >
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="in_progress">In Progress</MenuItem>
               <MenuItem value="completed">Completed</MenuItem>
-              {/* Force selection to completed for payment management context */}
+              <MenuItem value="cancelled">Cancelled</MenuItem>
             </Select>
           </FormControl>
 

@@ -500,6 +500,27 @@ const updateProduct = async (req, res) => {
       });
     }
 
+    // Bi-directional status sync: Product -> Order
+    // If product status is updated, propagate it to the corresponding Order
+    if (data.status && data.status !== currentProduct.status) {
+      if (product.noOrder) {
+        console.log(`[Bi-directional Sync] Propagating Product Status (${data.status}) to Order ${product.noOrder}`);
+        try {
+          const updatedOrder = await Order.findOneAndUpdate(
+            { noOrder: product.noOrder },
+            { status: data.status.toLowerCase() },
+            { new: true }
+          );
+          if (updatedOrder) {
+            console.log(`[Bi-directional Sync] Successfully updated Order ${product.noOrder} to ${data.status}`);
+          }
+        } catch (syncError) {
+          console.error(`[Bi-directional Sync] Failed to sync status to Order:`, syncError);
+          // We don't fail the whole request if sync fails, but we log it
+        }
+      }
+    }
+
     // Sync with cashflow if product has price and payment info
     const account = req.body.account || 'Rekening A';
     await syncProductWithCashflow(product, req.userId, account);
